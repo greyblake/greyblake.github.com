@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: javascript | Sergey Potapov Online]]></title>
+  <link href="http://greyblake.com/blog/categories/javascript/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-06-09T03:09:21+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Perfomance benchmakrs ExecJS VS Ruby]]></title>
+    <link href="http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/"/>
+    <updated>2011-10-23T08:49:33+03:00</updated>
+    <id>http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby</id>
+    <content type="html"><![CDATA[<p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you're are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google's V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
+
+<p>```ruby benchmark.rb</p>
+
+<p>require 'rubygems'
+require 'execjs'
+require 'benchmark'</p>
+
+<p>js =&lt;&lt;JAVASCRIPT
+function fib(a){
+  if(a &lt; 2)</p>
+
+<pre><code>return a;
+</code></pre>
+
+<p>  return fib(a-1) + fib(a-2);
+}
+JAVASCRIPT
+context = ExecJS.compile(js)</p>
+
+<p>def fib(a)
+  return a if a &lt; 2
+  fib(a-1) + fib(a-2)
+end</p>
+
+<p>[1, 10, 20, 30, 40].each do |n|
+  puts "N = #{n}"
+  Benchmark.bm(7) do |x|</p>
+
+<pre><code>x.report("Ruby:") { fib(n) }
+x.report("ExecJS:") { context.call("fib", n) }
+</code></pre>
+
+<p>  end
+  puts '-' * 52
+end</p>
+
+<p>```</p>
+
+<p>Here is the output:</p>
+
+<pre><code>N = 1
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.000008)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000318)
+----------------------------------------------------
+N = 10
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.000026)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000156)
+----------------------------------------------------
+N = 20
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.002585)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000550)
+----------------------------------------------------
+N = 30
+             user     system      total        real
+Ruby:    0.310000   0.000000   0.310000 (  0.312819)
+ExecJS:  0.040000   0.000000   0.040000 (  0.043603)
+----------------------------------------------------
+N = 40
+             user     system      total        real
+Ruby:   39.780000   0.050000  39.830000 ( 39.955098)
+ExecJS:  3.940000   0.020000   3.960000 (  3.943733)
+----------------------------------------------------
+</code></pre>
+
+<p>Looks like ExecJS needs some time for "initializing" and there is no reason to use it for small calculation. But it can be ten times faster in case of long time computing!</p>
+
+<p>I would not decide to use ExecJS for validation but however the benchmark results were amazing, and we've got to keep in mind that ExecJS can provide such perfomance benefits.</p>
+]]></content>
+  </entry>
+  
+</feed>

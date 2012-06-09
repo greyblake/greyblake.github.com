@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: datamapper | Sergey Potapov Online]]></title>
+  <link href="http://greyblake.com/blog/categories/datamapper/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-06-09T03:09:21+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[RSpec matchers for DataMapper (dm-rspec)]]></title>
+    <link href="http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/"/>
+    <updated>2011-09-12T22:25:15+03:00</updated>
+    <id>http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec</id>
+    <content type="html"><![CDATA[<p>I am currently developing a number of RSpec matchers for DataMapper models testing. You can try it. Just add the next in your Gemfile under <code>test</code> group:</p>
+
+<pre><code>gem 'dm-rspec'
+</code></pre>
+
+<p>And run <code>bundle install</code> to install new gems.</p>
+
+<p>The main idea is to provide the same (almost the same) interface which Shoulda provides to test ActiveRecord models.</p>
+
+<p>At the moment I implemented the next matchers:</p>
+
+<ul>
+<li>belong_to</li>
+<li>have_many</li>
+<li>have_many_and_belong_to</li>
+<li>have_property</li>
+<li>have(n).errors_on(:property)</li>
+<li>have_many(:association).trough(:another_association)</li>
+<li>validate_presence_of(:property)</li>
+<li>validate_uniqueness_of(:property)</li>
+<li>validate_format_of(:property).with(/regexp/)</li>
+</ul>
+
+
+<p>More information you can find on <a href="https://github.com/greyblake/dm-rspec">DataMapper RSpec github page</a>.</p>
+
+<p>Anyone is welcome to join me in developing:)</p>
+]]></content>
+  </entry>
+  
+</feed>

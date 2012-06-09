@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: git | Sergey Potapov Online]]></title>
+  <link href="http://greyblake.com/blog/categories/git/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-06-09T03:09:21+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Synchonize application data using git ]]></title>
+    <link href="http://greyblake.com/blog/2011/11/27/synchonize-application-data-using-git/"/>
+    <updated>2011-11-27T00:43:11+02:00</updated>
+    <id>http://greyblake.com/blog/2011/11/27/synchonize-application-data-using-git</id>
+    <content type="html"><![CDATA[<p>I started writing a diary using <a href="http://rednotebook.sourceforge.net">rednotebook</a> application. It's realy cool, but I stuck with a problem: I want to use it everywhere on any device and keep all my notes synchonized. So I decided to create a simple tool called <strong>gync</strong> to help me.</p>
+
+<p>Please check it out on Github: <a href="https://github.com/greyblake/gync">https://github.com/greyblake/gync</a></p>
+]]></content>
+  </entry>
+  
+</feed>

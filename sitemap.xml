@@ -1,11 +1,61 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
-        <loc>http://greyblake.github.com/blog/archives/</loc>
-        <lastmod>2012-06-08T23:27:11+03:00</lastmod>
+        <loc>http://greyblake.com/blog/2011/01/23/vim-preview-plugin/</loc>
+        <lastmod>2012-06-09T02:51:48+03:00</lastmod>
     </url>
     <url>
-        <loc>http://greyblake.github.com/</loc>
-        <lastmod>2012-06-08T23:27:11+03:00</lastmod>
+        <loc>http://greyblake.com/blog/2011/01/23/beep-alarm/</loc>
+        <lastmod>2012-06-09T02:51:48+03:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases/
+        </loc>
+        <lastmod>2012-06-09T02:58:04+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/</loc>
+        <lastmod>2012-06-09T02:59:13+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/blog/2011/09/18/using-update-rc-d/</loc>
+        <lastmod>2012-06-09T03:00:31+03:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/
+        </loc>
+        <lastmod>2012-06-09T03:01:54+03:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/
+        </loc>
+        <lastmod>2012-06-09T03:02:35+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/</loc>
+        <lastmod>2012-06-09T03:03:23+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/blog/2011/11/27/synchonize-application-data-using-git/</loc>
+        <lastmod>2012-06-09T03:03:48+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/blog/2012/01/30/razgonyaem-mozg/</loc>
+        <lastmod>2012-06-09T02:51:48+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/</loc>
+        <lastmod>2012-06-09T03:06:06+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/blog/archives/</loc>
+        <lastmod>2012-06-09T03:06:06+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/</loc>
+        <lastmod>2012-06-09T03:06:06+03:00</lastmod>
     </url>
 </urlset>

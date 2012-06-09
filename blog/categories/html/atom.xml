@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: html | Sergey Potapov Online]]></title>
+  <link href="http://greyblake.com/blog/categories/html/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-06-09T03:09:21+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Vim preview plugin]]></title>
+    <link href="http://greyblake.com/blog/2011/01/23/vim-preview-plugin/"/>
+    <updated>2011-01-23T03:13:14+02:00</updated>
+    <id>http://greyblake.com/blog/2011/01/23/vim-preview-plugin</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>Preview plugin is a tool developed to help you to preview markup files such as .markdown, .rdoc, .textile, .ronn and .html when you are editing them. It builds html files and opens them in your browser.</p>
+
+<h2>Supported Formats</h2>
+
+<p>The plugin supports the next formats:</p>
+
+<ul>
+<li>markdown(md, mkd, mkdn, mdown) - depends on <code>bluecloth</code> ruby gem</li>
+<li>rdoc - depends on <code>github-markup</code> ruby gem</li>
+<li>textile - depends on <code>RedCloth</code> ruby gem</li>
+<li>html(htm)</li>
+<li>ronn - depends on <code>ronn</code> ruby gem</li>
+</ul>
+
+
+<h2>Dependencies</h2>
+
+<p>The plugin requires a builtin ruby interpreter. It means that your Vim
+should be compiled with <code>--enable-rubyinterp</code> option.
+To find out does you Vim have builtin ruby interpreter you can do the next:</p>
+
+<pre><code>:echo has('ruby')
+</code></pre>
+
+<p>If output is <code>1</code> the ruby interpreter is builtin.</p>
+
+<p>The second thing you should verify is that you have installed all necessary
+ruby gems. Please see "Supported Formats" section to find out what gems you need.</p>
+
+<h2>Installation</h2>
+
+<p>At first you should get the plugin. You can clone my repository from github like this:</p>
+
+<pre><code>git clone git://github.com/greyblake/vim-preview.git
+</code></pre>
+
+<p>Or download it from <a href="http://www.vim.org/scripts/script.php?script_id=3344">vim.org</a></p>
+
+<p>To install the plugin just copy <code>autoload</code>, <code>plugin</code>, <code>doc</code> directories into your <code>.vim</code> directory:</p>
+
+<pre><code>cd vim-preview
+cp ./autoload ~/.vim -R
+cp ./plugin ~/.vim -R
+cp ./doc ~/.vim -R
+</code></pre>
+
+<p>If you use <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a> just unzip/clone the plugin to <code>~/.vim/bundle</code> directory.
+If don't use  <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a>, I would recommend you to start.</p>
+
+<h2>Usage</h2>
+
+<ul>
+<li><code>&lt;Leader&gt;P</code> - will open current file converted to HTML in your browser.</li>
+</ul>
+
+
+<p>I want to remind that <code>&lt;Leader&gt;</code> in most cases is <code>\</code> key.</p>
+
+<p>To get more information about the plugin and how it can be customized read help in Vim editor:</p>
+
+<pre><code>:help Preview
+</code></pre>
+
+<h2>If you found a bug ...</h2>
+
+<p>Report it me!</p>
+]]></content>
+  </entry>
+  
+</feed>

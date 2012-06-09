@@ -1,0 +1,343 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Beep alarm - Sergey Potapov Online</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Intro Someone would say I am brainsick&#8230; So may be I am. By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
+So &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2011/01/23/beep-alarm/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov Online" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov Online</a></h1>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Beep Alarm</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-01-23T23:24:39+02:00" pubdate data-updated="true">Jan 23<span>rd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2>Intro</h2>
+
+<p>Someone would say I am brainsick&#8230; So may be I am.</p>
+
+<p>By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
+So I decided to create an alarm based on <code>beep</code> Unix tool. This tool allows you to play sound with specified frequency and delay on your speaker.</p>
+
+<p>Some times after I decided that simple &#8220;Be-e-e-e-p&#8221; sound is borring and I created a player.
+It can play tunes defined in format for old Nokia mobiles.
+Have you ever type something like this:</p>
+
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1 
+</code></pre>
+
+<p>&#8230;to add new ringtone for your mobile?</p>
+
+<h2>Getting and usage</h2>
+
+<p>You should clone my <a href="http://github.com/greyblake/beep-alarm">repository from github</a>:</p>
+
+<pre><code>git clone git://github.com/greyblake/beep-alarm.git
+</code></pre>
+
+<p>And to try it just type:</p>
+
+<pre><code>./beep-alarm/bin/beep-alarm
+</code></pre>
+
+<p>You should listen a sound of russian song &#8220;Kalinka&#8221;. Unfortunately the only way to stop it is to send INT signal with pressing <code>Ctrl-C</code>.</p>
+
+<p>With this tool you can specify time at what you want a tune to play. Next example make it play at 8:00:</p>
+
+<pre><code>beep-alarm 8:00
+</code></pre>
+
+<p>It has 7 bultin melodies(to see them use <code>--help</code>), so you can choose another one with <code>-m</code> option:</p>
+
+<pre><code># play Metallica - Unforgiven
+beep-alarm -m 3
+</code></pre>
+
+<p>You can even change tempo of tune(default is 120)!</p>
+
+<pre><code>beep-alarm -t 200
+</code></pre>
+
+<p>And even play a tune in different keynote:</p>
+
+<pre><code># Down for 2 semitones
+beep-alarm -o -2
+</code></pre>
+
+<p>To get more information and example use <code>--help</code> option.</p>
+
+<h2>So&#8230;</h2>
+
+<p>I hope you&#8217;ll enjoy it and will never oversleep your work:)</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-01-23T23:24:39+02:00" pubdate data-updated="true">Jan 23<span>rd</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linux/'>Linux</a>, <a class='category' href='/blog/categories/alarm/'>alarm</a>, <a class='category' href='/blog/categories/bash/'>bash</a>, <a class='category' href='/blog/categories/beep/'>beep</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2011/01/23/beep-alarm/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2011/01/23/beep-alarm/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/01/23/vim-preview-plugin/" title="Previous Post: Vim preview plugin">&laquo; Vim preview plugin</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/02/04/backuping-and-restoring-postgresql-databases/" title="Next Post: Backuping and restoring PostgreSQL databases">Backuping and restoring PostgreSQL databases &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/">Получаем Premium на busuu.com бесплатно</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/01/30/razgonyaem-mozg/">Разгоняем мозг</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/27/synchonize-application-data-using-git/">Synchonize application data using git </a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/">Perfomance benchmakrs ExecJS VS Ruby</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/">How to Install Firefox (Iceweasel) 7 on Debian Squeeze</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 4, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2011/01/23/beep-alarm/';
+        var disqus_url = 'http://greyblake.com/blog/2011/01/23/beep-alarm/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
