@@ -9,7 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Недавно я начал пользоваться сервисом busuu.com. Очень классная вещь, но вот беда: спустя неделю часть функционала перестала работать, предлагая &hellip;">
+  <meta name="description" content="Today I released Smartdict version 0.1.0.
+Please give me a favour and check it out. I&#8217;m gonna implement a vim plugin based on smartdict-core. &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -76,6 +77,46 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/">I Released Smartdict Version 0.1.0</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-11T03:20:00+03:00" pubdate data-updated="true">Jun 11<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Today I released <a href="http://smartdict.net/blog/2012/06/11/smartdict-0-dot-1-0-is-released/">Smartdict version 0.1.0</a>.
+Please give me a favour and check it out.</p>
+
+<p>I&#8217;m gonna implement a vim plugin based on <a href="https://github.com/smartdict/smartdict-core">smartdict-core</a>.
+That will the next step in this direction, since I realy need it.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1066,98 +1107,6 @@ It&#8217;s a little routine work, right? But in case if you have descriptive com
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2011/01/23/beep-alarm/">Beep Alarm</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-01-23T23:24:39+02:00" pubdate data-updated="true">Jan 23<span>rd</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>Intro</h2>
-
-<p>Someone would say I am brainsick&#8230; So may be I am.</p>
-
-<p>By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
-So I decided to create an alarm based on <code>beep</code> Unix tool. This tool allows you to play sound with specified frequency and delay on your speaker.</p>
-
-<p>Some times after I decided that simple &#8220;Be-e-e-e-p&#8221; sound is borring and I created a player.
-It can play tunes defined in format for old Nokia mobiles.
-Have you ever type something like this:</p>
-
-<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1 
-</code></pre>
-
-<p>&#8230;to add new ringtone for your mobile?</p>
-
-<h2>Getting and usage</h2>
-
-<p>You should clone my <a href="http://github.com/greyblake/beep-alarm">repository from github</a>:</p>
-
-<pre><code>git clone git://github.com/greyblake/beep-alarm.git
-</code></pre>
-
-<p>And to try it just type:</p>
-
-<pre><code>./beep-alarm/bin/beep-alarm
-</code></pre>
-
-<p>You should listen a sound of russian song &#8220;Kalinka&#8221;. Unfortunately the only way to stop it is to send INT signal with pressing <code>Ctrl-C</code>.</p>
-
-<p>With this tool you can specify time at what you want a tune to play. Next example make it play at 8:00:</p>
-
-<pre><code>beep-alarm 8:00
-</code></pre>
-
-<p>It has 7 bultin melodies(to see them use <code>--help</code>), so you can choose another one with <code>-m</code> option:</p>
-
-<pre><code># play Metallica - Unforgiven
-beep-alarm -m 3
-</code></pre>
-
-<p>You can even change tempo of tune(default is 120)!</p>
-
-<pre><code>beep-alarm -t 200
-</code></pre>
-
-<p>And even play a tune in different keynote:</p>
-
-<pre><code># Down for 2 semitones
-beep-alarm -o -2
-</code></pre>
-
-<p>To get more information and example use <code>--help</code> option.</p>
-
-<h2>So&#8230;</h2>
-
-<p>I hope you&#8217;ll enjoy it and will never oversleep your work:)</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1173,6 +1122,10 @@ beep-alarm -o -2
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/">I released Smartdict version 0.1.0</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/">Получаем Premium на busuu.com бесплатно</a>
       </li>
     
@@ -1186,10 +1139,6 @@ beep-alarm -o -2
     
       <li class="post">
         <a href="/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/">Perfomance benchmakrs ExecJS VS Ruby</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/">How to Install Firefox (Iceweasel) 7 on Debian Squeeze</a>
       </li>
     
   </ul>
