@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T00:49:47+03:00</updated>
+  <updated>2012-07-07T01:36:20+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -150,7 +150,7 @@ end
 end
 ```</p>
 
-<p>Это по прежднему один тест, но мы избавились от длинных цепочек методов.
+<p>Это по-прежнему один тест, но мы избавились от длинных цепочек методов.
 Нужно заметить, что у такого подхода есть тоже свои недостатки: используя <code>instance_eval</code>
 мы покидаем контекст теста, и переходим прямо в контекст объекта, в котором не существует методов подобных
 <code>be_valid</code>, <code>be_instance_of</code>, etc.</p>
