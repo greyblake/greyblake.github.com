@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: ruby | Sergey Potapov Online]]></title>
+  <title><![CDATA[Category: Ruby | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-06-11T03:27:13+03:00</updated>
+  <updated>2012-07-07T00:49:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -14,116 +14,148 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Perfomance benchmakrs ExecJS VS Ruby]]></title>
-    <link href="http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/"/>
-    <updated>2011-10-23T08:49:33+03:00</updated>
-    <id>http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby</id>
-    <content type="html"><![CDATA[<p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you're are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google's V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
+    <title type="html"><![CDATA[Тестируем вложенные ActiveRecord-модели с RSpec]]></title>
+    <link href="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/"/>
+    <updated>2012-07-06T22:19:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec</id>
+    <content type="html"><![CDATA[<p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
+и конечно же протестировать, что ваш "builder" работает так, как нужно. На самом деле
+задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
 
-<p>```ruby benchmark.rb</p>
+<p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
+(На практики обычно моделей намного больше с большим количеством свойств).</p>
 
-<p>require 'rubygems'
-require 'execjs'
-require 'benchmark'</p>
+<p>```ruby user.rb
+class User &lt; ActiveRecord::Base
+  attr_accessible :last_name, :first_name</p>
 
-<p>js =&lt;&lt;JAVASCRIPT
-function fib(a){
-  if(a &lt; 2)</p>
+<p>  has_one :account
+end
+```</p>
 
-<pre><code>return a;
-</code></pre>
+<p>```ruby account.rb
+class Account &lt; ActiveRecord::Base
+  attr_accessible :email, :last_visit_date</p>
 
-<p>  return fib(a-1) + fib(a-2);
-}
-JAVASCRIPT
-context = ExecJS.compile(js)</p>
+<p>  belongs_to :user
+  has_one :preference
+end
+```</p>
 
-<p>def fib(a)
-  return a if a &lt; 2
-  fib(a-1) + fib(a-2)
-end</p>
+<p>```ruby preference.rb
+class Preference &lt; ActiveRecord::Base
+  attr_accessible :language, :weapon</p>
 
-<p>[1, 10, 20, 30, 40].each do |n|
-  puts "N = #{n}"
-  Benchmark.bm(7) do |x|</p>
+<p>  belongs_to :user
+end
+```</p>
 
-<pre><code>x.report("Ruby:") { fib(n) }
-x.report("ExecJS:") { context.call("fib", n) }
+<p>Предположим у нас есть некий builder, который строит объект User и все завимимые
+модели(Account и Preference). Всё что мы хотим сделать - это протестировать,
+что граф объектов построен правильно.</p>
+
+<p>Вот пример реализации стандартного rspec-теста, который первым приходит на ум:</p>
+
+<p>```ruby user_builder_spec.rb
+describe UserBuilder do
+  describe '#build' do</p>
+
+<pre><code>describe 'user' do
+  let(:user) { described_class.new(some_attrs).build }
+  subject { user }
+
+  its(:first_name) { should == "Rodion"      }
+  its(:last_name)  { should == "Raskolnikov" }
+
+  describe 'account' do
+    subject { user.account }
+
+    its(:email)           { should == "rodion@mail.ru"       }
+    its(:last_visit_date) { should == Date.new(1866, 11, 27) }
+
+    describe 'preference' do
+      subject { user.account.preference }
+
+      its(:language) { should == "Russian" }
+      its(:weapon)   { should == "ax"      }
+    end
+  end
+end
 </code></pre>
 
 <p>  end
-  puts '-' * 52
-end</p>
+end
+```</p>
 
-<p>```</p>
+<p>Всё читабельно, красиво и просто. Но проблема в том, что получилось шесть тестов(по тесту на
+каждый атрибут), которые тестируют лишь одно действие - постороение объекта. Когда операция построения
+занимает немало времени, а количество атрибутов на порядок больше, такой подход
+становится далеко не самым лучшим, поскольку возрастает время выполнения.
+Если объект не сохраняется в базе то вполне разумным будет использовать <code>before :all</code>. Но если
+вам приходится сохранять объект и вы используете опцию <code>config.use_transactional_fixtures = true</code>,
+потому что не хотите "гадить" в базу, то этот вариант не подойдёт.</p>
 
-<p>Here is the output:</p>
+<p>Можно пойти по пути классического unit-тестирования и сделать тест подобным этому:</p>
 
-<pre><code>N = 1
-             user     system      total        real
-Ruby:    0.000000   0.000000   0.000000 (  0.000008)
-ExecJS:  0.000000   0.000000   0.000000 (  0.000318)
-----------------------------------------------------
-N = 10
-             user     system      total        real
-Ruby:    0.000000   0.000000   0.000000 (  0.000026)
-ExecJS:  0.000000   0.000000   0.000000 (  0.000156)
-----------------------------------------------------
-N = 20
-             user     system      total        real
-Ruby:    0.000000   0.000000   0.000000 (  0.002585)
-ExecJS:  0.000000   0.000000   0.000000 (  0.000550)
-----------------------------------------------------
-N = 30
-             user     system      total        real
-Ruby:    0.310000   0.000000   0.310000 (  0.312819)
-ExecJS:  0.040000   0.000000   0.040000 (  0.043603)
-----------------------------------------------------
-N = 40
-             user     system      total        real
-Ruby:   39.780000   0.050000  39.830000 ( 39.955098)
-ExecJS:  3.940000   0.020000   3.960000 (  3.943733)
-----------------------------------------------------
+<p>```ruby user_builder_spec.rb
+describe UserBuilder do
+  describe '#build' do</p>
+
+<pre><code>let(:user) { described_class.new(some_attrs).build }
+
+it 'should correctly build a user' do
+  user.first_name.should == "Rodion"
+  user.last_name.should  == "Raskolnikov"
+  user.account.email.should           == "rodion@mail.ru"
+  user.account.last_visit_date.should == Date.new(1866, 11, 27)
+  user.account.preference.language.should == "Russian"
+  user.account.preference.weapon.should   == "ax"
+end
 </code></pre>
 
-<p>Looks like ExecJS needs some time for "initializing" and there is no reason to use it for small calculation. But it can be ten times faster in case of long time computing!</p>
+<p>  end
+end
+```</p>
 
-<p>I would not decide to use ExecJS for validation but however the benchmark results were amazing, and we've got to keep in mind that ExecJS can provide such perfomance benefits.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[RSpec matchers for DataMapper (dm-rspec)]]></title>
-    <link href="http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/"/>
-    <updated>2011-09-12T22:25:15+03:00</updated>
-    <id>http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec</id>
-    <content type="html"><![CDATA[<p>I am currently developing a number of RSpec matchers for DataMapper models testing. You can try it. Just add the next in your Gemfile under <code>test</code> group:</p>
+<p>Получилось даже лаконичнее, но менее читабельно(уж когда будет больше вложенность объектов,
+будет точно менее читабельно). Так же раздрожает длинные цепочки одинаковых методов.</p>
 
-<pre><code>gem 'dm-rspec'
+<p>Помедитировав над проблемой, я нашёл компроммиссное решение на основе метода <code>instance_eval</code>.</p>
+
+<p>```ruby user_builder_spec.rb
+describe UserBuilder do
+  describe '#build' do</p>
+
+<pre><code>let(:user) { described_class.new(some_attrs).build }
+
+it 'should correctly build a user' do
+  user.instance_eval do
+    first_name.should == "Rodion"
+    last_name.should  == "Raskolnikov"
+
+    account.instance_eval do
+      email.should           == "rodion@mail.ru"
+      last_visit_date.should == Date.new(1866, 11, 27)
+
+      preference.instance_eval do
+        language.should == "Russian"
+        weapon.should   == "ax"
+      end
+    end
+  end
+end
 </code></pre>
 
-<p>And run <code>bundle install</code> to install new gems.</p>
+<p>  end
+end
+```</p>
 
-<p>The main idea is to provide the same (almost the same) interface which Shoulda provides to test ActiveRecord models.</p>
+<p>Это по прежднему один тест, но мы избавились от длинных цепочек методов.
+Нужно заметить, что у такого подхода есть тоже свои недостатки: используя <code>instance_eval</code>
+мы покидаем контекст теста, и переходим прямо в контекст объекта, в котором не существует методов подобных
+<code>be_valid</code>, <code>be_instance_of</code>, etc.</p>
 
-<p>At the moment I implemented the next matchers:</p>
-
-<ul>
-<li>belong_to</li>
-<li>have_many</li>
-<li>have_many_and_belong_to</li>
-<li>have_property</li>
-<li>have(n).errors_on(:property)</li>
-<li>have_many(:association).trough(:another_association)</li>
-<li>validate_presence_of(:property)</li>
-<li>validate_uniqueness_of(:property)</li>
-<li>validate_format_of(:property).with(/regexp/)</li>
-</ul>
-
-
-<p>More information you can find on <a href="https://github.com/greyblake/dm-rspec">DataMapper RSpec github page</a>.</p>
-
-<p>Anyone is welcome to join me in developing:)</p>
+<p>Надеюсь, эта идея будет вам полезной. Буду рад узнать чужое мнение.</p>
 ]]></content>
   </entry>
   
