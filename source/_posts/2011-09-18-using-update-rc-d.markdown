@@ -21,6 +21,9 @@ If you are using OS with System-V style init scripts you can find you `/etc` the
 
 So, what are they for?
 
+
+<!--more-->
+
 Every directory contains symbol links to daemons located in `/etc/init.d/`. And every directory represents run level. Usually your system uses third level which means multi user mode with networking. When the system is initializing it starts daemons which have appropriate symbol links in rc3.d.
 
 Here is a short description of every run level:

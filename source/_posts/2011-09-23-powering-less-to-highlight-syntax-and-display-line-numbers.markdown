@@ -8,6 +8,8 @@ categories: less syntax-highlight syntax unix Linux bash
 
 Since I am a command line guy I use __less__ tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.
 
+<!--more-->
+
 ## Making less highlight syntax
 
 It didn't take a long time to find a solution.  There is a pretty tool called __source-highlight__.

@@ -6,7 +6,7 @@ comments: true
 categories: Vim preview markup plugin markdown textile html
 ---
 
-## Intro 
+## Intro
 
 Preview plugin is a tool developed to help you to preview markup files such as .markdown, .rdoc, .textile, .ronn and .html when you are editing them. It builds html files and opens them in your browser.
 
@@ -21,6 +21,7 @@ The plugin supports the next formats:
 * html(htm)
 * ronn - depends on `ronn` ruby gem
 
+<!--more-->
 
 ## Dependencies
 
@@ -31,7 +32,7 @@ To find out does you Vim have builtin ruby interpreter you can do the next:
 
 If output is `1` the ruby interpreter is builtin.
 
-The second thing you should verify is that you have installed all necessary 
+The second thing you should verify is that you have installed all necessary
 ruby gems. Please see "Supported Formats" section to find out what gems you need.
 
 

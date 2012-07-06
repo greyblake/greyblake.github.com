@@ -10,6 +10,8 @@ categories: Ruby, RSpec, test, unit, ActiveRecord, Ruby on Rails, тест, мо
 и конечно же протестировать, что ваш "builder" работает так, как нужно. На самом деле
 задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.
 
+<!--more-->
+
 Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
 (На практики обычно моделей намного больше с большим количеством свойств).
 
@@ -20,6 +22,7 @@ class User < ActiveRecord::Base
   has_one :account
 end
 ```
+
 
 ```ruby account.rb
 class Account < ActiveRecord::Base
