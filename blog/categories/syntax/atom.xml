@@ -4,7 +4,7 @@
   <title><![CDATA[Category: syntax | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/syntax/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:36:20+03:00</updated>
+  <updated>2012-07-07T01:48:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -19,6 +19,9 @@
     <updated>2011-09-23T17:38:35+03:00</updated>
     <id>http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers</id>
     <content type="html"><![CDATA[<p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
+
+<!--more-->
+
 
 <h2>Making less highlight syntax</h2>
 

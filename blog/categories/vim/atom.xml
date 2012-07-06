@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Vim | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/vim/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:36:20+03:00</updated>
+  <updated>2012-07-07T01:48:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -33,6 +33,9 @@
 <li>html(htm)</li>
 <li>ronn - depends on <code>ronn</code> ruby gem</li>
 </ul>
+
+
+<!--more-->
 
 
 <h2>Dependencies</h2>

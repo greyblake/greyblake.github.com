@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:36:20+03:00</updated>
+  <updated>2012-07-07T01:48:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -21,6 +21,9 @@
     <content type="html"><![CDATA[<p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
 и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, как нужно. На самом деле
 задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
+
+<!--more-->
+
 
 <p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
 (На практики обычно моделей намного больше с большим количеством свойств).</p>
@@ -258,6 +261,9 @@ That will the next step in this direction, since I realy need it.</p>
 <p><img src="http://i1078.photobucket.com/albums/w484/greyblake/play_button.png" alt="bussu play button" /></p>
 
 <p>Мне стало интересно, а можно ли это обойти? Оказалось, что можно! Файловый сервер, который отдаёт аудио-файлы никак не проверяет права пользователя, а сами ссылки на файлы можно прямо получить из ответов сервера на AJAX-запросы, которые отсылаются при нажатии на следующее/предыдущее слово.</p>
+
+<!--more-->
+
 
 <p>После полутора часов изучения и дебага родился скрипт, приведенный в конце статьи, который делает то, что мне нужно:</p>
 
@@ -550,6 +556,9 @@ That will the next step in this direction, since I realy need it.</p>
     <id>http://greyblake.com/blog/2012/01/30/razgonyaem-mozg</id>
     <content type="html"><![CDATA[<p>Несколько месяцев назад я был очень сильно озабочен своей продуктивностью. Здесь собраны некоторые рецепты повышения эффективности мозговой деятельности, которые мне удалось отыскать, большинство из них взяты из книги Вина Венгера &#8220;Фактор Эйнштейна&#8221;.</p>
 
+<!--more-->
+
+
 <ul>
 <li><a href="http://www.youtube.com/watch?v=-Q3cW5pBd6Q">Соната Моцарта для 2х фортепиано в Ре мажоре K.448</a>. 10 минут прослушивания поднимают IQ на 8-9 пунктов на 15 минут.</li>
 <li>Задержка дыхания. Возможно, даже стоит заняться подводным плаванием. Улучшается кровоснабжение мозга.</li>
@@ -582,6 +591,11 @@ That will the next step in this direction, since I realy need it.</p>
     <updated>2011-10-23T08:49:33+03:00</updated>
     <id>http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby</id>
     <content type="html"><![CDATA[<p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you&#8217;re are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google&#8217;s V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
+
+<!--more-->
+
+
+
 
 <figure class='code'><figcaption><span>benchmark.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -707,6 +721,9 @@ aptitude install iceweasel -t squeeze-backports
     <id>http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers</id>
     <content type="html"><![CDATA[<p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
 
+<!--more-->
+
+
 <h2>Making less highlight syntax</h2>
 
 <p>It didn&#8217;t take a long time to find a solution.  There is a pretty tool called <strong>source-highlight</strong>.</p>
@@ -796,6 +813,9 @@ aptitude install iceweasel -t squeeze-backports
 
 
 <p>So, what are they for?</p>
+
+<!--more-->
+
 
 <p>Every directory contains symbol links to daemons located in <code>/etc/init.d/</code>. And every directory represents run level. Usually your system uses third level which means multi user mode with networking. When the system is initializing it starts daemons which have appropriate symbol links in rc3.d.</p>
 
@@ -1008,10 +1028,13 @@ So I decided to create an alarm based on <code>beep</code> Unix tool. This tool 
 It can play tunes defined in format for old Nokia mobiles.
 Have you ever type something like this:</p>
 
-<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1 
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
 </code></pre>
 
 <p>&#8230;to add new ringtone for your mobile?</p>
+
+<!--more-->
+
 
 <h2>Getting and usage</h2>
 
@@ -1077,6 +1100,9 @@ beep-alarm -o -2
 <li>html(htm)</li>
 <li>ronn - depends on <code>ronn</code> ruby gem</li>
 </ul>
+
+
+<!--more-->
 
 
 <h2>Dependencies</h2>

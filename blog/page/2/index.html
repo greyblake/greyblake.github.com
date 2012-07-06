@@ -228,54 +228,17 @@ So I decided to create an alarm based on <code>beep</code> Unix tool. This tool 
 It can play tunes defined in format for old Nokia mobiles.
 Have you ever type something like this:</p>
 
-<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1 
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
 </code></pre>
 
 <p>&#8230;to add new ringtone for your mobile?</p>
 
-<h2>Getting and usage</h2>
-
-<p>You should clone my <a href="http://github.com/greyblake/beep-alarm">repository from github</a>:</p>
-
-<pre><code>git clone git://github.com/greyblake/beep-alarm.git
-</code></pre>
-
-<p>And to try it just type:</p>
-
-<pre><code>./beep-alarm/bin/beep-alarm
-</code></pre>
-
-<p>You should listen a sound of russian song &#8220;Kalinka&#8221;. Unfortunately the only way to stop it is to send INT signal with pressing <code>Ctrl-C</code>.</p>
-
-<p>With this tool you can specify time at what you want a tune to play. Next example make it play at 8:00:</p>
-
-<pre><code>beep-alarm 8:00
-</code></pre>
-
-<p>It has 7 bultin melodies(to see them use <code>--help</code>), so you can choose another one with <code>-m</code> option:</p>
-
-<pre><code># play Metallica - Unforgiven
-beep-alarm -m 3
-</code></pre>
-
-<p>You can even change tempo of tune(default is 120)!</p>
-
-<pre><code>beep-alarm -t 200
-</code></pre>
-
-<p>And even play a tune in different keynote:</p>
-
-<pre><code># Down for 2 semitones
-beep-alarm -o -2
-</code></pre>
-
-<p>To get more information and example use <code>--help</code> option.</p>
-
-<h2>So&#8230;</h2>
-
-<p>I hope you&#8217;ll enjoy it and will never oversleep your work:)</p>
 </div>
   
+  
+    <footer>
+      <a rel="full-article" href="/blog/2011/01/23/beep-alarm/">Read on &rarr;</a>
+    </footer>
   
 
 
@@ -326,59 +289,12 @@ beep-alarm -o -2
 </ul>
 
 
-<h2>Dependencies</h2>
-
-<p>The plugin requires a builtin ruby interpreter. It means that your Vim
-should be compiled with <code>--enable-rubyinterp</code> option.
-To find out does you Vim have builtin ruby interpreter you can do the next:</p>
-
-<pre><code>:echo has('ruby')
-</code></pre>
-
-<p>If output is <code>1</code> the ruby interpreter is builtin.</p>
-
-<p>The second thing you should verify is that you have installed all necessary
-ruby gems. Please see &#8220;Supported Formats&#8221; section to find out what gems you need.</p>
-
-<h2>Installation</h2>
-
-<p>At first you should get the plugin. You can clone my repository from github like this:</p>
-
-<pre><code>git clone git://github.com/greyblake/vim-preview.git
-</code></pre>
-
-<p>Or download it from <a href="http://www.vim.org/scripts/script.php?script_id=3344">vim.org</a></p>
-
-<p>To install the plugin just copy <code>autoload</code>, <code>plugin</code>, <code>doc</code> directories into your <code>.vim</code> directory:</p>
-
-<pre><code>cd vim-preview
-cp ./autoload ~/.vim -R
-cp ./plugin ~/.vim -R
-cp ./doc ~/.vim -R
-</code></pre>
-
-<p>If you use <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a> just unzip/clone the plugin to <code>~/.vim/bundle</code> directory.
-If don&#8217;t use  <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a>, I would recommend you to start.</p>
-
-<h2>Usage</h2>
-
-<ul>
-<li><code>&lt;Leader&gt;P</code> - will open current file converted to HTML in your browser.</li>
-</ul>
-
-
-<p>I want to remind that <code>&lt;Leader&gt;</code> in most cases is <code>\</code> key.</p>
-
-<p>To get more information about the plugin and how it can be customized read help in Vim editor:</p>
-
-<pre><code>:help Preview
-</code></pre>
-
-<h2>If you found a bug &#8230;</h2>
-
-<p>Report it me!</p>
 </div>
   
+  
+    <footer>
+      <a rel="full-article" href="/blog/2011/01/23/vim-preview-plugin/">Read on &rarr;</a>
+    </footer>
   
 
 

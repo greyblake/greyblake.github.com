@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Linux | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:36:20+03:00</updated>
+  <updated>2012-07-07T01:48:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -46,6 +46,9 @@ aptitude install iceweasel -t squeeze-backports
     <updated>2011-09-23T17:38:35+03:00</updated>
     <id>http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers</id>
     <content type="html"><![CDATA[<p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
+
+<!--more-->
+
 
 <h2>Making less highlight syntax</h2>
 
@@ -133,6 +136,9 @@ export LESS=' -R -N'</p>
 
 
 <p>So, what are they for?</p>
+
+<!--more-->
+
 
 <p>Every directory contains symbol links to daemons located in <code>/etc/init.d/</code>. And every directory represents run level. Usually your system uses third level which means multi user mode with networking. When the system is initializing it starts daemons which have appropriate symbol links in rc3.d.</p>
 
@@ -224,10 +230,13 @@ So I decided to create an alarm based on <code>beep</code> Unix tool. This tool 
 It can play tunes defined in format for old Nokia mobiles.
 Have you ever type something like this:</p>
 
-<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1 
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
 </code></pre>
 
 <p>...to add new ringtone for your mobile?</p>
+
+<!--more-->
+
 
 <h2>Getting and usage</h2>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: busuu | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/busuu/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:36:20+03:00</updated>
+  <updated>2012-07-07T01:48:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -25,6 +25,9 @@
 <p><img src="http://i1078.photobucket.com/albums/w484/greyblake/play_button.png" alt="bussu play button" /></p>
 
 <p>Мне стало интересно, а можно ли это обойти? Оказалось, что можно! Файловый сервер, который отдаёт аудио-файлы никак не проверяет права пользователя, а сами ссылки на файлы можно прямо получить из ответов сервера на AJAX-запросы, которые отсылаются при нажатии на следующее/предыдущее слово.</p>
+
+<!--more-->
+
 
 <p>После полутора часов изучения и дебага родился скрипт, приведенный в конце статьи, который делает то, что мне нужно:</p>
 

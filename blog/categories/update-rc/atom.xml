@@ -4,7 +4,7 @@
   <title><![CDATA[Category: update-rc | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/update-rc/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:36:20+03:00</updated>
+  <updated>2012-07-07T01:48:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -35,6 +35,9 @@
 
 
 <p>So, what are they for?</p>
+
+<!--more-->
+
 
 <p>Every directory contains symbol links to daemons located in <code>/etc/init.d/</code>. And every directory represents run level. Usually your system uses third level which means multi user mode with networking. When the system is initializing it starts daemons which have appropriate symbol links in rc3.d.</p>
 

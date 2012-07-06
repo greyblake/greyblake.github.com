@@ -4,7 +4,7 @@
   <title><![CDATA[Category: RSpec, | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/rspec-/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:36:20+03:00</updated>
+  <updated>2012-07-07T01:48:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -21,6 +21,9 @@
     <content type="html"><![CDATA[<p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
 и конечно же протестировать, что ваш "builder" работает так, как нужно. На самом деле
 задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
+
+<!--more-->
+
 
 <p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
 (На практики обычно моделей намного больше с большим количеством свойств).</p>

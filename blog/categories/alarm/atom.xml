@@ -4,7 +4,7 @@
   <title><![CDATA[Category: alarm | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/alarm/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:36:20+03:00</updated>
+  <updated>2012-07-07T01:48:47+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -29,10 +29,13 @@ So I decided to create an alarm based on <code>beep</code> Unix tool. This tool 
 It can play tunes defined in format for old Nokia mobiles.
 Have you ever type something like this:</p>
 
-<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1 
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
 </code></pre>
 
 <p>...to add new ringtone for your mobile?</p>
+
+<!--more-->
+
 
 <h2>Getting and usage</h2>
 
