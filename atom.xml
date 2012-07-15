@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-07T01:48:47+03:00</updated>
+  <updated>2012-07-15T23:28:12+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,162 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[How to build Vim against specific Ruby version]]></title>
+    <link href="http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/"/>
+    <updated>2012-07-15T23:00:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version</id>
+    <content type="html"><![CDATA[<p>Let&#8217;s say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
+But what if you need Vim compiled with Ruby 1.9.x?
+I&#8217;m gonna tell you how to do it.</p>
+
+<!--more-->
+
+
+<h2>Clone vim repository</h2>
+
+<p>Make sure you have installed <code>mercurial</code> package:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo apt-get install mercurial
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Clone Vim repository from google code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>hg clone https://vim.googlecode.com/hg/ vim_sources
+</span><span class='line'><span class="nv">$ </span><span class="nb">cd </span>vim_sources
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Patching</h2>
+
+<p>There is no option to specify Ruby version to compile Vim against.
+But it&#8217;s easy to patch vim sources to force it to use <code>1.9</code> instead of <code>1.8</code>.</p>
+
+<p>Open file <code>src/Make_mvc.mak</code> in vim sources directory.</p>
+
+<p>Find lines like this:</p>
+
+<figure class='code'><figcaption><span>src/Make_mvc.mak</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='make'><span class='line'><span class="c">#</span>
+</span><span class='line'><span class="c"># Support Ruby interface</span>
+</span><span class='line'><span class="c">#</span>
+</span><span class='line'><span class="err">!ifdef</span> <span class="err">RUBY</span>
+</span><span class='line'><span class="c">#  Set default value</span>
+</span><span class='line'><span class="err">!ifndef</span> <span class="err">RUBY_VER</span>
+</span><span class='line'><span class="nv">RUBY_VER</span> <span class="o">=</span> 18
+</span><span class='line'>!endif
+</span><span class='line'>!ifndef RUBY_VER_LONG
+</span><span class='line'><span class="nv">RUBY_VER_LONG</span> <span class="o">=</span> 1.8
+</span><span class='line'>!endif
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Replace <code>18</code> and <code>1.8</code> with <code>19</code> and <code>1.9</code>. So it should look this way:</p>
+
+<figure class='code'><figcaption><span>src/Make_mvc.mak</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='make'><span class='line'><span class="c">#</span>
+</span><span class='line'><span class="c"># Support Ruby interface</span>
+</span><span class='line'><span class="c">#</span>
+</span><span class='line'><span class="err">!ifdef</span> <span class="err">RUBY</span>
+</span><span class='line'><span class="c">#  Set default value</span>
+</span><span class='line'><span class="err">!ifndef</span> <span class="err">RUBY_VER</span>
+</span><span class='line'><span class="nv">RUBY_VER</span> <span class="o">=</span> 19
+</span><span class='line'>!endif
+</span><span class='line'>!ifndef RUBY_VER_LONG
+</span><span class='line'><span class="nv">RUBY_VER_LONG</span> <span class="o">=</span> 1.9
+</span><span class='line'>!endif
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Configure and compile</h2>
+
+<p>At first make sure your current ruby version is which one you need:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>rvm use 1.9.3 --default
+</span><span class='line'><span class="nv">$ </span>ruby -v
+</span><span class='line'>ruby 1.9.3p194 <span class="o">(</span>2012-04-20 revision 35410<span class="o">)</span> <span class="o">[</span>x86_64-linux<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>No we are ready to run <code>./configure</code> script:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>./configure --enable-rubyinterp<span class="o">=</span>yes --prefix<span class="o">=</span>/where/you/want/ruby/to/be/installed/
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If everything is OK we can go ahead and compile it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>make -j 3
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>-j</code> option defines number of processes to make builing faster. It&#8217;s useful if number of CPU cores is greater than one.</p>
+
+<p>Finally install built Vim to <code>/where/you/want/ruby/to/be/installed/</code> directory which you passed as <code>--prefix</code> option:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>make install
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Verify Ruby version</h2>
+
+<p>Now let&#8217;s open your new Vim:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span><span class="nb">cd</span> /where/you/want/ruby/to/be/installed/
+</span><span class='line'><span class="nv">$ </span>./bin/vim
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And run the next command:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='vim'><span class='line'><span class="p">:</span><span class="k">ruby</span> puts RUBY_DESCRIPTION
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The ouput should looks similar to this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='vim'><span class='line'><span class="k">ruby</span> <span class="m">1</span>.<span class="m">9</span>.<span class="m">3</span>p<span class="m">194</span> <span class="p">(</span><span class="m">2012-04-20</span> revision <span class="m">35410</span><span class="p">)</span> [x86_64<span class="p">-</span>linux]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So, everything is OK. Enjoy Vim and builtin ruby 1.9 ;)</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Тестируем вложенные ActiveRecord-модели с RSpec]]></title>
@@ -26,7 +182,7 @@
 
 
 <p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
-(На практики обычно моделей намного больше с большим количеством свойств).</p>
+(На практике обычно моделей намного больше с большим количеством свойств).</p>
 
 <figure class='code'><figcaption><span>user.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -132,7 +288,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Всё читабельно, красиво и просто. Но проблема в том, что получилось шесть тестов(по тесту на
+<p>Всё читаемо, красиво и просто. Но проблема в том, что получилось шесть тестов(по тесту на
 каждый атрибут), которые тестируют лишь одно действие - постороение объекта. Когда операция построения
 занимает немало времени, а количество атрибутов на порядок больше, такой подход
 становится далеко не самым лучшим, поскольку возрастает время выполнения.
@@ -173,8 +329,8 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Получилось даже лаконичнее, но менее читабельно(уж когда будет больше вложенность объектов,
-будет точно менее читабельно). Так же раздрожает длинные цепочки одинаковых методов.</p>
+<p>Получилось даже лаконичнее, но менее читаемо(уж когда будет больше вложенность объектов,
+будет точно менее читаемо). Так же раздрожает длинные цепочки одинаковых методов.</p>
 
 <p>Помедитировав над проблемой, я нашёл компроммиссное решение на основе метода <code>instance_eval</code>.</p>
 
