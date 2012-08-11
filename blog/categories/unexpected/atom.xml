@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: unexpected | Sergey Potapov Online]]></title>
+  <link href="http://greyblake.com/blog/categories/unexpected/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-08-11T03:33:21+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Unexpected Ruby behaviour]]></title>
+    <link href="http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour/"/>
+    <updated>2012-08-10T23:28:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour</id>
+    <content type="html"><![CDATA[<p>Ruby is a cool language with intuitive grammar. However there are a number of things which don't seem to be expected.
+It might take long hours to debug some weird issues for unenlightened newbies.</p>
+
+<h2>Implicitly variable declaration</h2>
+
+<p>Variable mentioned in conditional block of code become declared and initialized with <code>nil</code> even if the declaration was not executed.</p>
+
+<p><code>ruby
+if false
+  var = "never executed"
+end
+var # =&gt; nil
+</code></p>
+
+<p><strong>Expected:</strong> addressing to <code>var</code> raises <code>NameError: undefined local variable or method 'var'</code></p>
+
+<h2>Calling #utc and #gmt on Time object removes time zone information</h2>
+
+<p>```ruby
+t = Time.new  # => Sat Aug 11 01:11:52 +0300 2012
+t.utc         # => Fri Aug 10 22:11:52 UTC 2012
+t             # => Fri Aug 10 22:11:52 UTC 2012, WTF?</p>
+
+<p>t = Time.new  # => Sat Aug 11 01:17:06 +0300 2012
+t.gmtime      # => Fri Aug 10 22:17:06 UTC 2012
+t             # => Fri Aug 10 22:17:06 UTC 2012, WTF?
+```</p>
+
+<p>IMHO, this methods should be called <code>utc!</code> and <code>gmtime!</code> instead.
+I have an experience when it caused a really voodoo thing: a test failed only from 20:00 to 00:00
+in USA on CI server, and could never be reproduced in my time zone.</p>
+
+<p>Instead it's better to use <code>getutc</code> and <code>getgm</code> methods which return UTC and GMT time accordingly,
+but don't change Time object:</p>
+
+<p>```ruby
+t = Time.new  # => Sat Aug 11 01:11:52 +0300 2012
+t.getutc      # => Fri Aug 10 22:11:52 UTC 2012
+t             # => Sat Aug 11 01:11:52 +0300 2012</p>
+
+<p>t = Time.new  # => Sat Aug 11 01:17:06 +0300 2012
+t.getgm       # => Fri Aug 10 22:17:06 UTC 2012
+t             # => Sat Aug 11 01:17:06 +0300 2012
+```</p>
+
+<h2>Methods don't return value from ensure statement</h2>
+
+<p>Usually ruby methods return the value of the last method line unless <code>return</code> is called explicitly.
+But how about this?</p>
+
+<p>```ruby
+def run
+  1
+ensure
+  puts "ensure block..."
+  2
+end</p>
+
+<p>run # => 1</p>
+
+<h1>pints <code>ensure block...</code></h1>
+
+<p>```</p>
+
+<p>So if you want to return a value from <code>ensure</code> statement use <code>return</code> word:</p>
+
+<p>```ruby
+def run
+  1
+ensure
+  return 2
+end</p>
+
+<p>run # => 2
+```</p>
+
+<h2>lambda and Proc.new acts differently</h2>
+
+<p>It's a well known thing but I want to remind.
+There 2 differences between proc objects created with <code>lambda</code> and <code>Proc.new</code>:</p>
+
+<ul>
+<li><code>lambda</code> raises <code>ArgumentError</code> if parameter is missing when <code>Proc.new</code> uses <code>nil</code> instead.</li>
+</ul>
+
+
+<p>```ruby
+lm = lambda   {|a, b| "#{a.inspect} and #{b.inspect}" }
+pr = Proc.new {|a, b| "#{a.inspect} and #{b.inspect}" }</p>
+
+<p>lm.call(10)  # => ArgumentError: wrong number of arguments (1 for 2)
+pr.call(10)  # => "10 and nil"
+```</p>
+
+<ul>
+<li>For <code>lambda</code> word <code>return</code> means returning from proc object, when for <code>Proc.new</code> it means returning from scope where proc is defined.</li>
+</ul>
+
+
+<p>```ruby
+def lambda_method
+  lm = lambda { return 10 }     # return from lambda
+  half = lm.call
+  half * 2
+end</p>
+
+<p>def proc_method
+  pr = Proc.new { return 10 }   # return from proc_method
+  half = pr.call
+  half * 2
+end</p>
+
+<p>lambda_method   # => 20
+proc_method     # => 10
+```</p>
+
+<p>Note there is also method <code>proc</code>. In Ruby 1.8 it's a synonym for <code>lambda</code>
+but in Ruby 1.9 it's a synonym for <code>Proc.new</code>. So avoid using <code>proc</code> to keep you code compatible
+for both ruby versions.</p>
+
+<h2>DelegateClass instance doesn't eql itself</h2>
+
+<p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
+which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.</p>
+
+<p>```ruby
+require 'delegate'</p>
+
+<p>class Animal
+end</p>
+
+<p>class Dog &lt; DelegateClass(Animal)
+end</p>
+
+<p>animal = Animal.new
+dog = Dog.new(animal)</p>
+
+<p>dog.eql?(dog)  # => false
+```</p>
+
+<p>It happens because <code>eql?</code> is delegated to base object(animal):</p>
+
+<p><code>ruby
+dog.eql?(animal)  # =&gt; true
+</code></p>
+
+<p>On other hand <code>equal?</code> is not:</p>
+
+<p><code>ruby
+dog.equal?(dog)     # =&gt; true
+dog.equal?(animal)  # =&gt; false
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

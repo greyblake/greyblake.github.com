@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-07-15T23:28:12+03:00</updated>
+  <updated>2012-08-11T03:33:21+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,236 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Unexpected Ruby behaviour]]></title>
+    <link href="http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour/"/>
+    <updated>2012-08-10T23:28:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour</id>
+    <content type="html"><![CDATA[<p>Ruby is a cool language with intuitive grammar. However there are a number of things which don&#8217;t seem to be expected.
+It might take long hours to debug some weird issues for unenlightened newbies.</p>
+
+<h2>Implicitly variable declaration</h2>
+
+<p>Variable mentioned in conditional block of code become declared and initialized with <code>nil</code> even if the declaration was not executed.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="kp">false</span>
+</span><span class='line'>  <span class="n">var</span> <span class="o">=</span> <span class="s2">&quot;never executed&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">var</span> <span class="c1"># =&gt; nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Expected:</strong> addressing to <code>var</code> raises <code>NameError: undefined local variable or method 'var'</code></p>
+
+<h2>Calling #utc and #gmt on Time object removes time zone information</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">utc</span>         <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012, WTF?</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">gmtime</span>      <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012, WTF?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>IMHO, this methods should be called <code>utc!</code> and <code>gmtime!</code> instead.
+I have an experience when it caused a really voodoo thing: a test failed only from 20:00 to 00:00
+in USA on CI server, and could never be reproduced in my time zone.</p>
+
+<p>Instead it&#8217;s better to use <code>getutc</code> and <code>getgm</code> methods which return UTC and GMT time accordingly,
+but don&#8217;t change Time object:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">getutc</span>      <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">getgm</span>       <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Methods don&#8217;t return value from ensure statement</h2>
+
+<p>Usually ruby methods return the value of the last method line unless <code>return</code> is called explicitly.
+But how about this?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">run</span>
+</span><span class='line'>  <span class="mi">1</span>
+</span><span class='line'><span class="k">ensure</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;ensure block...&quot;</span>
+</span><span class='line'>  <span class="mi">2</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">run</span> <span class="c1"># =&gt; 1</span>
+</span><span class='line'><span class="c1"># pints `ensure block...`</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So if you want to return a value from <code>ensure</code> statement use <code>return</code> word:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">run</span>
+</span><span class='line'>  <span class="mi">1</span>
+</span><span class='line'><span class="k">ensure</span>
+</span><span class='line'>  <span class="k">return</span> <span class="mi">2</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">run</span> <span class="c1"># =&gt; 2</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>lambda and Proc.new acts differently</h2>
+
+<p>It&#8217;s a well known thing but I want to remind.
+There 2 differences between proc objects created with <code>lambda</code> and <code>Proc.new</code>:</p>
+
+<ul>
+<li><code>lambda</code> raises <code>ArgumentError</code> if parameter is missing when <code>Proc.new</code> uses <code>nil</code> instead.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">lm</span> <span class="o">=</span> <span class="nb">lambda</span>   <span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">a</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2"> and </span><span class="si">#{</span><span class="n">b</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="n">pr</span> <span class="o">=</span> <span class="no">Proc</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">a</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2"> and </span><span class="si">#{</span><span class="n">b</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">lm</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># =&gt; ArgumentError: wrong number of arguments (1 for 2)</span>
+</span><span class='line'><span class="n">pr</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># =&gt; &quot;10 and nil&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>For <code>lambda</code> word <code>return</code> means returning from proc object, when for <code>Proc.new</code> it means returning from scope where proc is defined.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">lambda_method</span>
+</span><span class='line'>  <span class="n">lm</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>     <span class="c1"># return from lambda</span>
+</span><span class='line'>  <span class="n">half</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'>  <span class="n">half</span> <span class="o">*</span> <span class="mi">2</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">proc_method</span>
+</span><span class='line'>  <span class="n">pr</span> <span class="o">=</span> <span class="no">Proc</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>   <span class="c1"># return from proc_method</span>
+</span><span class='line'>  <span class="n">half</span> <span class="o">=</span> <span class="n">pr</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'>  <span class="n">half</span> <span class="o">*</span> <span class="mi">2</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">lambda_method</span>   <span class="c1"># =&gt; 20</span>
+</span><span class='line'><span class="n">proc_method</span>     <span class="c1"># =&gt; 10</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note there is also method <code>proc</code>. In Ruby 1.8 it&#8217;s a synonym for <code>lambda</code>
+but in Ruby 1.9 it&#8217;s a synonym for <code>Proc.new</code>. So avoid using <code>proc</code> to keep you code compatible
+for both ruby versions.</p>
+
+<h2>DelegateClass instance doesn&#8217;t eql itself</h2>
+
+<p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
+which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;delegate&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Animal</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Dog</span> <span class="o">&lt;</span> <span class="no">DelegateClass</span><span class="p">(</span><span class="no">Animal</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="n">animal</span> <span class="o">=</span> <span class="no">Animal</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">dog</span> <span class="o">=</span> <span class="no">Dog</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="n">dog</span><span class="p">)</span>  <span class="c1"># =&gt; false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It happens because <code>eql?</code> is delegated to base object(animal):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>  <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On other hand <code>equal?</code> is not:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">equal?</span><span class="p">(</span><span class="n">dog</span><span class="p">)</span>     <span class="c1"># =&gt; true</span>
+</span><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">equal?</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>  <span class="c1"># =&gt; false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[How to build Vim against specific Ruby version]]></title>
