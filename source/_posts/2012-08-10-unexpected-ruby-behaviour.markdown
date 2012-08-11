@@ -32,11 +32,11 @@ var # => nil
 ```ruby
 t = Time.new  # => Sat Aug 11 01:11:52 +0300 2012
 t.utc         # => Fri Aug 10 22:11:52 UTC 2012
-t             # => Fri Aug 10 22:11:52 UTC 2012, WTF?
+t             # => Fri Aug 10 22:11:52 UTC 2012, WTF? O_o
 
 t = Time.new  # => Sat Aug 11 01:17:06 +0300 2012
 t.gmtime      # => Fri Aug 10 22:17:06 UTC 2012
-t             # => Fri Aug 10 22:17:06 UTC 2012, WTF?
+t             # => Fri Aug 10 22:17:06 UTC 2012, WTF? O_o
 ```
 
 IMHO, this methods should be called `utc!` and `gmtime!` instead.
@@ -58,7 +58,7 @@ t             # => Sat Aug 11 01:17:06 +0300 2012
 
 
 
-## Methods don't return value from ensure statement
+## Methods do not return value from ensure statement
 
 Usually ruby methods return the value of the last method line unless `return` is called explicitly.
 But how about this?
@@ -88,6 +88,84 @@ end
 
 run # => 2
 ```
+
+## Anchors ^ and $ do not mean a start and an end of a string
+
+Usually in script languages anchors `^` and `$` of regular expressions mean a start and an end of string accordingly.
+But not in Ruby! In Ruby they are a start and an end of a **line**.
+See the difference:
+
+```ruby
+pattern      = /^[a-zA-Z]{3,12}$/    # 3-12 alphabetic characters
+valid_name   = "Tatiana"
+invalid_name = "23\nabc\n!"
+
+valid_name   =~ pattern   # => 0, matchers
+invalid_name =~ pattern   # => 3, matchers
+```
+
+Instead use `\A` and `\Z` anchors. They are a start and an end of a **string**.
+
+```ruby
+pattern      = /\A[a-zA-Z]{3,12}\Z/    # 3-12 alphabetic characters
+valid_name   = "Tatiana"
+invalid_name = "23\nabc\n!"
+
+valid_name   =~ pattern   # => 0, matchers
+invalid_name =~ pattern   # => nil
+```
+
+Pay attention when you write validations.
+[Read Egor Homakov's article](http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html)
+to get more information about it.
+
+
+## Calling super and super() are not the same
+
+There is no matter for ruby methods do you use parentheses or not. But be careful with `super`
+since it's not a method, but a key word.
+Let me show an example when parentheses matter:
+
+```ruby
+class Parent
+  def m1(arg)
+    puts "Parent m1: arg = #{arg.inspect}"
+  end
+
+  def m2(arg)
+    puts "Parent m2: arg = #{arg.inspect}"
+  end
+end
+
+class Child < Parent
+  def m1(arg)
+    puts "Child m1: arg = #{arg.inspect}"
+    super
+  end
+
+  def m2(arg)
+    puts "Child m2: arg = #{arg.inspect}"
+    super()
+  end
+end
+
+child = Child.new
+child.m1("foo")
+child.m2("bar")
+```
+
+Output:
+
+    Child m1: arg = "foo"
+    Parent m1: arg = "foo"
+    Child m2: arg = "bar"
+    super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
+            from super.rb:19:in `m2'
+            from super.rb:25:in `<main>'
+
+When you use `super` it calls same method of parent class passing same arguments to it.
+But when you use `super(...)` you have to pass arguments manually. In my example `ArgumentError`
+was raised because `Parent#m2` expects to receive exactly one argument, but nothing was passed to `super()`
 
 ## lambda and Proc.new acts differently
 
@@ -132,6 +210,7 @@ for both ruby versions.
 
 Ruby standard library provides [DelegateClass](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html)
 which can be [pretty useful](http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world).
+But some things are not so obvious about it:
 
 ```ruby
 require 'delegate'
@@ -146,7 +225,7 @@ end
 animal = Animal.new
 dog = Dog.new(animal)
 
-dog.eql?(dog)  # => false
+dog.eql?(dog)  # => false, WTF? O_o
 ```
 
 It happens because `eql?` is delegated to base object(animal):
@@ -162,3 +241,11 @@ dog.equal?(dog)     # => true
 dog.equal?(animal)  # => false
 ```
 
+<br />
+<br />
+<br />
+
+So I hope the article was useful for you.
+If you know some fancy Ruby things I haven't mentioned please let me know.
+
+Thanks.
