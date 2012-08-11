@@ -137,11 +137,11 @@ It might take long hours to debug some weird issues for unenlightened newbies.</
 <span class='line-number'>7</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
 </span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">utc</span>         <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012</span>
-</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012, WTF?</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012, WTF? O_o</span>
 </span><span class='line'>
 </span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
 </span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">gmtime</span>      <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012</span>
-</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012, WTF?</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012, WTF? O_o</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -169,7 +169,7 @@ but don&#8217;t change Time object:</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h2>Methods don&#8217;t return value from ensure statement</h2>
+<h2>Methods do not return value from ensure statement</h2>
 
 <p>Usually ruby methods return the value of the last method line unless <code>return</code> is called explicitly.
 But how about this?</p>
@@ -213,6 +213,121 @@ But how about this?</p>
 </span><span class='line'><span class="n">run</span> <span class="c1"># =&gt; 2</span>
 </span></code></pre></td></tr></table></div></figure>
 
+
+<h2>Anchors ^ and $ do not mean a start and an end of a string</h2>
+
+<p>Usually in script languages anchors <code>^</code> and <code>$</code> of regular expressions mean a start and an end of string accordingly.
+But not in Ruby! In Ruby they are a start and an end of a <strong>line</strong>.
+See the difference:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">pattern</span>      <span class="o">=</span> <span class="sr">/^[a-zA-Z]{3,12}$/</span>    <span class="c1"># 3-12 alphabetic characters</span>
+</span><span class='line'><span class="n">valid_name</span>   <span class="o">=</span> <span class="s2">&quot;Tatiana&quot;</span>
+</span><span class='line'><span class="n">invalid_name</span> <span class="o">=</span> <span class="s2">&quot;23</span><span class="se">\n</span><span class="s2">abc</span><span class="se">\n</span><span class="s2">!&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">valid_name</span>   <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 0, matchers</span>
+</span><span class='line'><span class="n">invalid_name</span> <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 3, matchers</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Instead use <code>\A</code> and <code>\Z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">pattern</span>      <span class="o">=</span> <span class="sr">/\A[a-zA-Z]{3,12}\Z/</span>    <span class="c1"># 3-12 alphabetic characters</span>
+</span><span class='line'><span class="n">valid_name</span>   <span class="o">=</span> <span class="s2">&quot;Tatiana&quot;</span>
+</span><span class='line'><span class="n">invalid_name</span> <span class="o">=</span> <span class="s2">&quot;23</span><span class="se">\n</span><span class="s2">abc</span><span class="se">\n</span><span class="s2">!&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">valid_name</span>   <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 0, matchers</span>
+</span><span class='line'><span class="n">invalid_name</span> <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Pay attention when you write validations.
+<a href="http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html">Read Egor Homakov&#8217;s article</a>
+to get more information about it.</p>
+
+<h2>Calling super and super() are not the same</h2>
+
+<p>There is no matter for ruby methods do you use parentheses or not. But be careful with <code>super</code>
+since it&#8217;s not a method, but a key word.
+Let me show an example when parentheses matter:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Parent</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Parent m1: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Parent m2: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Child</span> <span class="o">&lt;</span> <span class="no">Parent</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Child m1: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>    <span class="k">super</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Child m2: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>    <span class="k">super</span><span class="p">()</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">child</span> <span class="o">=</span> <span class="no">Child</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m1</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m2</span><span class="p">(</span><span class="s2">&quot;bar&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>Child m1: arg = "foo"
+Parent m1: arg = "foo"
+Child m2: arg = "bar"
+super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
+        from super.rb:19:in `m2'
+        from super.rb:25:in `&lt;main&gt;'
+</code></pre>
+
+<p>When you use <code>super</code> it calls same method of parent class passing same arguments to it.
+But when you use <code>super(...)</code> you have to pass arguments manually. In my example <code>ArgumentError</code>
+was raised because <code>Parent#m2</code> expects to receive exactly one argument, but nothing was passed to <code>super()</code></p>
 
 <h2>lambda and Proc.new acts differently</h2>
 
@@ -280,7 +395,8 @@ for both ruby versions.</p>
 <h2>DelegateClass instance doesn&#8217;t eql itself</h2>
 
 <p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
-which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.</p>
+which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.
+But some things are not so obvious about it:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -307,7 +423,7 @@ which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-dele
 </span><span class='line'><span class="n">animal</span> <span class="o">=</span> <span class="no">Animal</span><span class="o">.</span><span class="n">new</span>
 </span><span class='line'><span class="n">dog</span> <span class="o">=</span> <span class="no">Dog</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>
 </span><span class='line'>
-</span><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="n">dog</span><span class="p">)</span>  <span class="c1"># =&gt; false</span>
+</span><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="n">dog</span><span class="p">)</span>  <span class="c1"># =&gt; false, WTF? O_o</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -328,6 +444,20 @@ which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-dele
 
 
 
+
+<br />
+
+
+<br />
+
+
+<br />
+
+
+<p>So I hope the article was useful for you.
+If you know some fancy Ruby things I haven&#8217;t mentioned please let me know.</p>
+
+<p>Thanks.</p>
 </div>
 
 

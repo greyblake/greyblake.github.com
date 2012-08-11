@@ -4,7 +4,7 @@
   <title><![CDATA[Category: behaviour | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/behaviour/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-08-11T03:36:17+03:00</updated>
+  <updated>2012-08-12T02:59:03+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -42,11 +42,11 @@ var # =&gt; nil
 <p>```ruby
 t = Time.new  # => Sat Aug 11 01:11:52 +0300 2012
 t.utc         # => Fri Aug 10 22:11:52 UTC 2012
-t             # => Fri Aug 10 22:11:52 UTC 2012, WTF?</p>
+t             # => Fri Aug 10 22:11:52 UTC 2012, WTF? O_o</p>
 
 <p>t = Time.new  # => Sat Aug 11 01:17:06 +0300 2012
 t.gmtime      # => Fri Aug 10 22:17:06 UTC 2012
-t             # => Fri Aug 10 22:17:06 UTC 2012, WTF?
+t             # => Fri Aug 10 22:17:06 UTC 2012, WTF? O_o
 ```</p>
 
 <p>IMHO, this methods should be called <code>utc!</code> and <code>gmtime!</code> instead.
@@ -66,7 +66,7 @@ t.getgm       # => Fri Aug 10 22:17:06 UTC 2012
 t             # => Sat Aug 11 01:17:06 +0300 2012
 ```</p>
 
-<h2>Methods don't return value from ensure statement</h2>
+<h2>Methods do not return value from ensure statement</h2>
 
 <p>Usually ruby methods return the value of the last method line unless <code>return</code> is called explicitly.
 But how about this?</p>
@@ -96,6 +96,96 @@ end</p>
 
 <p>run # => 2
 ```</p>
+
+<h2>Anchors ^ and $ do not mean a start and an end of a string</h2>
+
+<p>Usually in script languages anchors <code>^</code> and <code>$</code> of regular expressions mean a start and an end of string accordingly.
+But not in Ruby! In Ruby they are a start and an end of a <strong>line</strong>.
+See the difference:</p>
+
+<p>```ruby
+pattern      = /<sup>[a-zA-Z]{3,12}$/</sup>    # 3-12 alphabetic characters
+valid_name   = "Tatiana"
+invalid_name = "23\nabc\n!"</p>
+
+<p>valid_name   =~ pattern   # => 0, matchers
+invalid_name =~ pattern   # => 3, matchers
+```</p>
+
+<p>Instead use <code>\A</code> and <code>\Z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
+
+<p>```ruby
+pattern      = /\A[a-zA-Z]{3,12}\Z/    # 3-12 alphabetic characters
+valid_name   = "Tatiana"
+invalid_name = "23\nabc\n!"</p>
+
+<p>valid_name   =~ pattern   # => 0, matchers
+invalid_name =~ pattern   # => nil
+```</p>
+
+<p>Pay attention when you write validations.
+<a href="http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html">Read Egor Homakov's article</a>
+to get more information about it.</p>
+
+<h2>Calling super and super() are not the same</h2>
+
+<p>There is no matter for ruby methods do you use parentheses or not. But be careful with <code>super</code>
+since it's not a method, but a key word.
+Let me show an example when parentheses matter:</p>
+
+<p>```ruby
+class Parent
+  def m1(arg)</p>
+
+<pre><code>puts "Parent m1: arg = #{arg.inspect}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2(arg)</p>
+
+<pre><code>puts "Parent m2: arg = #{arg.inspect}"
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>class Child &lt; Parent
+  def m1(arg)</p>
+
+<pre><code>puts "Child m1: arg = #{arg.inspect}"
+super
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2(arg)</p>
+
+<pre><code>puts "Child m2: arg = #{arg.inspect}"
+super()
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>child = Child.new
+child.m1("foo")
+child.m2("bar")
+```</p>
+
+<p>Output:</p>
+
+<pre><code>Child m1: arg = "foo"
+Parent m1: arg = "foo"
+Child m2: arg = "bar"
+super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
+        from super.rb:19:in `m2'
+        from super.rb:25:in `&lt;main&gt;'
+</code></pre>
+
+<p>When you use <code>super</code> it calls same method of parent class passing same arguments to it.
+But when you use <code>super(...)</code> you have to pass arguments manually. In my example <code>ArgumentError</code>
+was raised because <code>Parent#m2</code> expects to receive exactly one argument, but nothing was passed to <code>super()</code></p>
 
 <h2>lambda and Proc.new acts differently</h2>
 
@@ -144,7 +234,8 @@ for both ruby versions.</p>
 <h2>DelegateClass instance doesn't eql itself</h2>
 
 <p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
-which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.</p>
+which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.
+But some things are not so obvious about it:</p>
 
 <p>```ruby
 require 'delegate'</p>
@@ -158,7 +249,7 @@ end</p>
 <p>animal = Animal.new
 dog = Dog.new(animal)</p>
 
-<p>dog.eql?(dog)  # => false
+<p>dog.eql?(dog)  # => false, WTF? O_o
 ```</p>
 
 <p>It happens because <code>eql?</code> is delegated to base object(animal):</p>
@@ -173,6 +264,20 @@ dog.eql?(animal)  # =&gt; true
 dog.equal?(dog)     # =&gt; true
 dog.equal?(animal)  # =&gt; false
 </code></p>
+
+<br />
+
+
+<br />
+
+
+<br />
+
+
+<p>So I hope the article was useful for you.
+If you know some fancy Ruby things I haven't mentioned please let me know.</p>
+
+<p>Thanks.</p>
 ]]></content>
   </entry>
   
