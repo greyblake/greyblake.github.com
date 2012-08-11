@@ -11,6 +11,8 @@ Ruby is a cool language with intuitive grammar. However there are a number of th
 It might take long hours to debug some weird issues for unenlightened newbies.
 
 
+<!--more-->
+
 
 ## Implicitly variable declaration
 
