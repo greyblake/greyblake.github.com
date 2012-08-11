@@ -3,7 +3,7 @@ layout: post
 title: "Unexpected Ruby behaviour"
 date: 2012-08-10 23:28
 comments: true
-categories: unexpected ruby behaviour
+categories: unexpected ruby behaviour lambda proc time ensure DelegateClass ensure
 ---
 
 
