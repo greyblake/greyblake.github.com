@@ -4,7 +4,7 @@
   <title><![CDATA[Category: time | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/time/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-08-12T02:59:03+03:00</updated>
+  <updated>2012-08-12T03:00:53+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -231,7 +231,7 @@ proc_method     # => 10
 but in Ruby 1.9 it's a synonym for <code>Proc.new</code>. So avoid using <code>proc</code> to keep you code compatible
 for both ruby versions.</p>
 
-<h2>DelegateClass instance doesn't eql itself</h2>
+<h2>DelegateClass instance does not eql itself</h2>
 
 <p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
 which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.
