@@ -91,7 +91,7 @@ run # => 2
 
 ## Anchors ^ and $ do not mean a start and an end of a string
 
-Usually in script languages anchors `^` and `$` of regular expressions mean a start and an end of string accordingly.
+Most of script languages uses anchors `^` and `$` of regular expressions as a start and an end of string accordingly.
 But not in Ruby! In Ruby they are a start and an end of a **line**.
 See the difference:
 
@@ -119,6 +119,14 @@ Pay attention when you write validations.
 [Read Egor Homakov's article](http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html)
 to get more information about it.
 
+## \m regexp option
+
+When other languages use `\s` option to make `.` match newline, Ruby uses `\m`:
+
+```ruby
+ "\n" =~ /./   # => nil
+ "\n" =~ /./m  # => 0
+```
 
 ## Calling super and super() are not the same
 
