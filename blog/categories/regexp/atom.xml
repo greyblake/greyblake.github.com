@@ -4,7 +4,7 @@
   <title><![CDATA[Category: regexp | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/regexp/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-08-12T03:03:09+03:00</updated>
+  <updated>2012-08-12T12:29:56+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -99,7 +99,7 @@ end</p>
 
 <h2>Anchors ^ and $ do not mean a start and an end of a string</h2>
 
-<p>Usually in script languages anchors <code>^</code> and <code>$</code> of regular expressions mean a start and an end of string accordingly.
+<p>Most of script languages uses anchors <code>^</code> and <code>$</code> of regular expressions as a start and an end of string accordingly.
 But not in Ruby! In Ruby they are a start and an end of a <strong>line</strong>.
 See the difference:</p>
 
@@ -126,6 +126,15 @@ invalid_name =~ pattern   # => nil
 <p>Pay attention when you write validations.
 <a href="http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html">Read Egor Homakov's article</a>
 to get more information about it.</p>
+
+<h2>\m regexp option</h2>
+
+<p>When other languages use <code>\s</code> option to make <code>.</code> match newline, Ruby uses <code>\m</code>:</p>
+
+<p><code>ruby
+ "\n" =~ /./   # =&gt; nil
+ "\n" =~ /./m  # =&gt; 0
+</code></p>
 
 <h2>Calling super and super() are not the same</h2>
 
