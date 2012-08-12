@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: unexpected | Sergey Potapov Online]]></title>
-  <link href="http://greyblake.com/blog/categories/unexpected/atom.xml" rel="self"/>
+  <title><![CDATA[Category: regexp | Sergey Potapov Online]]></title>
+  <link href="http://greyblake.com/blog/categories/regexp/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
   <updated>2012-08-12T03:03:09+03:00</updated>
   <id>http://greyblake.com/</id>
