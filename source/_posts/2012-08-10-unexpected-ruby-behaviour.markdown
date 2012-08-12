@@ -206,7 +206,7 @@ but in Ruby 1.9 it's a synonym for `Proc.new`. So avoid using `proc` to keep you
 for both ruby versions.
 
 
-## DelegateClass instance doesn't eql itself
+## DelegateClass instance does not eql itself
 
 Ruby standard library provides [DelegateClass](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html)
 which can be [pretty useful](http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world).
