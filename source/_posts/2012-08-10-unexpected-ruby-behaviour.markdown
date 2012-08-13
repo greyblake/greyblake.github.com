@@ -175,7 +175,7 @@ When you use `super` it calls same method of parent class passing same arguments
 But when you use `super(...)` you have to pass arguments manually. In my example `ArgumentError`
 was raised because `Parent#m2` expects to receive exactly one argument, but nothing was passed to `super()`
 
-## lambda and Proc.new acts differently
+## lambda and Proc.new act differently
 
 It's a well known thing but I want to remind.
 There 2 differences between proc objects created with `lambda` and `Proc.new`:
