@@ -104,10 +104,10 @@ valid_name   =~ pattern   # => 0, matchers
 invalid_name =~ pattern   # => 3, matchers
 ```
 
-Instead use `\A` and `\Z` anchors. They are a start and an end of a **string**.
+Instead use `\A` and `\z` anchors. They are a start and an end of a **string**.
 
 ```ruby
-pattern      = /\A[a-zA-Z]{3,12}\Z/    # 3-12 alphabetic characters
+pattern      = /\A[a-zA-Z]{3,12}\z/    # 3-12 alphabetic characters
 valid_name   = "Tatiana"
 invalid_name = "23\nabc\n!"
 
@@ -174,6 +174,40 @@ Output:
 When you use `super` it calls same method of parent class passing same arguments to it.
 But when you use `super(...)` you have to pass arguments manually. In my example `ArgumentError`
 was raised because `Parent#m2` expects to receive exactly one argument, but nothing was passed to `super()`
+
+However `super()` still delegates a passed block. If you don't wanna pass
+a block you have to do it explicitly using `super(&nil)`:
+
+```ruby
+class Parent
+  def m1
+    yield
+  end
+
+  def m2
+    yield
+  end
+end
+
+class Child < Parent
+  def m1
+    super()
+  end
+
+  def m2
+    super(&nil)
+  end
+end
+
+child = Child.new
+child.m1 { puts "Hi, m1" }
+child.m2 { puts "Hi, m2" }
+```
+
+Output:
+    Hi, m1
+    /tmp/super.rb:7:in `m2': no block given (yield) (LocalJumpError)
+
 
 ## lambda and Proc.new act differently
 
@@ -249,7 +283,53 @@ dog.equal?(dog)     # => true
 dog.equal?(animal)  # => false
 ```
 
-<br />
+## dup method do not work for all objects
+
+As you might know every object in Ruby has [dup](http://ruby-doc.org/core-1.9.3/Object.html#method-i-dup)
+method inherited from `Object` class. It's convenient, I like it. But **it does not mean that every object
+can be duplicated**.
+
+```ruby
+[:symbol, true, false].all? { |obj| obj.respond_to? :dup } # => true
+:symbol.dup   # => TypeError: can't dup Symbol
+true.dup      # => TypeError: can't dup TrueClass
+false.dup     # => TypeError: can't dup FalseClass
+```
+
+It means you can't make a deep copy of an array (with one level depth) like this:
+
+```ruby
+copy = array.map(&:dup)
+```
+
+Or like this:
+
+```
+copy = array.map { |val| val.respond_to?(:dup) ? val.dup : val }
+```
+
+Since all your objects respond to `#dup`.
+
+ActiveSupport provides `duplicable?` method to inspect an ability
+to duplicate an object, so finally your solution would look the next way:
+
+```ruby
+copy = array.map { |val| val.duplicable? ? val.dup : val }
+```
+
+Internally ruby symbols and booleans point to constant memory addresses, and
+there is no reason to copy them since they are unchangable.
+But I wish the implementation of their `#dup` methods looked like this:
+
+```ruby
+class Symbol
+  def dup
+    self
+  end
+end
+```
+
+
 <br />
 <br />
 
