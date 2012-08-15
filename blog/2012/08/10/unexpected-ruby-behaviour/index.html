@@ -235,7 +235,7 @@ See the difference:</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Instead use <code>\A</code> and <code>\Z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
+<p>Instead use <code>\A</code> and <code>\z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -243,7 +243,7 @@ See the difference:</p>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">pattern</span>      <span class="o">=</span> <span class="sr">/\A[a-zA-Z]{3,12}\Z/</span>    <span class="c1"># 3-12 alphabetic characters</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">pattern</span>      <span class="o">=</span> <span class="sr">/\A[a-zA-Z]{3,12}\z/</span>    <span class="c1"># 3-12 alphabetic characters</span>
 </span><span class='line'><span class="n">valid_name</span>   <span class="o">=</span> <span class="s2">&quot;Tatiana&quot;</span>
 </span><span class='line'><span class="n">invalid_name</span> <span class="o">=</span> <span class="s2">&quot;23</span><span class="se">\n</span><span class="s2">abc</span><span class="se">\n</span><span class="s2">!&quot;</span>
 </span><span class='line'>
@@ -340,7 +340,65 @@ super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
 But when you use <code>super(...)</code> you have to pass arguments manually. In my example <code>ArgumentError</code>
 was raised because <code>Parent#m2</code> expects to receive exactly one argument, but nothing was passed to <code>super()</code></p>
 
-<h2>lambda and Proc.new acts differently</h2>
+<p>However <code>super()</code> still delegates a passed block. If you don&#8217;t wanna pass
+a block you have to do it explicitly using <code>super(&amp;nil)</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Parent</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span>
+</span><span class='line'>    <span class="k">yield</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span>
+</span><span class='line'>    <span class="k">yield</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Child</span> <span class="o">&lt;</span> <span class="no">Parent</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span>
+</span><span class='line'>    <span class="k">super</span><span class="p">()</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span>
+</span><span class='line'>    <span class="k">super</span><span class="p">(</span><span class="o">&amp;</span><span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">child</span> <span class="o">=</span> <span class="no">Child</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m1</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hi, m1&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m2</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hi, m2&quot;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>Hi, m1
+/tmp/super.rb:7:in `m2': no block given (yield) (LocalJumpError)
+</code></pre>
+
+<h2>lambda and Proc.new act differently</h2>
 
 <p>It&#8217;s a well known thing but I want to remind.
 There 2 differences between proc objects created with <code>lambda</code> and <code>Proc.new</code>:</p>
@@ -454,9 +512,64 @@ But some things are not so obvious about it:</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
+<h2>dup method do not work for all objects</h2>
+
+<p>As you might know every object in Ruby has <a href="http://ruby-doc.org/core-1.9.3/Object.html#method-i-dup">dup</a>
+method inherited from <code>Object</code> class. It&#8217;s convenient, I like it. But <strong>it does not mean that every object
+can be duplicated</strong>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="ss">:symbol</span><span class="p">,</span> <span class="kp">true</span><span class="p">,</span> <span class="kp">false</span><span class="o">].</span><span class="n">all?</span> <span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">respond_to?</span> <span class="ss">:dup</span> <span class="p">}</span> <span class="c1"># =&gt; true</span>
+</span><span class='line'><span class="ss">:symbol</span><span class="o">.</span><span class="n">dup</span>   <span class="c1"># =&gt; TypeError: can&#39;t dup Symbol</span>
+</span><span class='line'><span class="kp">true</span><span class="o">.</span><span class="n">dup</span>      <span class="c1"># =&gt; TypeError: can&#39;t dup TrueClass</span>
+</span><span class='line'><span class="kp">false</span><span class="o">.</span><span class="n">dup</span>     <span class="c1"># =&gt; TypeError: can&#39;t dup FalseClass</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
-<br />
+<p>It means you can&#8217;t make a deep copy of an array (with one level depth) like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:dup</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Or like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span> <span class="n">val</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:dup</span><span class="p">)</span> <span class="p">?</span> <span class="n">val</span><span class="o">.</span><span class="n">dup</span> <span class="p">:</span> <span class="n">val</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since all your objects respond to <code>#dup</code>.</p>
+
+<p>ActiveSupport provides <code>duplicable?</code> method to inspect an ability
+to duplicate an object, so finally your solution would look the next way:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span> <span class="n">val</span><span class="o">.</span><span class="n">duplicable?</span> <span class="p">?</span> <span class="n">val</span><span class="o">.</span><span class="n">dup</span> <span class="p">:</span> <span class="n">val</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Internally ruby symbols and booleans point to constant memory addresses, and
+there is no reason to copy them since they are unchangable.
+But I wish the implementation of their <code>#dup</code> methods looked like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Symbol</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">dup</span>
+</span><span class='line'>    <span class="nb">self</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
 
 
 <br />

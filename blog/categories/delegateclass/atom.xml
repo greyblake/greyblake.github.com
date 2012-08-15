@@ -4,7 +4,7 @@
   <title><![CDATA[Category: DelegateClass | Sergey Potapov Online]]></title>
   <link href="http://greyblake.com/blog/categories/delegateclass/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-08-12T12:29:56+03:00</updated>
+  <updated>2012-08-15T12:10:09+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -112,10 +112,10 @@ invalid_name = "23\nabc\n!"</p>
 invalid_name =~ pattern   # => 3, matchers
 ```</p>
 
-<p>Instead use <code>\A</code> and <code>\Z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
+<p>Instead use <code>\A</code> and <code>\z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
 
 <p>```ruby
-pattern      = /\A[a-zA-Z]{3,12}\Z/    # 3-12 alphabetic characters
+pattern      = /\A[a-zA-Z]{3,12}\z/    # 3-12 alphabetic characters
 valid_name   = "Tatiana"
 invalid_name = "23\nabc\n!"</p>
 
@@ -196,7 +196,54 @@ super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
 But when you use <code>super(...)</code> you have to pass arguments manually. In my example <code>ArgumentError</code>
 was raised because <code>Parent#m2</code> expects to receive exactly one argument, but nothing was passed to <code>super()</code></p>
 
-<h2>lambda and Proc.new acts differently</h2>
+<p>However <code>super()</code> still delegates a passed block. If you don't wanna pass
+a block you have to do it explicitly using <code>super(&amp;nil)</code>:</p>
+
+<p>```ruby
+class Parent
+  def m1</p>
+
+<pre><code>yield
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2</p>
+
+<pre><code>yield
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>class Child &lt; Parent
+  def m1</p>
+
+<pre><code>super()
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2</p>
+
+<pre><code>super(&amp;nil)
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>child = Child.new
+child.m1 { puts "Hi, m1" }
+child.m2 { puts "Hi, m2" }
+```</p>
+
+<p>Output:</p>
+
+<pre><code>Hi, m1
+/tmp/super.rb:7:in `m2': no block given (yield) (LocalJumpError)
+</code></pre>
+
+<h2>lambda and Proc.new act differently</h2>
 
 <p>It's a well known thing but I want to remind.
 There 2 differences between proc objects created with <code>lambda</code> and <code>Proc.new</code>:</p>
@@ -274,8 +321,54 @@ dog.equal?(dog)     # =&gt; true
 dog.equal?(animal)  # =&gt; false
 </code></p>
 
-<br />
+<h2>dup method do not work for all objects</h2>
 
+<p>As you might know every object in Ruby has <a href="http://ruby-doc.org/core-1.9.3/Object.html#method-i-dup">dup</a>
+method inherited from <code>Object</code> class. It's convenient, I like it. But <strong>it does not mean that every object
+can be duplicated</strong>.</p>
+
+<p><code>ruby
+[:symbol, true, false].all? { |obj| obj.respond_to? :dup } # =&gt; true
+:symbol.dup   # =&gt; TypeError: can't dup Symbol
+true.dup      # =&gt; TypeError: can't dup TrueClass
+false.dup     # =&gt; TypeError: can't dup FalseClass
+</code></p>
+
+<p>It means you can't make a deep copy of an array (with one level depth) like this:</p>
+
+<p><code>ruby
+copy = array.map(&amp;:dup)
+</code></p>
+
+<p>Or like this:</p>
+
+<p><code>
+copy = array.map { |val| val.respond_to?(:dup) ? val.dup : val }
+</code></p>
+
+<p>Since all your objects respond to <code>#dup</code>.</p>
+
+<p>ActiveSupport provides <code>duplicable?</code> method to inspect an ability
+to duplicate an object, so finally your solution would look the next way:</p>
+
+<p><code>ruby
+copy = array.map { |val| val.duplicable? ? val.dup : val }
+</code></p>
+
+<p>Internally ruby symbols and booleans point to constant memory addresses, and
+there is no reason to copy them since they are unchangable.
+But I wish the implementation of their <code>#dup</code> methods looked like this:</p>
+
+<p>```ruby
+class Symbol
+  def dup</p>
+
+<pre><code>self
+</code></pre>
+
+<p>  end
+end
+```</p>
 
 <br />
 
