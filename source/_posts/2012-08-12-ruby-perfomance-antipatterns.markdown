@@ -9,8 +9,6 @@ categories: ruby exception performance string concatenation
 
 This time I want to describe common ways developers use to slow down ruby applications.
 
-<!--Prior to continue reading make sure your know what [sarcasm](http://en.wikipedia.org/wiki/Sarcasm) is.-->
-
 ## Using exceptions for a control flow instead of conditional statements
 
 In ruby exceptions are pretty slow.
