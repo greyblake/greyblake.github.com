@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Beep alarm - Sergey Potapov Online</title>
+  <title>Beep alarm - Sergey Potapov</title>
   <meta name="author" content="Sergey Potapov">
 
   
@@ -25,7 +25,8 @@ So &hellip;">
   <script src="/javascripts/modernizr-2.0.js"></script>
   <script src="/javascripts/ender.js"></script>
   <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <link href="/atom.xml" rel="alternate" title="Sergey Potapov Online" type="application/atom+xml">
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
   <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
 <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
@@ -48,10 +49,17 @@ So &hellip;">
 
 <body   >
   <header role="banner"><hgroup>
-  <h1><a href="/">Sergey Potapov Online</a></h1>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
   
     <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
   
+  <div class="clear"></div>
 </hgroup>
 
 </header>
@@ -69,6 +77,8 @@ So &hellip;">
   
 <ul class="main-navigation">
   <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
   <li><a href="/blog/archives">Archives</a></li>
 </ul>
 
@@ -80,7 +90,9 @@ So &hellip;">
   
   <header>
     
-      <h1 class="entry-title">Beep Alarm</h1>
+      
+        <h1 class="entry-title">Beep Alarm</h1>
+      
     
     
       <p class="meta">
@@ -208,10 +220,10 @@ beep-alarm -o -2
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2011/01/23/vim-preview-plugin/" title="Previous Post: Vim preview plugin">&laquo; Vim preview plugin</a>
+        <a class="basic-alignment left articlenav" href="/blog/2011/01/23/vim-preview-plugin/" title="Previous Post: Vim preview plugin">&laquo; Vim preview plugin</a>
       
       
-        <a class="basic-alignment right" href="/blog/2011/02/04/backuping-and-restoring-postgresql-databases/" title="Next Post: Backuping and restoring PostgreSQL databases">Backuping and restoring PostgreSQL databases &raquo;</a>
+        <a class="basic-alignment right articlenav" href="/blog/2011/02/04/backuping-and-restoring-postgresql-databases/" title="Next Post: Backuping and restoring PostgreSQL databases">Backuping and restoring PostgreSQL databases &raquo;</a>
       
     </p>
   </footer>
@@ -274,7 +286,7 @@ beep-alarm -o -2
 
         github.showRepos({
             user: 'greyblake',
-            count: 10,
+            count: 5,
             skip_forks: true,
             target: '#gh_repos'
         });
@@ -291,7 +303,7 @@ beep-alarm -o -2
   </ul>
   <script type="text/javascript">
     $.domReady(function(){
-      getTwitterFeed("greyblake", 4, false);
+      getTwitterFeed("greyblake", 3, false);
     });
   </script>
   <script src="/javascripts/twitter.js" type="text/javascript"> </script>
