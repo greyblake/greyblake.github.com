@@ -392,6 +392,8 @@ So `class_eval` works slower but it's preferred since methods generated with
 * [6 Optimization Tips for Ruby MRI](http://www.igvita.com/2008/07/08/6-optimization-tips-for-ruby-mri/)
 (NOTE: `Symbol#to_proc` was ported to Ruby and it's not slow anymore)
 * ["Writing Efficient Ruby Code" by Dr. Stefan Kaes](http://my.safaribooksonline.com/book/web-development/ruby/9780321540034)
+* [Top 10 Ruby on Rails performance tips ](http://programmingzen.com/2007/02/10/top-10-ruby-on-rails-performance-tips/)
+* [20 Ruby Performance Tips](http://blog.monitis.com/index.php/2012/02/08/20-ruby-performance-tips/)
 * [A Beginner’s Guide to Big O Notation](http://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/)
 
 
