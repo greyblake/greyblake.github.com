@@ -1,19 +1,20 @@
 ---
 layout: post
-title: "Ruby performance antipatterns"
-date: 2012-08-12 13:23
+title: "Ruby performance tricks"
+date: 2012-09-02 23:34
 comments: true
-published: false
-categories: ruby exception performance string concatenation
+published: true
+categories: ruby exception performance string concatenation reader writer accessor variable
 ---
 
-This time I want to describe common ways developers use to slow down ruby applications.
+I did some benchmarks to find out which alternatives to write code work faster. I wanna
+share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.
 
-## Exceptions for a control flow
 
-In ruby exceptions are pretty slow.
-Consider an example with usage of `respond_to?` and conditional statement
-against catching `NoMethodError`:
+## Do not use exceptions for a control flow
+
+The next example is pretty stupid but it shows how exceptions slow against
+conditional statements.
 
 ```ruby
 require 'benchmark'
@@ -58,12 +59,7 @@ MRI 1.8.7 (REE has similar result):
     rescue/condition:  24.250000        inf       -nan ( 24.481970)
 
 
-As you see the solution with exception is much slower than using conditional statement.
-And that's true for all kind of exceptions. Normally exceptions should not be used for a control flow.
-Read [Simone Carletti's article](http://www.simonecarletti.com/blog/2010/01/how-slow-are-ruby-exceptions/)
-to find out more about exceptions and performance issues.
-
-## Using += to join strings
+## String concatenation
 
 Avoid using `+=` to concatenate strings in favor of `<<` method.
 The result is absolutely the same: add a string to the end of an existing one.
@@ -87,7 +83,7 @@ When you use `+=` ruby creates a temporal object which is result of `str1 + str2
 Then it overrides `str1` variable with reference to the new built object.
 On other hand `<<` modifies existing one.
 
-As result of using `+=` you have the next disadvantages:
+As a result of using `+=` you have the next disadvantages:
 
 * More calculation to join strings.
 * Redundant string object in memory (previous value of `str1`), which approximates time when
@@ -157,7 +153,7 @@ Output:
     += VS <<   625.400000 339.800000        NaN (455.961373)
 
 
-## Nested iterators
+## Be careful with calculation within iterators
 
 Assume you need to write a function to convert an array into a hash
 where keys and values are same as elements of the array:
@@ -235,11 +231,168 @@ Output:
     O(n2)      17.850000   0.080000  17.930000 ( 17.983827)
 
 
-It's an obvious and trivial example. Just keep in mind that
-using nested iterating methods like `each`, `map`, `inject` makes your
-algorithm much slower, and it's better to avoid it when it's possible, even
-if you code would look less sexy.
+It's an obvious and trivial example. Just keep in mind to not do
+hard calculation within iterators if it's possible.
 
-If you are not aware about **big O notation** then
-[Rob Bell's article](http://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/)
-will be helpful.
+
+## Use bang! methods
+
+In many cases bang methods do the same as there non-bang analogues but without
+duplication an object. The previous example with `merge!` would be much faster:
+
+
+```ruby
+require 'benchmark'
+
+def merge!(array)
+  array.inject({}) { |h, e| h.merge!(e => e) }
+end
+
+def merge(array)
+  array.inject({}) { |h, e| h.merge(e => e) }
+end
+
+N = 10_000
+array = (0..N).to_a
+
+Benchmark.bm(10) do |x|
+  x.report("merge!") { merge!(array) }
+  x.report("merge")  { merge(array)  }
+end
+```
+
+Output:
+                     user     system      total        real
+    merge!       0.010000   0.000000   0.010000 (  0.011370)
+    merge       17.710000   0.000000  17.710000 ( 17.840856)
+
+
+
+
+## Use instance variables
+
+Accessing instance variable directly is about two times faster than accessing
+them with accessor methods:
+
+```ruby
+require 'benchmark'
+
+class Metric
+  attr_accessor :var
+
+  def initialize(n)
+    @n   = n
+    @var = 22
+  end
+
+  def run
+    Benchmark.bm(10) do |x|
+      x.report("@var") { @n.times { @var } }
+      x.report("var" ) { @n.times { var  } }
+      x.report("@var =")     { @n.times {|i| @var = i     } }
+      x.report("self.var =") { @n.times {|i| self.var = i } }
+    end
+  end
+end
+
+metric = Metric.new(100_000_000)
+metric.run
+```
+
+Output:
+                     user     system      total        real
+    @var         6.980000   0.010000   6.990000 (  7.193725)
+    var         13.040000   0.000000  13.040000 ( 13.131711)
+    @var =       7.960000   0.000000   7.960000 (  8.242603)
+    self.var =  14.910000   0.010000  14.920000 ( 15.960125)
+
+
+## Parallel assignment is slower
+
+```ruby
+require 'benchmark'
+
+N = 10_000_000
+
+Benchmark.bm(15) do |x|
+  x.report('parallel') do
+    N.times do
+      a, b = 10, 20
+    end
+  end
+
+  x.report('consequentially') do |x|
+    N.times do
+      a = 10
+      b = 20
+    end
+  end
+end
+```
+
+Output:
+                          user     system      total        real
+    parallel          1.900000   0.000000   1.900000 (  1.928063)
+    consequentially   0.880000   0.000000   0.880000 (  0.879675)
+
+## Dynamic method defention
+
+What is the faster way to define method dynamically: `class_eval` with a code string
+or using `define_method`? Which way generated methods work faster?
+
+```ruby
+require 'benchmark'
+
+class Metric
+  N = 1_000_000
+
+  def self.class_eval_with_string
+    N.times do |i|
+      class_eval(<<-eorb, __FILE__, __LINE__ + 1)
+        def smeth_#{i}
+          #{i}
+        end
+      eorb
+    end
+  end
+
+  def self.with_define_method
+    N.times do |i|
+      define_method("dmeth_#{i}") do
+        i
+      end
+    end
+  end
+end
+
+Benchmark.bm(22) do |x|
+  x.report("class_eval with string") { Metric.class_eval_with_string }
+  x.report("define_method")          { Metric.with_define_method     }
+
+  metric = Metric.new
+  x.report("string method")  { Metric::N.times { metric.smeth_1 } }
+  x.report("dynamic method") { Metric::N.times { metric.dmeth_1 } }
+end
+```
+
+Output:
+                                 user     system      total        real
+    class_eval with string 219.840000   0.720000 220.560000 (221.933074)
+    define_method           61.280000   0.240000  61.520000 ( 62.070911)
+    string method            0.110000   0.000000   0.110000 (  0.111433)
+    dynamic method           0.150000   0.000000   0.150000 (  0.156537)
+
+So `class_eval` works slower but it's preferred since methods generated with
+`class_eval` and a string of code work faster.
+
+
+## Links
+
+* [How Slow Are Ruby Exceptions](http://www.simonecarletti.com/blog/2010/01/how-slow-are-ruby-exceptions/)
+* [6 Optimization Tips for Ruby MRI](http://www.igvita.com/2008/07/08/6-optimization-tips-for-ruby-mri/)
+(NOTE: `Symbol#to_proc` was ported to Ruby and it's not slow anymore)
+* ["Writing Efficient Ruby Code" by Dr. Stefan Kaes](http://my.safaribooksonline.com/book/web-development/ruby/9780321540034)
+* [A Beginner’s Guide to Big O Notation](http://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/)
+
+
+Danke.
