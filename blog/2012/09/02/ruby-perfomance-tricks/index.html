@@ -1,0 +1,884 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Ruby performance tricks - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="I did some benchmarks to find out which alternatives to write code work faster. I wanna
+share it with you. All benchmarks are made against ruby 1.9. &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Ruby Performance Tricks</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-02T23:34:00+03:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I did some benchmarks to find out which alternatives to write code work faster. I wanna
+share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.</p>
+
+<h2>Do not use exceptions for a control flow</h2>
+
+<p>The next example is pretty stupid but it shows how exceptions slow against
+conditional statements.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Obj</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">with_condition</span>
+</span><span class='line'>    <span class="nb">respond_to?</span><span class="p">(</span><span class="ss">:mythical_method</span><span class="p">)</span> <span class="p">?</span> <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span> <span class="p">:</span> <span class="kp">nil</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">with_rescue</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span>
+</span><span class='line'>  <span class="k">rescue</span> <span class="no">NoMethodError</span>
+</span><span class='line'>    <span class="kp">nil</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">obj</span> <span class="o">=</span> <span class="no">Obj</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">puts</span> <span class="no">RUBY_DESCRIPTION</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s2">&quot;rescue/condition&quot;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">rescue_report</span>     <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;rescue:&quot;</span><span class="p">)</span>    <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_rescue</span>  <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">condition_report</span>  <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;condition:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_if</span>      <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>  <span class="o">[</span><span class="n">rescue_report</span> <span class="o">/</span> <span class="n">condition_report</span><span class="o">]</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>MRI 1.9.3:</p>
+
+<pre><code>ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
+                        user     system      total        real
+rescue:           111.530000   2.650000 114.180000 (115.837103)
+condition:          2.620000   0.010000   2.630000 (  2.633154)
+rescue/condition:  42.568702 265.000000        NaN ( 43.991767)
+</code></pre>
+
+<p>MRI 1.8.7 (REE has similar result):</p>
+
+<pre><code>ruby 1.8.7 (2011-12-28 patchlevel 357) [x86_64-linux]
+                        user     system      total        real
+rescue:            80.510000   0.940000  81.450000 ( 81.529022)
+if:                 3.320000   0.000000   3.320000 (  3.330166)
+rescue/condition:  24.250000        inf       -nan ( 24.481970)
+</code></pre>
+
+<h2>String concatenation</h2>
+
+<p>Avoid using <code>+=</code> to concatenate strings in favor of <code>&lt;&lt;</code> method.
+The result is absolutely the same: add a string to the end of an existing one.
+What is the difference then?</p>
+
+<p>See the example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;first&quot;</span>
+</span><span class='line'><span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;second&quot;</span>
+</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>       <span class="c1"># =&gt; 16241320</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">str1</span> <span class="o">+=</span> <span class="n">str2</span>    <span class="c1"># str1 = str1 + str2</span>
+</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>  <span class="c1"># =&gt; 16241240, id is changed</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">str1</span> <span class="o">&lt;&lt;</span> <span class="n">str2</span>
+</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>  <span class="c1"># =&gt; 16241240, id is the same</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When you use <code>+=</code> ruby creates a temporal object which is result of <code>str1 + str2</code>.
+Then it overrides <code>str1</code> variable with reference to the new built object.
+On other hand <code>&lt;&lt;</code> modifies existing one.</p>
+
+<p>As a result of using <code>+=</code> you have the next disadvantages:</p>
+
+<ul>
+<li>More calculation to join strings.</li>
+<li>Redundant string object in memory (previous value of <code>str1</code>), which approximates time when
+<a href="http://en.wikipedia.org/wiki/Garbage_collection_%28computer_science%29">GC</a> will trigger.</li>
+</ul>
+
+
+<p>How <code>+=</code> is slow? Basically it depends on length of strings you have operation with.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
+</span><span class='line'><span class="no">BASIC_LENGTH</span> <span class="o">=</span> <span class="mi">10</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">5</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">factor</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">length</span> <span class="o">=</span> <span class="no">BASIC_LENGTH</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">factor</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;_&quot;</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">LENGTH: </span><span class="si">#{</span><span class="n">length</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;+= VS &lt;&lt;&#39;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">concat_report</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;+=&quot;</span><span class="p">)</span>  <span class="k">do</span>
+</span><span class='line'>      <span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span class='line'>      <span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span> <span class="o">*</span> <span class="n">length</span>
+</span><span class='line'>      <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">str1</span> <span class="o">+=</span> <span class="n">str2</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">modify_report</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;&lt;&lt;&quot;</span><span class="p">)</span>  <span class="k">do</span>
+</span><span class='line'>      <span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span>
+</span><span class='line'>      <span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span> <span class="o">*</span> <span class="n">length</span>
+</span><span class='line'>      <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">str1</span> <span class="o">&lt;&lt;</span> <span class="n">str2</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="o">[</span><span class="n">concat_report</span> <span class="o">/</span> <span class="n">modify_report</span><span class="o">]</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>____________________________________________________________
+LENGTH: 10
+                 user     system      total        real
++=           0.000000   0.000000   0.000000 (  0.004671)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.000176)
++= VS &lt;&lt;          NaN        NaN        NaN ( 26.508796)
+____________________________________________________________
+LENGTH: 100
+                 user     system      total        real
++=           0.020000   0.000000   0.020000 (  0.022995)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.000226)
++= VS &lt;&lt;          Inf        NaN        NaN (101.845829)
+____________________________________________________________
+LENGTH: 1000
+                 user     system      total        real
++=           0.270000   0.120000   0.390000 (  0.390888)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.001730)
++= VS &lt;&lt;          Inf        Inf        NaN (225.920077)
+____________________________________________________________
+LENGTH: 10000
+                 user     system      total        real
++=           3.660000   1.570000   5.230000 (  5.233861)
+&lt;&lt;           0.000000   0.010000   0.010000 (  0.015099)
++= VS &lt;&lt;          Inf 157.000000        NaN (346.629692)
+____________________________________________________________
+LENGTH: 100000
+                 user     system      total        real
++=          31.270000  16.990000  48.260000 ( 48.328511)
+&lt;&lt;           0.050000   0.050000   0.100000 (  0.105993)
++= VS &lt;&lt;   625.400000 339.800000        NaN (455.961373)
+</code></pre>
+
+<h2>Be careful with calculation within iterators</h2>
+
+<p>Assume you need to write a function to convert an array into a hash
+where keys and values are same as elements of the array:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">func</span><span class="p">(</span><span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="o">]</span><span class="p">)</span>  <span class="c1"># =&gt; {1 =&gt; 1, 2 =&gt; 2, 3 =&gt; 3}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The next solution would satisfy the requirements:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And would be extremely slow with big portions of data because it contains
+nested methods (<code>inject</code> and <code>merge</code>), so it&#8217;s <strong> O(n<sup>2</sup>) </strong> algorithm.
+But it&#8217;s obviously that it must be <strong> O(n) </strong>.
+Consider the next:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">[</span><span class="n">e</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span> <span class="n">h</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case we do only one iteration over an array without any hard calculation
+within the iterator.</p>
+
+<p>See the benchmark:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">n_func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">[</span><span class="n">e</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span> <span class="n">h</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">n2_func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">BASE_SIZE</span> <span class="o">=</span> <span class="mi">10</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">4</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">factor</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">size</span>   <span class="o">=</span> <span class="no">BASE_SIZE</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">factor</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="n">.size</span><span class="p">)</span><span class="o">.</span><span class="n">to_a</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;_&quot;</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">SIZE: </span><span class="si">#{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;O(n)&quot;</span> <span class="p">)</span> <span class="p">{</span> <span class="n">n_func</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>  <span class="p">}</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;O(n2)&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">n2_func</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>____________________________________________________________
+SIZE: 10
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000014)
+O(n2)       0.000000   0.000000   0.000000 (  0.000033)
+____________________________________________________________
+SIZE: 100
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000043)
+O(n2)       0.000000   0.000000   0.000000 (  0.001070)
+____________________________________________________________
+SIZE: 1000
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000347)
+O(n2)       0.130000   0.000000   0.130000 (  0.127638)
+____________________________________________________________
+SIZE: 10000
+                user     system      total        real
+O(n)        0.020000   0.000000   0.020000 (  0.019067)
+O(n2)      17.850000   0.080000  17.930000 ( 17.983827)
+</code></pre>
+
+<p>It&#8217;s an obvious and trivial example. Just keep in mind to not do
+hard calculation within iterators if it&#8217;s possible.</p>
+
+<h2>Use bang! methods</h2>
+
+<p>In many cases bang methods do the same as there non-bang analogues but without
+duplication an object. The previous example with <code>merge!</code> would be much faster:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">merge!</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge!</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000</span>
+</span><span class='line'><span class="n">array</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="n">.N</span><span class="p">)</span><span class="o">.</span><span class="n">to_a</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;merge!&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">merge!</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;merge&quot;</span><span class="p">)</span>  <span class="p">{</span> <span class="n">merge</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>  <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>                 user     system      total        real
+merge!       0.010000   0.000000   0.010000 (  0.011370)
+merge       17.710000   0.000000  17.710000 ( 17.840856)
+</code></pre>
+
+<h2>Use instance variables</h2>
+
+<p>Accessing instance variable directly is about two times faster than accessing
+them with accessor methods:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Metric</span>
+</span><span class='line'>  <span class="kp">attr_accessor</span> <span class="ss">:var</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@n</span>   <span class="o">=</span> <span class="n">n</span>
+</span><span class='line'>    <span class="vi">@var</span> <span class="o">=</span> <span class="mi">22</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">run</span>
+</span><span class='line'>    <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;@var&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="vi">@var</span> <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;var&quot;</span> <span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">var</span>  <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;@var =&quot;</span><span class="p">)</span>     <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span><span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="vi">@var</span> <span class="o">=</span> <span class="n">i</span>     <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;self.var =&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span><span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="nb">self</span><span class="o">.</span><span class="n">var</span> <span class="o">=</span> <span class="n">i</span> <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">metric</span> <span class="o">=</span> <span class="no">Metric</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">100_000_000</span><span class="p">)</span>
+</span><span class='line'><span class="n">metric</span><span class="o">.</span><span class="n">run</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>                 user     system      total        real
+@var         6.980000   0.010000   6.990000 (  7.193725)
+var         13.040000   0.000000  13.040000 ( 13.131711)
+@var =       7.960000   0.000000   7.960000 (  8.242603)
+self.var =  14.910000   0.010000  14.920000 ( 15.960125)
+</code></pre>
+
+<h2>Parallel assignment is slower</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;consequentially&#39;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">a</span> <span class="o">=</span> <span class="mi">10</span>
+</span><span class='line'>      <span class="n">b</span> <span class="o">=</span> <span class="mi">20</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>                      user     system      total        real
+parallel          1.900000   0.000000   1.900000 (  1.928063)
+consequentially   0.880000   0.000000   0.880000 (  0.879675)
+</code></pre>
+
+<h2>Dynamic method defention</h2>
+
+<p>What is the faster way to define method dynamically: <code>class_eval</code> with a code string
+or using <code>define_method</code>? Which way generated methods work faster?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Metric</span>
+</span><span class='line'>  <span class="n">N</span> <span class="o">=</span> <span class="mi">1_000_000</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">class_eval_with_string</span>
+</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">class_eval</span><span class="p">(</span><span class="o">&lt;&lt;-</span><span class="no">eorb</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">,</span> <span class="bp">__LINE__</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'><span class="sh">        def smeth_#{i}</span>
+</span><span class='line'><span class="sh">          #{i}</span>
+</span><span class='line'><span class="sh">        end</span>
+</span><span class='line'><span class="no">      eorb</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">with_define_method</span>
+</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">define_method</span><span class="p">(</span><span class="s2">&quot;dmeth_</span><span class="si">#{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">i</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">22</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;class_eval with string&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="no">Metric</span><span class="o">.</span><span class="n">class_eval_with_string</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;define_method&quot;</span><span class="p">)</span>          <span class="p">{</span> <span class="no">Metric</span><span class="o">.</span><span class="n">with_define_method</span>     <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">metric</span> <span class="o">=</span> <span class="no">Metric</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;string method&quot;</span><span class="p">)</span>  <span class="p">{</span> <span class="no">Metric</span><span class="o">::</span><span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">metric</span><span class="o">.</span><span class="n">smeth_1</span> <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;dynamic method&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="no">Metric</span><span class="o">::</span><span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">metric</span><span class="o">.</span><span class="n">dmeth_1</span> <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>                             user     system      total        real
+class_eval with string 219.840000   0.720000 220.560000 (221.933074)
+define_method           61.280000   0.240000  61.520000 ( 62.070911)
+string method            0.110000   0.000000   0.110000 (  0.111433)
+dynamic method           0.150000   0.000000   0.150000 (  0.156537)
+</code></pre>
+
+<p>So <code>class_eval</code> works slower but it&#8217;s preferred since methods generated with
+<code>class_eval</code> and a string of code work faster.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="http://www.simonecarletti.com/blog/2010/01/how-slow-are-ruby-exceptions/">How Slow Are Ruby Exceptions</a></li>
+<li><a href="http://www.igvita.com/2008/07/08/6-optimization-tips-for-ruby-mri/">6 Optimization Tips for Ruby MRI</a>
+(NOTE: <code>Symbol#to_proc</code> was ported to Ruby and it&#8217;s not slow anymore)</li>
+<li><a href="http://my.safaribooksonline.com/book/web-development/ruby/9780321540034">&#8220;Writing Efficient Ruby Code&#8221; by Dr. Stefan Kaes</a></li>
+<li><a href="http://programmingzen.com/2007/02/10/top-10-ruby-on-rails-performance-tips/">Top 10 Ruby on Rails performance tips </a></li>
+<li><a href="http://blog.monitis.com/index.php/2012/02/08/20-ruby-performance-tips/">20 Ruby Performance Tips</a></li>
+<li><a href="http://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/">A Beginner’s Guide to Big O Notation</a></li>
+</ul>
+
+
+<p>Danke.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-02T23:34:00+03:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/accessor/'>accessor</a>, <a class='category' href='/blog/categories/concatenation/'>concatenation</a>, <a class='category' href='/blog/categories/exception/'>exception</a>, <a class='category' href='/blog/categories/performance/'>performance</a>, <a class='category' href='/blog/categories/reader/'>reader</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/string/'>string</a>, <a class='category' href='/blog/categories/variable/'>variable</a>, <a class='category' href='/blog/categories/writer/'>writer</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2012/08/10/unexpected-ruby-behaviour/" title="Previous Post: Unexpected Ruby behaviour">&laquo; Unexpected Ruby behaviour</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby performance tricks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/08/10/unexpected-ruby-behaviour/">Unexpected Ruby behaviour</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">How to build Vim against specific Ruby version</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Тестируем вложенные ActiveRecord-модели с RSpec</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/">I released Smartdict version 0.1.0</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/';
+        var disqus_url = 'http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
