@@ -58,6 +58,7 @@ MRI 1.8.7 (REE has similar result):
     if:                 3.320000   0.000000   3.320000 (  3.330166)
     rescue/condition:  24.250000        inf       -nan ( 24.481970)
 
+<!--more-->
 
 ## String concatenation
 
