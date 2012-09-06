@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Sergey Potapov</title>
+  <title>pg_power - ActiveRecord extension for PostgreSQL - Sergey Potapov</title>
   <meta name="author" content="Sergey Potapov">
 
   
@@ -20,7 +20,7 @@ allows to use number of PostgreSQL features with Rails &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://greyblake.com/">
+  <link rel="canonical" href="http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -86,16 +86,13 @@ allows to use number of PostgreSQL features with Rails &hellip;">
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">Pg_power - ActiveRecord Extension for PostgreSQL</a></h1>
+      
+        <h1 class="entry-title">Pg_power - ActiveRecord Extension for PostgreSQL</h1>
       
     
     
@@ -119,7 +116,7 @@ allows to use number of PostgreSQL features with Rails &hellip;">
   </header>
 
 
-  <div class="entry-content"><p>I am happy to announce that  <a href="http://tmxcredit.com/">TMXCredit</a> released
+<div class="entry-content"><p>I am happy to announce that  <a href="http://tmxcredit.com/">TMXCredit</a> released
 <a href="https://github.com/TMXCredit/pg_power">pg_power</a> gem - an ActiveRecord extension which
 allows to use number of PostgreSQL features with Rails.</p>
 
@@ -280,24 +277,16 @@ schema prefix in module and models will use it build table name automatically.</
 
 <p>Thanks. Sergey Potapov.</p>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby Performance Tricks</a></h1>
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
       
-    
-    
-      <p class="meta">
-        
 
 
 
@@ -309,460 +298,38 @@ schema prefix in module and models will use it build table name automatically.</
   
 
 
-<time datetime="2012-09-02T23:34:00+03:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time>
-        
-      </p>
+<time datetime="2012-09-06T23:24:00+03:00" pubdate data-updated="true">Sep 6<span>th</span>, 2012</time>
+      
+
+
+    </p>
     
-  </header>
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/" >Tweet</a>
+  
+  
+  
+</div>
 
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2012/09/02/ruby-perfomance-tricks/" title="Previous Post: Ruby performance tricks">&laquo; Ruby performance tricks</a>
+      
+      
+    </p>
+  </footer>
+</article>
 
-  <div class="entry-content"><p>I did some benchmarks to find out which alternatives to write code work faster. I wanna
-share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.</p>
-
-<h2>Do not use exceptions for a control flow</h2>
-
-<p>The next example is pretty stupid but it shows how exceptions slow against
-conditional statements.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Obj</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">with_condition</span>
-</span><span class='line'>    <span class="nb">respond_to?</span><span class="p">(</span><span class="ss">:mythical_method</span><span class="p">)</span> <span class="p">?</span> <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span> <span class="p">:</span> <span class="kp">nil</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">with_rescue</span>
-</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span>
-</span><span class='line'>  <span class="k">rescue</span> <span class="no">NoMethodError</span>
-</span><span class='line'>    <span class="kp">nil</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">obj</span> <span class="o">=</span> <span class="no">Obj</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
-</span><span class='line'>
-</span><span class='line'><span class="nb">puts</span> <span class="no">RUBY_DESCRIPTION</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s2">&quot;rescue/condition&quot;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">rescue_report</span>     <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;rescue:&quot;</span><span class="p">)</span>    <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_rescue</span>  <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="n">condition_report</span>  <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;condition:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_if</span>      <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="o">[</span><span class="n">rescue_report</span> <span class="o">/</span> <span class="n">condition_report</span><span class="o">]</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>MRI 1.9.3:</p>
-
-<pre><code>ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
-                        user     system      total        real
-rescue:           111.530000   2.650000 114.180000 (115.837103)
-condition:          2.620000   0.010000   2.630000 (  2.633154)
-rescue/condition:  42.568702 265.000000        NaN ( 43.991767)
-</code></pre>
-
-<p>MRI 1.8.7 (REE has similar result):</p>
-
-<pre><code>ruby 1.8.7 (2011-12-28 patchlevel 357) [x86_64-linux]
-                        user     system      total        real
-rescue:            80.510000   0.940000  81.450000 ( 81.529022)
-if:                 3.320000   0.000000   3.320000 (  3.330166)
-rescue/condition:  24.250000        inf       -nan ( 24.481970)
-</code></pre>
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/09/02/ruby-perfomance-tricks/">Read on &rarr;</a>
-    </footer>
-  
 
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/08/10/unexpected-ruby-behaviour/">Unexpected Ruby Behaviour</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-08-10T23:28:00+03:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Ruby is a cool language with intuitive grammar. However there are a number of things which don&#8217;t seem to be expected.
-It might take long hours to debug some weird issues for unenlightened newbies.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/08/10/unexpected-ruby-behaviour/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">How to Build Vim Against Specific Ruby Version</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-07-15T23:00:00+03:00" pubdate data-updated="true">Jul 15<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Let&#8217;s say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
-But what if you need Vim compiled with Ruby 1.9.x?
-I&#8217;m gonna tell you how to do it.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Тестируем вложенные ActiveRecord-модели с RSpec</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-07-06T22:19:00+03:00" pubdate data-updated="true">Jul 6<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
-и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, как нужно. На самом деле
-задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/">I Released Smartdict Version 0.1.0</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-06-11T03:20:00+03:00" pubdate data-updated="true">Jun 11<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Today I released <a href="http://smartdict.net/blog/2012/06/11/smartdict-0-dot-1-0-is-released/">Smartdict version 0.1.0</a>.
-Please give me a favour and check it out.</p>
-
-<p>I&#8217;m gonna implement a vim plugin based on <a href="https://github.com/smartdict/smartdict-core">smartdict-core</a>.
-That will the next step in this direction, since I realy need it.</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/">Получаем Premium на busuu.com бесплатно</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-05-21T17:42:20+03:00" pubdate data-updated="true">May 21<span>st</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Недавно я начал пользоваться сервисом <a href="http://www.busuu.com">busuu.com</a>. Очень классная вещь, но вот беда: спустя неделю часть функционала перестала работать, предлагая купить Premium аккаунт за 69,99 EUR.</p>
-
-<p>Одна из полезностей которые пропали, была возможность прослушивания ключевых фраз во время изучения новых слов. Кнопка, при нажатие на которую должна произносится фраза, превратилась в обычную ссылку на страницу, которая предлагает купить Premium.</p>
-
-<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/play_button.png" alt="bussu play button" /></p>
-
-<p>Мне стало интересно, а можно ли это обойти? Оказалось, что можно! Файловый сервер, который отдаёт аудио-файлы никак не проверяет права пользователя, а сами ссылки на файлы можно прямо получить из ответов сервера на AJAX-запросы, которые отсылаются при нажатии на следующее/предыдущее слово.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/01/30/razgonyaem-mozg/">Разгоняем мозг</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-01-30T00:33:36+02:00" pubdate data-updated="true">Jan 30<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Несколько месяцев назад я был очень сильно озабочен своей продуктивностью. Здесь собраны некоторые рецепты повышения эффективности мозговой деятельности, которые мне удалось отыскать, большинство из них взяты из книги Вина Венгера &#8220;Фактор Эйнштейна&#8221;.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/01/30/razgonyaem-mozg/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2011/11/27/synchonize-application-data-using-git/">Synchonize Application Data Using Git</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-11-27T00:43:11+02:00" pubdate data-updated="true">Nov 27<span>th</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I started writing a diary using <a href="http://rednotebook.sourceforge.net">rednotebook</a> application. It&#8217;s realy cool, but I stuck with a problem: I want to use it everywhere on any device and keep all my notes synchonized. So I decided to create a simple tool called <strong>gync</strong> to help me.</p>
-
-<p>Please check it out on Github: <a href="https://github.com/greyblake/gync">https://github.com/greyblake/gync</a></p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/">Perfomance Benchmakrs ExecJS vs Ruby</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-10-23T08:49:33+03:00" pubdate data-updated="true">Oct 23<span>rd</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you&#8217;re are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google&#8217;s V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  <div class="pagination">
-    
-      <a class="prev" href="/blog/page/2/">&larr; Older</a>
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
-</div>
 <aside class="sidebar">
   
     <section>
@@ -795,7 +362,7 @@ That will the next step in this direction, since I realy need it.</p>
 <section>
   <h1>GitHub Repos</h1>
   <ul id="gh_repos">
-    <li class="loading">Status updating&#8230;</li>
+    <li class="loading">Status updating...</li>
   </ul>
   
   <a href="https://github.com/greyblake">@greyblake</a> on GitHub
@@ -825,7 +392,7 @@ That will the next step in this direction, since I realy need it.</p>
 <section>
   <h1>Latest Tweets</h1>
   <ul id="tweets">
-    <li class="loading">Status updating&#8230;</li>
+    <li class="loading">Status updating...</li>
   </ul>
   <script type="text/javascript">
     $.domReady(function(){
@@ -845,6 +412,7 @@ That will the next step in this direction, since I realy need it.</p>
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -859,7 +427,10 @@ That will the next step in this direction, since I realy need it.</p>
       var disqus_shortname = 'greyblake';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/';
+        var disqus_url = 'http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
