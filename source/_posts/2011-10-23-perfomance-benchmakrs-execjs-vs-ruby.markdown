@@ -8,6 +8,8 @@ categories: ExecJS javascript benchmark perfomance ruby
 
 Yesterday on RubyShift [Thorben Schröder](http://www.xing.com/profile/Thorben_Schroeder) talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you're are using [therubyracer](https://github.com/cowboyd/therubyracer)(wrapper for Google's V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.
 
+<!--more-->
+
 ```ruby benchmark.rb
 
 require 'rubygems'

@@ -3,7 +3,7 @@
 # ----------------------- #
 
 url: http://greyblake.com
-title: Sergey Potapov Online
+title: Sergey Potapov
 subtitle: Talking about Linux, Ruby and other hackers' stuff.
 author: Sergey Potapov
 simple_search: http://google.com/search
@@ -59,13 +59,13 @@ default_asides: [asides/recent_posts.html, asides/github.html, asides/twitter.ht
 
 # Github repositories
 github_user: greyblake
-github_repo_count: 10
+github_repo_count: 5
 github_show_profile_link: true
 github_skip_forks: true
 
 # Twitter
 twitter_user: greyblake
-twitter_tweet_count: 4
+twitter_tweet_count: 3
 twitter_show_replies: false
 twitter_follow_button: true
 twitter_show_follower_count: false

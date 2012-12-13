@@ -6,7 +6,7 @@ comments: true
 categories: beep alarm Linux bash
 ---
 
-## Intro 
+## Intro
 
 Someone would say I am brainsick... So may be I am.
 
@@ -17,10 +17,11 @@ Some times after I decided that simple "Be-e-e-e-p" sound is borring and I creat
 It can play tunes defined in format for old Nokia mobiles.
 Have you ever type something like this:
 
-    8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1 
+    8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
 
 ...to add new ringtone for your mobile?
 
+<!--more-->
 
 ## Getting and usage
 
@@ -48,7 +49,7 @@ You can even change tempo of tune(default is 120)!
     beep-alarm -t 200
 
 And even play a tune in different keynote:
-    
+
     # Down for 2 semitones
     beep-alarm -o -2
 
