@@ -1,0 +1,525 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Тестируем вложенные ActiveRecord-модели с RSpec - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
+и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Тестируем вложенные ActiveRecord-модели с RSpec</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-07-06T22:19:00+03:00" pubdate data-updated="true">Jul 6<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
+и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, как нужно. На самом деле
+задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
+
+<!--more-->
+
+
+<p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
+(На практике обычно моделей намного больше с большим количеством свойств).</p>
+
+<figure class='code'><figcaption><span>user.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:first_name</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">has_one</span> <span class="ss">:account</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>account.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Account</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:last_visit_date</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
+</span><span class='line'>  <span class="n">has_one</span> <span class="ss">:preference</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>preference.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Preference</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:language</span><span class="p">,</span> <span class="ss">:weapon</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Предположим у нас есть некий builder, который строит объект User и все завимимые
+модели(Account и Preference). Всё что мы хотим сделать - это протестировать,
+что граф объектов построен правильно.</p>
+
+<p>Вот пример реализации стандартного rspec-теста, который первым приходит на ум:</p>
+
+<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">describe</span> <span class="s1">&#39;user&#39;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">its</span><span class="p">(</span><span class="ss">:first_name</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>      <span class="p">}</span>
+</span><span class='line'>      <span class="n">its</span><span class="p">(</span><span class="ss">:last_name</span><span class="p">)</span>  <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">describe</span> <span class="s1">&#39;account&#39;</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span><span class="o">.</span><span class="n">account</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">its</span><span class="p">(</span><span class="ss">:email</span><span class="p">)</span>           <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>       <span class="p">}</span>
+</span><span class='line'>        <span class="n">its</span><span class="p">(</span><span class="ss">:last_visit_date</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">describe</span> <span class="s1">&#39;preference&#39;</span> <span class="k">do</span>
+</span><span class='line'>          <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="n">its</span><span class="p">(</span><span class="ss">:language</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span> <span class="p">}</span>
+</span><span class='line'>          <span class="n">its</span><span class="p">(</span><span class="ss">:weapon</span><span class="p">)</span>   <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>      <span class="p">}</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Всё читаемо, красиво и просто. Но проблема в том, что получилось шесть тестов(по тесту на
+каждый атрибут), которые тестируют лишь одно действие - постороение объекта. Когда операция построения
+занимает немало времени, а количество атрибутов на порядок больше, такой подход
+становится далеко не самым лучшим, поскольку возрастает время выполнения.
+Если объект не сохраняется в базе то вполне разумным будет использовать <code>before :all</code>. Но если
+вам приходится сохранять объект и вы используете опцию <code>config.use_transactional_fixtures = true</code>,
+потому что не хотите &#8220;гадить&#8221; в базу, то этот вариант не подойдёт.</p>
+
+<p>Можно пойти по пути классического unit-тестирования и сделать тест подобным этому:</p>
+
+<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">it</span> <span class="s1">&#39;should correctly build a user&#39;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="o">.</span><span class="n">should</span>  <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">should</span>           <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">last_visit_date</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span><span class="o">.</span><span class="n">weapon</span><span class="o">.</span><span class="n">should</span>   <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Получилось даже лаконичнее, но менее читаемо(уж когда будет больше вложенность объектов,
+будет точно менее читаемо). Так же раздрожает длинные цепочки одинаковых методов.</p>
+
+<p>Помедитировав над проблемой, я нашёл компроммиссное решение на основе метода <code>instance_eval</code>.</p>
+
+<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">it</span> <span class="s1">&#39;should correctly build a user&#39;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">first_name</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>
+</span><span class='line'>        <span class="n">last_name</span><span class="o">.</span><span class="n">should</span>  <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">account</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
+</span><span class='line'>          <span class="n">email</span><span class="o">.</span><span class="n">should</span>           <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>
+</span><span class='line'>          <span class="n">last_visit_date</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="n">preference</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
+</span><span class='line'>            <span class="n">language</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span>
+</span><span class='line'>            <span class="n">weapon</span><span class="o">.</span><span class="n">should</span>   <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Это по-прежнему один тест, но мы избавились от длинных цепочек методов.
+Нужно заметить, что у такого подхода есть тоже свои недостатки: используя <code>instance_eval</code>
+мы покидаем контекст теста, и переходим прямо в контекст объекта, в котором не существует методов подобных
+<code>be_valid</code>, <code>be_instance_of</code>, etc.</p>
+
+<p>Надеюсь, эта идея будет вам полезной. Буду рад узнать чужое мнение.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-07-06T22:19:00+03:00" pubdate data-updated="true">Jul 6<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/activerecord-/'>ActiveRecord,</a>, <a class='category' href='/blog/categories/rspec-/'>RSpec,</a>, <a class='category' href='/blog/categories/rails-/'>Rails,</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/ruby-/'>Ruby,</a>, <a class='category' href='/blog/categories/on/'>on</a>, <a class='category' href='/blog/categories/test-/'>test,</a>, <a class='category' href='/blog/categories/unit-/'>unit,</a>, <a class='category' href='/blog/categories/модель/'>модель</a>, <a class='category' href='/blog/categories/тест-/'>тест,</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/" title="Previous Post: I released Smartdict version 0.1.0">&laquo; I released Smartdict version 0.1.0</a>
+      
+      
+        <a class="basic-alignment right articlenav" href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/" title="Next Post: How to build Vim against specific Ruby version">How to build Vim against specific Ruby version &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">pg_power - ActiveRecord extension for PostgreSQL</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby performance tricks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/08/10/unexpected-ruby-behaviour/">Unexpected Ruby behaviour</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">How to build Vim against specific Ruby version</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Тестируем вложенные ActiveRecord-модели с RSpec</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/';
+        var disqus_url = 'http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

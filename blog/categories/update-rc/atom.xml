@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: update-rc | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/update-rc/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Using update-rc.d]]></title>
+    <link href="http://greyblake.com/blog/2011/09/18/using-update-rc-d/"/>
+    <updated>2011-09-18T21:00:00+03:00</updated>
+    <id>http://greyblake.com/blog/2011/09/18/using-update-rc-d</id>
+    <content type="html"><![CDATA[<p><code>update-rc.d</code> is tool for adding daemons to /etc/rc[1-6]d files.</p>
+
+<p>If you are using OS with System-V style init scripts you can find you <code>/etc</code> the next directories:</p>
+
+<ul>
+<li>rc0.d/</li>
+<li>rc1.d/</li>
+<li>rc2.d/</li>
+<li>rc3.d/</li>
+<li>rc4.d/</li>
+<li>rc5.d/</li>
+<li>rc6.d/</li>
+<li>rcS.d/</li>
+</ul>
+
+
+<p>So, what are they for?</p>
+
+<!--more-->
+
+
+<p>Every directory contains symbol links to daemons located in <code>/etc/init.d/</code>. And every directory represents run level. Usually your system uses third level which means multi user mode with networking. When the system is initializing it starts daemons which have appropriate symbol links in rc3.d.</p>
+
+<p>Here is a short description of every run level:</p>
+
+<ul>
+<li><strong>0 (Halt)</strong>  Shuts down the system.</li>
+<li><strong>1 (Single-User Mode)</strong>  Mode for administrative tasks.[2][3]</li>
+<li><strong>2 (Multi-User Mode)</strong>   Does not configure network interfaces and does not export networks services.[4]</li>
+<li><strong>3 (Multi-User Mode with Networking)</strong>   Starts the system normally.[5]</li>
+<li><strong>4 (Not used/User-definable)</strong>   For special purposes.</li>
+<li><strong>5 (Start the system normally with appropriate display manager.)</strong>   As runlevel 3 + display manager.</li>
+<li><strong>6 (Reboot)</strong>    Reboots the system.</li>
+</ul>
+
+
+<p>Usualy you don't need to switch levels, but if you do you should use <code>init</code> command. Take care of what you doing.</p>
+
+<p>OK, take a look at a head of some daemon scripts. For example <code>/etc/init.d/postgresql</code>:</p>
+
+<p>```bash /etc/init.d/postgresql</p>
+
+<h1>!/bin/sh</h1>
+
+<p>set -e</p>
+
+<h3>BEGIN INIT INFO</h3>
+
+<h1>Provides:             postgresql</h1>
+
+<h1>Required-Start:       $local_fs $remote_fs $network $time</h1>
+
+<h1>Required-Stop:        $local_fs $remote_fs $network $time</h1>
+
+<h1>Should-Start:         $syslog</h1>
+
+<h1>Should-Stop:          $syslog</h1>
+
+<h1>Default-Start:        2 3 4 5</h1>
+
+<h1>Default-Stop:         0 1 6</h1>
+
+<h1>Short-Description:    PostgreSQL RDBMS server</h1>
+
+<h3>END INIT INFO</h3>
+
+<p>```</p>
+
+<p>It has a self descriptive comment in an appropriate format. <code>Default-Start</code> section contains numbers of levels which runs postgres daemon. <code>Default-Stop</code> section contains number of levels which should not run PostgreSQL, so when you switch to them PostgreSQL daemon will be stopped.</p>
+
+<p>So, let's assume you have created you own daemon which knows how to process <code>start</code> and <code>stop</code> arguments and want it to run on appropriate levels. You need to create symbol links like these:</p>
+
+<pre><code>/etc/rc1.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc4.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc0.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc2.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc3.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc6.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc5.d/S02postgresql -&gt; ../init.d/postgresql
+</code></pre>
+
+<p>By the way prefix <code>K</code> means kill(stop) process and <code>S</code> means start.
+It's a little routine work, right? But in case if you have descriptive comment I metioned above you just can use <code>update-rc.d</code> tool. It creates all necessary symbol links based on the comment. So just run:</p>
+
+<pre><code>update-rc.d postgres defaults
+</code></pre>
+
+<p>Change <code>postgres</code> with name of your daemon.</p>
+
+<h2>Why?</h2>
+
+<p>Unfortunatly I often forget how this tool is called.</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: alarm | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/alarm/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Beep alarm]]></title>
+    <link href="http://greyblake.com/blog/2011/01/23/beep-alarm/"/>
+    <updated>2011-01-23T23:24:39+02:00</updated>
+    <id>http://greyblake.com/blog/2011/01/23/beep-alarm</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>Someone would say I am brainsick... So may be I am.</p>
+
+<p>By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
+So I decided to create an alarm based on <code>beep</code> Unix tool. This tool allows you to play sound with specified frequency and delay on your speaker.</p>
+
+<p>Some times after I decided that simple "Be-e-e-e-p" sound is borring and I created a player.
+It can play tunes defined in format for old Nokia mobiles.
+Have you ever type something like this:</p>
+
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
+</code></pre>
+
+<p>...to add new ringtone for your mobile?</p>
+
+<!--more-->
+
+
+<h2>Getting and usage</h2>
+
+<p>You should clone my <a href="http://github.com/greyblake/beep-alarm">repository from github</a>:</p>
+
+<pre><code>git clone git://github.com/greyblake/beep-alarm.git
+</code></pre>
+
+<p>And to try it just type:</p>
+
+<pre><code>./beep-alarm/bin/beep-alarm
+</code></pre>
+
+<p>You should listen a sound of russian song "Kalinka". Unfortunately the only way to stop it is to send INT signal with pressing <code>Ctrl-C</code>.</p>
+
+<p>With this tool you can specify time at what you want a tune to play. Next example make it play at 8:00:</p>
+
+<pre><code>beep-alarm 8:00
+</code></pre>
+
+<p>It has 7 bultin melodies(to see them use <code>--help</code>), so you can choose another one with <code>-m</code> option:</p>
+
+<pre><code># play Metallica - Unforgiven
+beep-alarm -m 3
+</code></pre>
+
+<p>You can even change tempo of tune(default is 120)!</p>
+
+<pre><code>beep-alarm -t 200
+</code></pre>
+
+<p>And even play a tune in different keynote:</p>
+
+<pre><code># Down for 2 semitones
+beep-alarm -o -2
+</code></pre>
+
+<p>To get more information and example use <code>--help</code> option.</p>
+
+<h2>So...</h2>
+
+<p>I hope you'll enjoy it and will never oversleep your work:)</p>
+]]></content>
+  </entry>
+  
+</feed>

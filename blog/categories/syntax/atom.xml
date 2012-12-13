@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: syntax | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/syntax/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Powering less to highlight syntax and display line numbers]]></title>
+    <link href="http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/"/>
+    <updated>2011-09-23T17:38:35+03:00</updated>
+    <id>http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers</id>
+    <content type="html"><![CDATA[<p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
+
+<!--more-->
+
+
+<h2>Making less highlight syntax</h2>
+
+<p>It didn't take a long time to find a solution.  There is a pretty tool called <strong>source-highlight</strong>.</p>
+
+<p>It might be exist in standard repository of your system. In Debian like Linux distribution(Debian, Ubuntu, Mint, etc) you can install it with command:</p>
+
+<pre><code>apt-get install source-highlight
+</code></pre>
+
+<p>It supports a realy big list of languages(in my case 143) and 12 output formats(esc, html, javadoc, latex, etc). You can use man to get closer with it:</p>
+
+<pre><code>man source-highlight
+</code></pre>
+
+<p><strong>source-highlight</strong> package provides a little script which receives a source code file and prints highlighted code. Its path is <code>/usr/share/source-highlight/src-hilite-lesspipe.sh</code>. So we're gonna to use it with <strong>less</strong>.</p>
+
+<p>Fortunately <em>_less</em> is require flexible tool and we can customize it with number of invironment variables. One of them is <code>LESSOPEN</code>. A quote from <code>man less</code>:</p>
+
+<pre><code>LESSOPEN
+    Command line to invoke the (optional) input-preprocessor.
+</code></pre>
+
+<p>So we can you any pipes to prepare an input for <strong>less</strong>.</p>
+
+<p>Another variable we are going to use is <code>LESS</code>:</p>
+
+<pre><code>LESS
+    Options which are passed to less automatically.
+</code></pre>
+
+<p>We will use <code>-R</code> option to allow ANSI colors.</p>
+
+<p>So just set up this to variables:</p>
+
+<p><code>bash
+export LESSOPEN="| /usr/share/source-highlight/src-hilite-lesspipe.sh %s"
+export LESS=' -R '
+</code></p>
+
+<h2>Making less display line numbers</h2>
+
+<p>To display line numbers just use <code>-N</code> option. If you want <strong>less</strong> to use it everytime add it to <code>LESS</code> variable as well:</p>
+
+<p><code>bash
+export LESS=' -RN '
+</code></p>
+
+<h2>Make it work everytime</h2>
+
+<p>To make it work in all shell session just add the next code to the end of you <code>$HOME/.bashrc</code> file:</p>
+
+<p>```bash</p>
+
+<h1>syntax highlight for less</h1>
+
+<p>export LESSOPEN="| /usr/share/source-highlight/src-hilite-lesspipe.sh %s"
+export LESS=' -R -N'</p>
+
+<p>```</p>
+
+<p>Hope this was useful for you. Don't be shy and leave you comments.</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: bash | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/bash/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Powering less to highlight syntax and display line numbers]]></title>
+    <link href="http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/"/>
+    <updated>2011-09-23T17:38:35+03:00</updated>
+    <id>http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers</id>
+    <content type="html"><![CDATA[<p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
+
+<!--more-->
+
+
+<h2>Making less highlight syntax</h2>
+
+<p>It didn't take a long time to find a solution.  There is a pretty tool called <strong>source-highlight</strong>.</p>
+
+<p>It might be exist in standard repository of your system. In Debian like Linux distribution(Debian, Ubuntu, Mint, etc) you can install it with command:</p>
+
+<pre><code>apt-get install source-highlight
+</code></pre>
+
+<p>It supports a realy big list of languages(in my case 143) and 12 output formats(esc, html, javadoc, latex, etc). You can use man to get closer with it:</p>
+
+<pre><code>man source-highlight
+</code></pre>
+
+<p><strong>source-highlight</strong> package provides a little script which receives a source code file and prints highlighted code. Its path is <code>/usr/share/source-highlight/src-hilite-lesspipe.sh</code>. So we're gonna to use it with <strong>less</strong>.</p>
+
+<p>Fortunately <em>_less</em> is require flexible tool and we can customize it with number of invironment variables. One of them is <code>LESSOPEN</code>. A quote from <code>man less</code>:</p>
+
+<pre><code>LESSOPEN
+    Command line to invoke the (optional) input-preprocessor.
+</code></pre>
+
+<p>So we can you any pipes to prepare an input for <strong>less</strong>.</p>
+
+<p>Another variable we are going to use is <code>LESS</code>:</p>
+
+<pre><code>LESS
+    Options which are passed to less automatically.
+</code></pre>
+
+<p>We will use <code>-R</code> option to allow ANSI colors.</p>
+
+<p>So just set up this to variables:</p>
+
+<p><code>bash
+export LESSOPEN="| /usr/share/source-highlight/src-hilite-lesspipe.sh %s"
+export LESS=' -R '
+</code></p>
+
+<h2>Making less display line numbers</h2>
+
+<p>To display line numbers just use <code>-N</code> option. If you want <strong>less</strong> to use it everytime add it to <code>LESS</code> variable as well:</p>
+
+<p><code>bash
+export LESS=' -RN '
+</code></p>
+
+<h2>Make it work everytime</h2>
+
+<p>To make it work in all shell session just add the next code to the end of you <code>$HOME/.bashrc</code> file:</p>
+
+<p>```bash</p>
+
+<h1>syntax highlight for less</h1>
+
+<p>export LESSOPEN="| /usr/share/source-highlight/src-hilite-lesspipe.sh %s"
+export LESS=' -R -N'</p>
+
+<p>```</p>
+
+<p>Hope this was useful for you. Don't be shy and leave you comments.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Backuping and restoring PostgreSQL databases]]></title>
+    <link href="http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases/"/>
+    <updated>2011-02-04T23:48:55+02:00</updated>
+    <id>http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases</id>
+    <content type="html"><![CDATA[<p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
+
+<p>The first one is for backup:</p>
+
+<p>```bash backup.sh</p>
+
+<h1>!/bin/sh</h1>
+
+<p>BASE_BACKUP_DIR="/backups/postgres/"</p>
+
+<p>timeslot=$(date +"%F_%Hh%Mm%Ss")
+backup_dir="${BASE_BACKUP_DIR}/${timeslot}"
+databases=$(sudo -u postgres sh -c "psql  -c '\l'" 2> /dev/null | sed \
+-n 4,/\eof/p | grep -v rows) | awk '{print $1}' | egrep '<sup>\w')</sup></p>
+
+<p>mkdir -p $backup_dir</p>
+
+<p>for db in $databases; do</p>
+
+<pre><code>sudo -u postgres sh -c "pg_dump -C ${db}" 2&gt; /dev/null | xz -9e &gt; $backup_dir/$db.xz
+</code></pre>
+
+<p>done</p>
+
+<p>```</p>
+
+<p>After executing script you'll have all you database dumps in <code>/backups/postgres/date_time</code> directory compressed with <code>xz</code>. Sure instead of <code>xz</code> you can use <code>gzip</code> or <code>bzip2</code>.</p>
+
+<p>Okay. Now let's take a look at the restore script:</p>
+
+<p>```bash restore.sh</p>
+
+<h1>!/bin/sh</h1>
+
+<p>if [ $# -lt 1 ] ; then</p>
+
+<pre><code>echo "Error: You should specify backup directory path" 1&gt;&amp;2
+exit 1
+</code></pre>
+
+<p>fi
+backup_dir=$1
+if [ ! -d $backup_dir ]; then</p>
+
+<pre><code>echo "Error: directory ${backup_dir} does not exist" 1&gt;&amp;2
+exit 1
+</code></pre>
+
+<p>fi</p>
+
+<p>for db_xz in $backup_dir/*.xz; do</p>
+
+<pre><code>db_name=$(echo $db_xz | sed 's/\.xz$//; s/^.*\///g')
+sudo -u postgres sh -c "xz -cd ${db_xz} | psql"
+</code></pre>
+
+<p>done</p>
+
+<p>```</p>
+
+<p>It takes one parameter: a path to back directory with *.xz archives.</p>
+
+<p>Both scripts should be executed with with root permissions, cause they use <code>sudo</code> to execute <code>pg_dump</code> and <code>pg_restore</code> commands with <code>postgres</code> user permissions. It allows avoiding asking a password for database. It's not the only way, but I decided to use this one.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Beep alarm]]></title>
+    <link href="http://greyblake.com/blog/2011/01/23/beep-alarm/"/>
+    <updated>2011-01-23T23:24:39+02:00</updated>
+    <id>http://greyblake.com/blog/2011/01/23/beep-alarm</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>Someone would say I am brainsick... So may be I am.</p>
+
+<p>By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
+So I decided to create an alarm based on <code>beep</code> Unix tool. This tool allows you to play sound with specified frequency and delay on your speaker.</p>
+
+<p>Some times after I decided that simple "Be-e-e-e-p" sound is borring and I created a player.
+It can play tunes defined in format for old Nokia mobiles.
+Have you ever type something like this:</p>
+
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
+</code></pre>
+
+<p>...to add new ringtone for your mobile?</p>
+
+<!--more-->
+
+
+<h2>Getting and usage</h2>
+
+<p>You should clone my <a href="http://github.com/greyblake/beep-alarm">repository from github</a>:</p>
+
+<pre><code>git clone git://github.com/greyblake/beep-alarm.git
+</code></pre>
+
+<p>And to try it just type:</p>
+
+<pre><code>./beep-alarm/bin/beep-alarm
+</code></pre>
+
+<p>You should listen a sound of russian song "Kalinka". Unfortunately the only way to stop it is to send INT signal with pressing <code>Ctrl-C</code>.</p>
+
+<p>With this tool you can specify time at what you want a tune to play. Next example make it play at 8:00:</p>
+
+<pre><code>beep-alarm 8:00
+</code></pre>
+
+<p>It has 7 bultin melodies(to see them use <code>--help</code>), so you can choose another one with <code>-m</code> option:</p>
+
+<pre><code># play Metallica - Unforgiven
+beep-alarm -m 3
+</code></pre>
+
+<p>You can even change tempo of tune(default is 120)!</p>
+
+<pre><code>beep-alarm -t 200
+</code></pre>
+
+<p>And even play a tune in different keynote:</p>
+
+<pre><code># Down for 2 semitones
+beep-alarm -o -2
+</code></pre>
+
+<p>To get more information and example use <code>--help</code> option.</p>
+
+<h2>So...</h2>
+
+<p>I hope you'll enjoy it and will never oversleep your work:)</p>
+]]></content>
+  </entry>
+  
+</feed>

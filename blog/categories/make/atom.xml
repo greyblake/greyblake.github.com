@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: make | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/make/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How to build Vim against specific Ruby version]]></title>
+    <link href="http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/"/>
+    <updated>2012-07-15T23:00:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version</id>
+    <content type="html"><![CDATA[<p>Let's say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
+But what if you need Vim compiled with Ruby 1.9.x?
+I'm gonna tell you how to do it.</p>
+
+<!--more-->
+
+
+<h2>Clone vim repository</h2>
+
+<p>Make sure you have installed <code>mercurial</code> package:</p>
+
+<p><code>sh
+$ sudo apt-get install mercurial
+</code></p>
+
+<p>Clone Vim repository from google code:</p>
+
+<p><code>sh
+$ hg clone https://vim.googlecode.com/hg/ vim_sources
+$ cd vim_sources
+</code></p>
+
+<h2>Patching</h2>
+
+<p>There is no option to specify Ruby version to compile Vim against.
+But it's easy to patch vim sources to force it to use <code>1.9</code> instead of <code>1.8</code>.</p>
+
+<p>Open file <code>src/Make_mvc.mak</code> in vim sources directory.</p>
+
+<p>Find lines like this:</p>
+
+<p>```make src/Make_mvc.mak</p>
+
+<p>#</p>
+
+<h1>Support Ruby interface</h1>
+
+<p>#
+!ifdef RUBY</p>
+
+<h1>Set default value</h1>
+
+<p>!ifndef RUBY_VER
+RUBY_VER = 18
+!endif
+!ifndef RUBY_VER_LONG
+RUBY_VER_LONG = 1.8
+!endif</p>
+
+<p>```</p>
+
+<p>Replace <code>18</code> and <code>1.8</code> with <code>19</code> and <code>1.9</code>. So it should look this way:</p>
+
+<p>```make src/Make_mvc.mak</p>
+
+<p>#</p>
+
+<h1>Support Ruby interface</h1>
+
+<p>#
+!ifdef RUBY</p>
+
+<h1>Set default value</h1>
+
+<p>!ifndef RUBY_VER
+RUBY_VER = 19
+!endif
+!ifndef RUBY_VER_LONG
+RUBY_VER_LONG = 1.9
+!endif</p>
+
+<p>```</p>
+
+<h2>Configure and compile</h2>
+
+<p>At first make sure your current ruby version is which one you need:</p>
+
+<p><code>sh
+$ rvm use 1.9.3 --default
+$ ruby -v
+ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
+</code></p>
+
+<p>No we are ready to run <code>./configure</code> script:</p>
+
+<p><code>sh
+$ ./configure --enable-rubyinterp=yes --prefix=/where/you/want/ruby/to/be/installed/
+</code></p>
+
+<p>If everything is OK we can go ahead and compile it:</p>
+
+<p><code>sh
+$ make -j 3
+</code></p>
+
+<p><code>-j</code> option defines number of processes to make builing faster. It's useful if number of CPU cores is greater than one.</p>
+
+<p>Finally install built Vim to <code>/where/you/want/ruby/to/be/installed/</code> directory which you passed as <code>--prefix</code> option:</p>
+
+<p><code>sh
+$ make install
+</code></p>
+
+<h2>Verify Ruby version</h2>
+
+<p>Now let's open your new Vim:</p>
+
+<p><code>sh
+$ cd /where/you/want/ruby/to/be/installed/
+$ ./bin/vim
+</code></p>
+
+<p>And run the next command:</p>
+
+<p><code>vim
+:ruby puts RUBY_DESCRIPTION
+</code></p>
+
+<p>The ouput should looks similar to this:</p>
+
+<p><code>
+ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
+</code></p>
+
+<p>So, everything is OK. Enjoy Vim and builtin ruby 1.9 ;)</p>
+]]></content>
+  </entry>
+  
+</feed>

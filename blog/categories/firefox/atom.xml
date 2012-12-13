@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Firefox | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/firefox/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How to Install Firefox (Iceweasel) 7 on Debian Squeeze]]></title>
+    <link href="http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/"/>
+    <updated>2011-10-03T18:12:54+03:00</updated>
+    <id>http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze</id>
+    <content type="html"><![CDATA[<p>First remove lagacy version of Iceweasel:</p>
+
+<pre><code>aptitude remove iceweasel
+</code></pre>
+
+<p>Create <code>/etc/apt/sources.list.d/squeeze-backports.list</code> file:</p>
+
+<pre><code># New Mozilla packages for Squeeze
+deb http://mozilla.debian.net/ squeeze-backports iceweasel-release
+deb http://backports.debian.org/debian-backports squeeze-backports main
+</code></pre>
+
+<p>Then run:</p>
+
+<pre><code>aptitude update
+aptitude install iceweasel -t squeeze-backports
+</code></pre>
+
+<p>Enjoy!</p>
+]]></content>
+  </entry>
+  
+</feed>

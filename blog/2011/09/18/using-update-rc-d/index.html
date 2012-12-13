@@ -1,0 +1,402 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Using update-rc.d - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="update-rc.d is tool for adding daemons to /etc/rc[1-6]d files. If you are using OS with System-V style init scripts you can find you /etc the next &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2011/09/18/using-update-rc-d/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Using update-rc.d</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-18T21:00:00+03:00" pubdate data-updated="true">Sep 18<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><code>update-rc.d</code> is tool for adding daemons to /etc/rc[1-6]d files.</p>
+
+<p>If you are using OS with System-V style init scripts you can find you <code>/etc</code> the next directories:</p>
+
+<ul>
+<li>rc0.d/</li>
+<li>rc1.d/</li>
+<li>rc2.d/</li>
+<li>rc3.d/</li>
+<li>rc4.d/</li>
+<li>rc5.d/</li>
+<li>rc6.d/</li>
+<li>rcS.d/</li>
+</ul>
+
+
+<p>So, what are they for?</p>
+
+<!--more-->
+
+
+<p>Every directory contains symbol links to daemons located in <code>/etc/init.d/</code>. And every directory represents run level. Usually your system uses third level which means multi user mode with networking. When the system is initializing it starts daemons which have appropriate symbol links in rc3.d.</p>
+
+<p>Here is a short description of every run level:</p>
+
+<ul>
+<li><strong>0 (Halt)</strong>  Shuts down the system.</li>
+<li><strong>1 (Single-User Mode)</strong>  Mode for administrative tasks.[2][3]</li>
+<li><strong>2 (Multi-User Mode)</strong>   Does not configure network interfaces and does not export networks services.[4]</li>
+<li><strong>3 (Multi-User Mode with Networking)</strong>   Starts the system normally.[5]</li>
+<li><strong>4 (Not used/User-definable)</strong>   For special purposes.</li>
+<li><strong>5 (Start the system normally with appropriate display manager.)</strong>   As runlevel 3 + display manager.</li>
+<li><strong>6 (Reboot)</strong>    Reboots the system.</li>
+</ul>
+
+
+<p>Usualy you don&#8217;t need to switch levels, but if you do you should use <code>init</code> command. Take care of what you doing.</p>
+
+<p>OK, take a look at a head of some daemon scripts. For example <code>/etc/init.d/postgresql</code>:</p>
+
+<figure class='code'><figcaption><span>/etc/init.d/postgresql</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'><span class="nb">set</span> -e
+</span><span class='line'>
+</span><span class='line'><span class="c">### BEGIN INIT INFO</span>
+</span><span class='line'><span class="c"># Provides:             postgresql</span>
+</span><span class='line'><span class="c"># Required-Start:       $local_fs $remote_fs $network $time</span>
+</span><span class='line'><span class="c"># Required-Stop:        $local_fs $remote_fs $network $time</span>
+</span><span class='line'><span class="c"># Should-Start:         $syslog</span>
+</span><span class='line'><span class="c"># Should-Stop:          $syslog</span>
+</span><span class='line'><span class="c"># Default-Start:        2 3 4 5</span>
+</span><span class='line'><span class="c"># Default-Stop:         0 1 6</span>
+</span><span class='line'><span class="c"># Short-Description:    PostgreSQL RDBMS server</span>
+</span><span class='line'><span class="c">### END INIT INFO</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It has a self descriptive comment in an appropriate format. <code>Default-Start</code> section contains numbers of levels which runs postgres daemon. <code>Default-Stop</code> section contains number of levels which should not run PostgreSQL, so when you switch to them PostgreSQL daemon will be stopped.</p>
+
+<p>So, let&#8217;s assume you have created you own daemon which knows how to process <code>start</code> and <code>stop</code> arguments and want it to run on appropriate levels. You need to create symbol links like these:</p>
+
+<pre><code>/etc/rc1.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc4.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc0.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc2.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc3.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc6.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc5.d/S02postgresql -&gt; ../init.d/postgresql
+</code></pre>
+
+<p>By the way prefix <code>K</code> means kill(stop) process and <code>S</code> means start.
+It&#8217;s a little routine work, right? But in case if you have descriptive comment I metioned above you just can use <code>update-rc.d</code> tool. It creates all necessary symbol links based on the comment. So just run:</p>
+
+<pre><code>update-rc.d postgres defaults
+</code></pre>
+
+<p>Change <code>postgres</code> with name of your daemon.</p>
+
+<h2>Why?</h2>
+
+<p>Unfortunatly I often forget how this tool is called.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-18T21:00:00+03:00" pubdate data-updated="true">Sep 18<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linux/'>Linux</a>, <a class='category' href='/blog/categories/daemon/'>daemon</a>, <a class='category' href='/blog/categories/unix/'>unix</a>, <a class='category' href='/blog/categories/update-rc/'>update-rc</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2011/09/18/using-update-rc-d/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2011/09/18/using-update-rc-d/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/" title="Previous Post: RSpec matchers for DataMapper (dm-rspec)">&laquo; RSpec matchers for DataMapper (dm-rspec)</a>
+      
+      
+        <a class="basic-alignment right articlenav" href="/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/" title="Next Post: Powering less to highlight syntax and display line numbers">Powering less to highlight syntax and display line numbers &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">pg_power - ActiveRecord extension for PostgreSQL</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby performance tricks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/08/10/unexpected-ruby-behaviour/">Unexpected Ruby behaviour</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">How to build Vim against specific Ruby version</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Тестируем вложенные ActiveRecord-модели с RSpec</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2011/09/18/using-update-rc-d/';
+        var disqus_url = 'http://greyblake.com/blog/2011/09/18/using-update-rc-d/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

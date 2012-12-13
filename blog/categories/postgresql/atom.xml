@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: postgresql | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/postgresql/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Backuping and restoring PostgreSQL databases]]></title>
+    <link href="http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases/"/>
+    <updated>2011-02-04T23:48:55+02:00</updated>
+    <id>http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases</id>
+    <content type="html"><![CDATA[<p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
+
+<p>The first one is for backup:</p>
+
+<p>```bash backup.sh</p>
+
+<h1>!/bin/sh</h1>
+
+<p>BASE_BACKUP_DIR="/backups/postgres/"</p>
+
+<p>timeslot=$(date +"%F_%Hh%Mm%Ss")
+backup_dir="${BASE_BACKUP_DIR}/${timeslot}"
+databases=$(sudo -u postgres sh -c "psql  -c '\l'" 2> /dev/null | sed \
+-n 4,/\eof/p | grep -v rows) | awk '{print $1}' | egrep '<sup>\w')</sup></p>
+
+<p>mkdir -p $backup_dir</p>
+
+<p>for db in $databases; do</p>
+
+<pre><code>sudo -u postgres sh -c "pg_dump -C ${db}" 2&gt; /dev/null | xz -9e &gt; $backup_dir/$db.xz
+</code></pre>
+
+<p>done</p>
+
+<p>```</p>
+
+<p>After executing script you'll have all you database dumps in <code>/backups/postgres/date_time</code> directory compressed with <code>xz</code>. Sure instead of <code>xz</code> you can use <code>gzip</code> or <code>bzip2</code>.</p>
+
+<p>Okay. Now let's take a look at the restore script:</p>
+
+<p>```bash restore.sh</p>
+
+<h1>!/bin/sh</h1>
+
+<p>if [ $# -lt 1 ] ; then</p>
+
+<pre><code>echo "Error: You should specify backup directory path" 1&gt;&amp;2
+exit 1
+</code></pre>
+
+<p>fi
+backup_dir=$1
+if [ ! -d $backup_dir ]; then</p>
+
+<pre><code>echo "Error: directory ${backup_dir} does not exist" 1&gt;&amp;2
+exit 1
+</code></pre>
+
+<p>fi</p>
+
+<p>for db_xz in $backup_dir/*.xz; do</p>
+
+<pre><code>db_name=$(echo $db_xz | sed 's/\.xz$//; s/^.*\///g')
+sudo -u postgres sh -c "xz -cd ${db_xz} | psql"
+</code></pre>
+
+<p>done</p>
+
+<p>```</p>
+
+<p>It takes one parameter: a path to back directory with *.xz archives.</p>
+
+<p>Both scripts should be executed with with root permissions, cause they use <code>sudo</code> to execute <code>pg_dump</code> and <code>pg_restore</code> commands with <code>postgres</code> user permissions. It allows avoiding asking a password for database. It's not the only way, but I decided to use this one.</p>
+]]></content>
+  </entry>
+  
+</feed>

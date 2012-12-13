@@ -1,0 +1,2560 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Sergey Potapov]]></title>
+  <link href="http://greyblake.com/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[pg_power - ActiveRecord extension for PostgreSQL]]></title>
+    <link href="http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/"/>
+    <updated>2012-09-06T23:24:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql</id>
+    <content type="html"><![CDATA[<p>I am happy to announce that  <a href="http://tmxcredit.com/">TMXCredit</a> released
+<a href="https://github.com/TMXCredit/pg_power">pg_power</a> gem - an ActiveRecord extension which
+allows to use number of PostgreSQL features with Rails.</p>
+
+<h2>What you can do with pg_power?</h2>
+
+<ul>
+<li>Use PostgresSQL schemas in your Rails project.</li>
+<li>Add comments to PostgreSQL database with Rails migrations.</li>
+<li>Use foreign keys (we imported foreigner functionality and made it schema aware).</li>
+<li>Use partial indexes.</li>
+<li>Add indexes concurrently.</li>
+</ul>
+
+
+<p>You&#8217;ll find enough documentation in <a href="https://github.com/TMXCredit/pg_power/blob/master/README.markdown">README</a>
+file.</p>
+
+<h2>Quick usage example</h2>
+
+<p>Assume you want to create tables <code>countries</code> and <code>languages</code> in <code>demography</code> schema.</p>
+
+<p>At first we need to create <code>demography</code> schema:</p>
+
+<figure class='code'><figcaption><span>db/migrate/create_demography_schema.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CreateDemographySchema</span> <span class="o">&lt;</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">change</span>
+</span><span class='line'>    <span class="n">create_schema</span> <span class="s1">&#39;demography&#39;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now let&#8217;s create tables:</p>
+
+<figure class='code'><figcaption><span>db/migrate/create_demography_languages.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CreateDemographyLanguages</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">change</span>
+</span><span class='line'>    <span class="c1"># Create table `languages` in schema `demography`</span>
+</span><span class='line'>    <span class="n">create_table</span> <span class="s2">&quot;languages&quot;</span><span class="p">,</span> <span class="ss">:schema</span> <span class="o">=&gt;</span> <span class="s2">&quot;demography&quot;</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">t</span><span class="o">.</span><span class="n">string</span> <span class="ss">:name</span>
+</span><span class='line'>      <span class="n">t</span><span class="o">.</span><span class="n">string</span> <span class="ss">:code</span><span class="p">,</span> <span class="ss">:limit</span> <span class="o">=&gt;</span> <span class="mi">2</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add PostgreSQL comments</span>
+</span><span class='line'>    <span class="n">set_table_comment</span> <span class="s2">&quot;demography.languages&quot;</span><span class="p">,</span> <span class="s2">&quot;List of languages&quot;</span>
+</span><span class='line'>    <span class="n">set_column_comments</span> <span class="s2">&quot;demography.languages&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;Full name of language in English&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">:code</span> <span class="o">=&gt;</span> <span class="s2">&quot;ISO 639-1 code&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>db/migrate/create_demography_countries.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CreateDemographyContries</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">change</span>
+</span><span class='line'>    <span class="c1"># Create table `countries` in schema `demography`</span>
+</span><span class='line'>    <span class="n">create_table</span> <span class="s2">&quot;countries&quot;</span><span class="p">,</span> <span class="ss">:schema</span> <span class="o">=&gt;</span> <span class="s2">&quot;demography&quot;</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">t</span><span class="o">.</span><span class="n">string</span> <span class="ss">:name</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># In real life you likely would have many-to-many associaton</span>
+</span><span class='line'>      <span class="n">t</span><span class="o">.</span><span class="n">integer</span> <span class="ss">:language_id</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add PostgreSQL comments</span>
+</span><span class='line'>    <span class="n">set_table_comment</span> <span class="s2">&quot;demography.countries&quot;</span><span class="p">,</span> <span class="s2">&quot;List of world countries&quot;</span>
+</span><span class='line'>    <span class="n">set_column_comments</span> <span class="s2">&quot;demography.languages&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">:name</span>        <span class="o">=&gt;</span> <span class="s2">&quot;Full name of country in English&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">:language_id</span> <span class="o">=&gt;</span> <span class="s2">&quot;Most popular language in the country&quot;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add foreign key and create index on demography.countries.language_id</span>
+</span><span class='line'>    <span class="n">add_foreign_key</span><span class="p">(</span><span class="s2">&quot;demography.countries&quot;</span><span class="p">,</span> <span class="s2">&quot;demography.languages&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Great! Now we need to set table names in models to make ActiveRecord know that
+these tables are located in <code>demography</code> schema.</p>
+
+<figure class='code'><figcaption><span>app/models/language.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Language</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="n">set_table_name</span> <span class="s2">&quot;demography.languages&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It will work. But I would recommend you to create module <code>Demography</code> which would represent
+<code>demography</code> schema and move those models to it. One more benefit is that you can define
+schema prefix in module and models will use it build table name automatically.</p>
+
+<figure class='code'><figcaption><span>app/models/demography.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Demography</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">table_name_prefix</span>
+</span><span class='line'>    <span class="s1">&#39;demography.&#39;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>app/models/demography/language.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Demography::Language</span>
+</span><span class='line'>  <span class="c1"># No need to use set_table_name anymore</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I hope you will enjoy <a href="https://github.com/TMXCredit/pg_power">pg_power</a>. Let us know what you think!</p>
+
+<p>Thanks. Sergey Potapov.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby performance tricks]]></title>
+    <link href="http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/"/>
+    <updated>2012-09-02T23:34:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks</id>
+    <content type="html"><![CDATA[<p>I did some benchmarks to find out which alternatives to write code work faster. I wanna
+share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.</p>
+
+<h2>Do not use exceptions for a control flow</h2>
+
+<p>The next example is pretty stupid but it shows how exceptions slow against
+conditional statements.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Obj</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">with_condition</span>
+</span><span class='line'>    <span class="nb">respond_to?</span><span class="p">(</span><span class="ss">:mythical_method</span><span class="p">)</span> <span class="p">?</span> <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span> <span class="p">:</span> <span class="kp">nil</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">with_rescue</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span>
+</span><span class='line'>  <span class="k">rescue</span> <span class="no">NoMethodError</span>
+</span><span class='line'>    <span class="kp">nil</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">obj</span> <span class="o">=</span> <span class="no">Obj</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">puts</span> <span class="no">RUBY_DESCRIPTION</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s2">&quot;rescue/condition&quot;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">rescue_report</span>     <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;rescue:&quot;</span><span class="p">)</span>    <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_rescue</span>  <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">condition_report</span>  <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;condition:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_if</span>      <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>  <span class="o">[</span><span class="n">rescue_report</span> <span class="o">/</span> <span class="n">condition_report</span><span class="o">]</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>MRI 1.9.3:</p>
+
+<pre><code>ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
+                        user     system      total        real
+rescue:           111.530000   2.650000 114.180000 (115.837103)
+condition:          2.620000   0.010000   2.630000 (  2.633154)
+rescue/condition:  42.568702 265.000000        NaN ( 43.991767)
+</code></pre>
+
+<p>MRI 1.8.7 (REE has similar result):</p>
+
+<pre><code>ruby 1.8.7 (2011-12-28 patchlevel 357) [x86_64-linux]
+                        user     system      total        real
+rescue:            80.510000   0.940000  81.450000 ( 81.529022)
+if:                 3.320000   0.000000   3.320000 (  3.330166)
+rescue/condition:  24.250000        inf       -nan ( 24.481970)
+</code></pre>
+
+<!--more-->
+
+
+<h2>String concatenation</h2>
+
+<p>Avoid using <code>+=</code> to concatenate strings in favor of <code>&lt;&lt;</code> method.
+The result is absolutely the same: add a string to the end of an existing one.
+What is the difference then?</p>
+
+<p>See the example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;first&quot;</span>
+</span><span class='line'><span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;second&quot;</span>
+</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>       <span class="c1"># =&gt; 16241320</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">str1</span> <span class="o">+=</span> <span class="n">str2</span>    <span class="c1"># str1 = str1 + str2</span>
+</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>  <span class="c1"># =&gt; 16241240, id is changed</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">str1</span> <span class="o">&lt;&lt;</span> <span class="n">str2</span>
+</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>  <span class="c1"># =&gt; 16241240, id is the same</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When you use <code>+=</code> ruby creates a temporal object which is result of <code>str1 + str2</code>.
+Then it overrides <code>str1</code> variable with reference to the new built object.
+On other hand <code>&lt;&lt;</code> modifies existing one.</p>
+
+<p>As a result of using <code>+=</code> you have the next disadvantages:</p>
+
+<ul>
+<li>More calculation to join strings.</li>
+<li>Redundant string object in memory (previous value of <code>str1</code>), which approximates time when
+<a href="http://en.wikipedia.org/wiki/Garbage_collection_%28computer_science%29">GC</a> will trigger.</li>
+</ul>
+
+
+<p>How <code>+=</code> is slow? Basically it depends on length of strings you have operation with.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
+</span><span class='line'><span class="no">BASIC_LENGTH</span> <span class="o">=</span> <span class="mi">10</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">5</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">factor</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">length</span> <span class="o">=</span> <span class="no">BASIC_LENGTH</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">factor</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;_&quot;</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">LENGTH: </span><span class="si">#{</span><span class="n">length</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;+= VS &lt;&lt;&#39;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">concat_report</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;+=&quot;</span><span class="p">)</span>  <span class="k">do</span>
+</span><span class='line'>      <span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span class='line'>      <span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span> <span class="o">*</span> <span class="n">length</span>
+</span><span class='line'>      <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">str1</span> <span class="o">+=</span> <span class="n">str2</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">modify_report</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;&lt;&lt;&quot;</span><span class="p">)</span>  <span class="k">do</span>
+</span><span class='line'>      <span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span>
+</span><span class='line'>      <span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span> <span class="o">*</span> <span class="n">length</span>
+</span><span class='line'>      <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">str1</span> <span class="o">&lt;&lt;</span> <span class="n">str2</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="o">[</span><span class="n">concat_report</span> <span class="o">/</span> <span class="n">modify_report</span><span class="o">]</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>____________________________________________________________
+LENGTH: 10
+                 user     system      total        real
++=           0.000000   0.000000   0.000000 (  0.004671)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.000176)
++= VS &lt;&lt;          NaN        NaN        NaN ( 26.508796)
+____________________________________________________________
+LENGTH: 100
+                 user     system      total        real
++=           0.020000   0.000000   0.020000 (  0.022995)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.000226)
++= VS &lt;&lt;          Inf        NaN        NaN (101.845829)
+____________________________________________________________
+LENGTH: 1000
+                 user     system      total        real
++=           0.270000   0.120000   0.390000 (  0.390888)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.001730)
++= VS &lt;&lt;          Inf        Inf        NaN (225.920077)
+____________________________________________________________
+LENGTH: 10000
+                 user     system      total        real
++=           3.660000   1.570000   5.230000 (  5.233861)
+&lt;&lt;           0.000000   0.010000   0.010000 (  0.015099)
++= VS &lt;&lt;          Inf 157.000000        NaN (346.629692)
+____________________________________________________________
+LENGTH: 100000
+                 user     system      total        real
++=          31.270000  16.990000  48.260000 ( 48.328511)
+&lt;&lt;           0.050000   0.050000   0.100000 (  0.105993)
++= VS &lt;&lt;   625.400000 339.800000        NaN (455.961373)
+</code></pre>
+
+<h2>Be careful with calculation within iterators</h2>
+
+<p>Assume you need to write a function to convert an array into a hash
+where keys and values are same as elements of the array:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">func</span><span class="p">(</span><span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="o">]</span><span class="p">)</span>  <span class="c1"># =&gt; {1 =&gt; 1, 2 =&gt; 2, 3 =&gt; 3}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The next solution would satisfy the requirements:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And would be extremely slow with big portions of data because it contains
+nested methods (<code>inject</code> and <code>merge</code>), so it&#8217;s <strong> O(n<sup>2</sup>) </strong> algorithm.
+But it&#8217;s obviously that it must be <strong> O(n) </strong>.
+Consider the next:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">[</span><span class="n">e</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span> <span class="n">h</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case we do only one iteration over an array without any hard calculation
+within the iterator.</p>
+
+<p>See the benchmark:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">n_func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">[</span><span class="n">e</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span> <span class="n">h</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">n2_func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">BASE_SIZE</span> <span class="o">=</span> <span class="mi">10</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">4</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">factor</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">size</span>   <span class="o">=</span> <span class="no">BASE_SIZE</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">factor</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="n">.size</span><span class="p">)</span><span class="o">.</span><span class="n">to_a</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;_&quot;</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">SIZE: </span><span class="si">#{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;O(n)&quot;</span> <span class="p">)</span> <span class="p">{</span> <span class="n">n_func</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>  <span class="p">}</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;O(n2)&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">n2_func</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>____________________________________________________________
+SIZE: 10
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000014)
+O(n2)       0.000000   0.000000   0.000000 (  0.000033)
+____________________________________________________________
+SIZE: 100
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000043)
+O(n2)       0.000000   0.000000   0.000000 (  0.001070)
+____________________________________________________________
+SIZE: 1000
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000347)
+O(n2)       0.130000   0.000000   0.130000 (  0.127638)
+____________________________________________________________
+SIZE: 10000
+                user     system      total        real
+O(n)        0.020000   0.000000   0.020000 (  0.019067)
+O(n2)      17.850000   0.080000  17.930000 ( 17.983827)
+</code></pre>
+
+<p>It&#8217;s an obvious and trivial example. Just keep in mind to not do
+hard calculation within iterators if it&#8217;s possible.</p>
+
+<h2>Use bang! methods</h2>
+
+<p>In many cases bang methods do the same as there non-bang analogues but without
+duplication an object. The previous example with <code>merge!</code> would be much faster:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">merge!</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge!</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000</span>
+</span><span class='line'><span class="n">array</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="n">.N</span><span class="p">)</span><span class="o">.</span><span class="n">to_a</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;merge!&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">merge!</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;merge&quot;</span><span class="p">)</span>  <span class="p">{</span> <span class="n">merge</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>  <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>                 user     system      total        real
+merge!       0.010000   0.000000   0.010000 (  0.011370)
+merge       17.710000   0.000000  17.710000 ( 17.840856)
+</code></pre>
+
+<h2>Use instance variables</h2>
+
+<p>Accessing instance variable directly is about two times faster than accessing
+them with accessor methods:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Metric</span>
+</span><span class='line'>  <span class="kp">attr_accessor</span> <span class="ss">:var</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@n</span>   <span class="o">=</span> <span class="n">n</span>
+</span><span class='line'>    <span class="vi">@var</span> <span class="o">=</span> <span class="mi">22</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">run</span>
+</span><span class='line'>    <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;@var&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="vi">@var</span> <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;var&quot;</span> <span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">var</span>  <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;@var =&quot;</span><span class="p">)</span>     <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span><span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="vi">@var</span> <span class="o">=</span> <span class="n">i</span>     <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;self.var =&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span><span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="nb">self</span><span class="o">.</span><span class="n">var</span> <span class="o">=</span> <span class="n">i</span> <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">metric</span> <span class="o">=</span> <span class="no">Metric</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">100_000_000</span><span class="p">)</span>
+</span><span class='line'><span class="n">metric</span><span class="o">.</span><span class="n">run</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>                 user     system      total        real
+@var         6.980000   0.010000   6.990000 (  7.193725)
+var         13.040000   0.000000  13.040000 ( 13.131711)
+@var =       7.960000   0.000000   7.960000 (  8.242603)
+self.var =  14.910000   0.010000  14.920000 ( 15.960125)
+</code></pre>
+
+<h2>Parallel assignment is slower</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;consequentially&#39;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">a</span> <span class="o">=</span> <span class="mi">10</span>
+</span><span class='line'>      <span class="n">b</span> <span class="o">=</span> <span class="mi">20</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>                      user     system      total        real
+parallel          1.900000   0.000000   1.900000 (  1.928063)
+consequentially   0.880000   0.000000   0.880000 (  0.879675)
+</code></pre>
+
+<h2>Dynamic method defention</h2>
+
+<p>What is the faster way to define method dynamically: <code>class_eval</code> with a code string
+or using <code>define_method</code>? Which way generated methods work faster?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Metric</span>
+</span><span class='line'>  <span class="n">N</span> <span class="o">=</span> <span class="mi">1_000_000</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">class_eval_with_string</span>
+</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">class_eval</span><span class="p">(</span><span class="o">&lt;&lt;-</span><span class="no">eorb</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">,</span> <span class="bp">__LINE__</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'><span class="sh">        def smeth_#{i}</span>
+</span><span class='line'><span class="sh">          #{i}</span>
+</span><span class='line'><span class="sh">        end</span>
+</span><span class='line'><span class="no">      eorb</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">with_define_method</span>
+</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">define_method</span><span class="p">(</span><span class="s2">&quot;dmeth_</span><span class="si">#{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">i</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">22</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;class_eval with string&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="no">Metric</span><span class="o">.</span><span class="n">class_eval_with_string</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;define_method&quot;</span><span class="p">)</span>          <span class="p">{</span> <span class="no">Metric</span><span class="o">.</span><span class="n">with_define_method</span>     <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">metric</span> <span class="o">=</span> <span class="no">Metric</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;string method&quot;</span><span class="p">)</span>  <span class="p">{</span> <span class="no">Metric</span><span class="o">::</span><span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">metric</span><span class="o">.</span><span class="n">smeth_1</span> <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;dynamic method&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="no">Metric</span><span class="o">::</span><span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">metric</span><span class="o">.</span><span class="n">dmeth_1</span> <span class="p">}</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>                             user     system      total        real
+class_eval with string 219.840000   0.720000 220.560000 (221.933074)
+define_method           61.280000   0.240000  61.520000 ( 62.070911)
+string method            0.110000   0.000000   0.110000 (  0.111433)
+dynamic method           0.150000   0.000000   0.150000 (  0.156537)
+</code></pre>
+
+<p>So <code>class_eval</code> works slower but it&#8217;s preferred since methods generated with
+<code>class_eval</code> and a string of code work faster.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="http://www.simonecarletti.com/blog/2010/01/how-slow-are-ruby-exceptions/">How Slow Are Ruby Exceptions</a></li>
+<li><a href="http://www.igvita.com/2008/07/08/6-optimization-tips-for-ruby-mri/">6 Optimization Tips for Ruby MRI</a>
+(NOTE: <code>Symbol#to_proc</code> was ported to Ruby and it&#8217;s not slow anymore)</li>
+<li><a href="http://my.safaribooksonline.com/book/web-development/ruby/9780321540034">&#8220;Writing Efficient Ruby Code&#8221; by Dr. Stefan Kaes</a></li>
+<li><a href="http://programmingzen.com/2007/02/10/top-10-ruby-on-rails-performance-tips/">Top 10 Ruby on Rails performance tips </a></li>
+<li><a href="http://blog.monitis.com/index.php/2012/02/08/20-ruby-performance-tips/">20 Ruby Performance Tips</a></li>
+<li><a href="http://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/">A Beginner’s Guide to Big O Notation</a></li>
+</ul>
+
+
+<p>Danke.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Unexpected Ruby behaviour]]></title>
+    <link href="http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour/"/>
+    <updated>2012-08-10T23:28:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour</id>
+    <content type="html"><![CDATA[<p>Ruby is a cool language with intuitive grammar. However there are a number of things which don&#8217;t seem to be expected.
+It might take long hours to debug some weird issues for unenlightened newbies.</p>
+
+<!--more-->
+
+
+<h2>Implicitly variable declaration</h2>
+
+<p>Variable mentioned in conditional block of code become declared and initialized with <code>nil</code> even if the declaration was not executed.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="kp">false</span>
+</span><span class='line'>  <span class="n">var</span> <span class="o">=</span> <span class="s2">&quot;never executed&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="n">var</span> <span class="c1"># =&gt; nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Expected:</strong> addressing to <code>var</code> raises <code>NameError: undefined local variable or method 'var'</code></p>
+
+<h2>Calling #utc and #gmt on Time object removes time zone information</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">utc</span>         <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012, WTF? O_o</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">gmtime</span>      <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012, WTF? O_o</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>IMHO, this methods should be called <code>utc!</code> and <code>gmtime!</code> instead.
+I have an experience when it caused a really voodoo thing: a test failed only from 20:00 to 00:00
+in USA on CI server, and could never be reproduced in my time zone.</p>
+
+<p>Instead it&#8217;s better to use <code>getutc</code> and <code>getgm</code> methods which return UTC and GMT time accordingly,
+but don&#8217;t change Time object:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">getutc</span>      <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
+</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">getgm</span>       <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012</span>
+</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Methods do not return value from ensure statement</h2>
+
+<p>Usually ruby methods return the value of the last method line unless <code>return</code> is called explicitly.
+But how about this?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">run</span>
+</span><span class='line'>  <span class="mi">1</span>
+</span><span class='line'><span class="k">ensure</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;ensure block...&quot;</span>
+</span><span class='line'>  <span class="mi">2</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">run</span> <span class="c1"># =&gt; 1</span>
+</span><span class='line'><span class="c1"># pints `ensure block...`</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So if you want to return a value from <code>ensure</code> statement use <code>return</code> word:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">run</span>
+</span><span class='line'>  <span class="mi">1</span>
+</span><span class='line'><span class="k">ensure</span>
+</span><span class='line'>  <span class="k">return</span> <span class="mi">2</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">run</span> <span class="c1"># =&gt; 2</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Anchors ^ and $ do not mean a start and an end of a string</h2>
+
+<p>Most of script languages uses anchors <code>^</code> and <code>$</code> of regular expressions as a start and an end of string accordingly.
+But not in Ruby! In Ruby they are a start and an end of a <strong>line</strong>.
+See the difference:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">pattern</span>      <span class="o">=</span> <span class="sr">/^[a-zA-Z]{3,12}$/</span>    <span class="c1"># 3-12 alphabetic characters</span>
+</span><span class='line'><span class="n">valid_name</span>   <span class="o">=</span> <span class="s2">&quot;Tatiana&quot;</span>
+</span><span class='line'><span class="n">invalid_name</span> <span class="o">=</span> <span class="s2">&quot;23</span><span class="se">\n</span><span class="s2">abc</span><span class="se">\n</span><span class="s2">!&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">valid_name</span>   <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 0, matchers</span>
+</span><span class='line'><span class="n">invalid_name</span> <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 3, matchers</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Instead use <code>\A</code> and <code>\z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">pattern</span>      <span class="o">=</span> <span class="sr">/\A[a-zA-Z]{3,12}\z/</span>    <span class="c1"># 3-12 alphabetic characters</span>
+</span><span class='line'><span class="n">valid_name</span>   <span class="o">=</span> <span class="s2">&quot;Tatiana&quot;</span>
+</span><span class='line'><span class="n">invalid_name</span> <span class="o">=</span> <span class="s2">&quot;23</span><span class="se">\n</span><span class="s2">abc</span><span class="se">\n</span><span class="s2">!&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">valid_name</span>   <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 0, matchers</span>
+</span><span class='line'><span class="n">invalid_name</span> <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; nil</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Pay attention when you write validations.
+<a href="http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html">Read Egor Homakov&#8217;s article</a>
+to get more information about it.</p>
+
+<h2>\m regexp option</h2>
+
+<p>When other languages use <code>\s</code> option to make <code>.</code> match newline, Ruby uses <code>\m</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">=~</span> <span class="sr">/./</span>   <span class="c1"># =&gt; nil</span>
+</span><span class='line'> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">=~</span> <span class="sr">/./m</span>  <span class="c1"># =&gt; 0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Calling super and super() are not the same</h2>
+
+<p>There is no matter for ruby methods do you use parentheses or not. But be careful with <code>super</code>
+since it&#8217;s not a method, but a key word.
+Let me show an example when parentheses matter:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Parent</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Parent m1: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Parent m2: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Child</span> <span class="o">&lt;</span> <span class="no">Parent</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Child m1: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>    <span class="k">super</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Child m2: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>    <span class="k">super</span><span class="p">()</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">child</span> <span class="o">=</span> <span class="no">Child</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m1</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m2</span><span class="p">(</span><span class="s2">&quot;bar&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>Child m1: arg = "foo"
+Parent m1: arg = "foo"
+Child m2: arg = "bar"
+super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
+        from super.rb:19:in `m2'
+        from super.rb:25:in `&lt;main&gt;'
+</code></pre>
+
+<p>When you use <code>super</code> it calls same method of parent class passing same arguments to it.
+But when you use <code>super(...)</code> you have to pass arguments manually. In my example <code>ArgumentError</code>
+was raised because <code>Parent#m2</code> expects to receive exactly one argument, but nothing was passed to <code>super()</code></p>
+
+<p>However <code>super()</code> still delegates a passed block. If you don&#8217;t wanna pass
+a block you have to do it explicitly using <code>super(&amp;nil)</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Parent</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span>
+</span><span class='line'>    <span class="k">yield</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span>
+</span><span class='line'>    <span class="k">yield</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Child</span> <span class="o">&lt;</span> <span class="no">Parent</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span>
+</span><span class='line'>    <span class="k">super</span><span class="p">()</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span>
+</span><span class='line'>    <span class="k">super</span><span class="p">(</span><span class="o">&amp;</span><span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">child</span> <span class="o">=</span> <span class="no">Child</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m1</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hi, m1&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m2</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hi, m2&quot;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Output:</p>
+
+<pre><code>Hi, m1
+/tmp/super.rb:7:in `m2': no block given (yield) (LocalJumpError)
+</code></pre>
+
+<h2>lambda and Proc.new act differently</h2>
+
+<p>It&#8217;s a well known thing but I want to remind.
+There 2 differences between proc objects created with <code>lambda</code> and <code>Proc.new</code>:</p>
+
+<ul>
+<li><code>lambda</code> raises <code>ArgumentError</code> if parameter is missing when <code>Proc.new</code> uses <code>nil</code> instead.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">lm</span> <span class="o">=</span> <span class="nb">lambda</span>   <span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">a</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2"> and </span><span class="si">#{</span><span class="n">b</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
+</span><span class='line'><span class="n">pr</span> <span class="o">=</span> <span class="no">Proc</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">a</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2"> and </span><span class="si">#{</span><span class="n">b</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">lm</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># =&gt; ArgumentError: wrong number of arguments (1 for 2)</span>
+</span><span class='line'><span class="n">pr</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># =&gt; &quot;10 and nil&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>For <code>lambda</code> word <code>return</code> means returning from proc object, when for <code>Proc.new</code> it means returning from scope where proc is defined.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">lambda_method</span>
+</span><span class='line'>  <span class="n">lm</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>     <span class="c1"># return from lambda</span>
+</span><span class='line'>  <span class="n">half</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'>  <span class="n">half</span> <span class="o">*</span> <span class="mi">2</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">proc_method</span>
+</span><span class='line'>  <span class="n">pr</span> <span class="o">=</span> <span class="no">Proc</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>   <span class="c1"># return from proc_method</span>
+</span><span class='line'>  <span class="n">half</span> <span class="o">=</span> <span class="n">pr</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'>  <span class="n">half</span> <span class="o">*</span> <span class="mi">2</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">lambda_method</span>   <span class="c1"># =&gt; 20</span>
+</span><span class='line'><span class="n">proc_method</span>     <span class="c1"># =&gt; 10</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note there is also method <code>proc</code>. In Ruby 1.8 it&#8217;s a synonym for <code>lambda</code>
+but in Ruby 1.9 it&#8217;s a synonym for <code>Proc.new</code>. So avoid using <code>proc</code> to keep you code compatible
+for both ruby versions.</p>
+
+<h2>DelegateClass instance does not eql itself</h2>
+
+<p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
+which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.
+But some things are not so obvious about it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;delegate&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Animal</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Dog</span> <span class="o">&lt;</span> <span class="no">DelegateClass</span><span class="p">(</span><span class="no">Animal</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="n">animal</span> <span class="o">=</span> <span class="no">Animal</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">dog</span> <span class="o">=</span> <span class="no">Dog</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="n">dog</span><span class="p">)</span>  <span class="c1"># =&gt; false, WTF? O_o</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It happens because <code>eql?</code> is delegated to base object(animal):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>  <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On other hand <code>equal?</code> is not:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">equal?</span><span class="p">(</span><span class="n">dog</span><span class="p">)</span>     <span class="c1"># =&gt; true</span>
+</span><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">equal?</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>  <span class="c1"># =&gt; false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>dup method do not work for all objects</h2>
+
+<p>As you might know every object in Ruby has <a href="http://ruby-doc.org/core-1.9.3/Object.html#method-i-dup">dup</a>
+method inherited from <code>Object</code> class. It&#8217;s convenient, I like it. But <strong>it does not mean that every object
+can be duplicated</strong>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="ss">:symbol</span><span class="p">,</span> <span class="kp">true</span><span class="p">,</span> <span class="kp">false</span><span class="o">].</span><span class="n">all?</span> <span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">respond_to?</span> <span class="ss">:dup</span> <span class="p">}</span> <span class="c1"># =&gt; true</span>
+</span><span class='line'><span class="ss">:symbol</span><span class="o">.</span><span class="n">dup</span>   <span class="c1"># =&gt; TypeError: can&#39;t dup Symbol</span>
+</span><span class='line'><span class="kp">true</span><span class="o">.</span><span class="n">dup</span>      <span class="c1"># =&gt; TypeError: can&#39;t dup TrueClass</span>
+</span><span class='line'><span class="kp">false</span><span class="o">.</span><span class="n">dup</span>     <span class="c1"># =&gt; TypeError: can&#39;t dup FalseClass</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It means you can&#8217;t make a deep copy of an array (with one level depth) like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:dup</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Or like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span> <span class="n">val</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:dup</span><span class="p">)</span> <span class="p">?</span> <span class="n">val</span><span class="o">.</span><span class="n">dup</span> <span class="p">:</span> <span class="n">val</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since all your objects respond to <code>#dup</code>.</p>
+
+<p>ActiveSupport provides <code>duplicable?</code> method to inspect an ability
+to duplicate an object, so finally your solution would look the next way:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span> <span class="n">val</span><span class="o">.</span><span class="n">duplicable?</span> <span class="p">?</span> <span class="n">val</span><span class="o">.</span><span class="n">dup</span> <span class="p">:</span> <span class="n">val</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Internally ruby symbols and booleans point to constant memory addresses, and
+there is no reason to copy them since they are unchangable.
+But I wish the implementation of their <code>#dup</code> methods looked like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Symbol</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">dup</span>
+</span><span class='line'>    <span class="nb">self</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<br />
+
+
+<br />
+
+
+<p>So I hope the article was useful for you.
+If you know some fancy Ruby things I haven&#8217;t mentioned please let me know.</p>
+
+<p>Thanks.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How to build Vim against specific Ruby version]]></title>
+    <link href="http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/"/>
+    <updated>2012-07-15T23:00:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version</id>
+    <content type="html"><![CDATA[<p>Let&#8217;s say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
+But what if you need Vim compiled with Ruby 1.9.x?
+I&#8217;m gonna tell you how to do it.</p>
+
+<!--more-->
+
+
+<h2>Clone vim repository</h2>
+
+<p>Make sure you have installed <code>mercurial</code> package:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo apt-get install mercurial
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Clone Vim repository from google code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>hg clone https://vim.googlecode.com/hg/ vim_sources
+</span><span class='line'><span class="nv">$ </span><span class="nb">cd </span>vim_sources
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Patching</h2>
+
+<p>There is no option to specify Ruby version to compile Vim against.
+But it&#8217;s easy to patch vim sources to force it to use <code>1.9</code> instead of <code>1.8</code>.</p>
+
+<p>Open file <code>src/Make_mvc.mak</code> in vim sources directory.</p>
+
+<p>Find lines like this:</p>
+
+<figure class='code'><figcaption><span>src/Make_mvc.mak</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='make'><span class='line'><span class="c">#</span>
+</span><span class='line'><span class="c"># Support Ruby interface</span>
+</span><span class='line'><span class="c">#</span>
+</span><span class='line'><span class="err">!ifdef</span> <span class="err">RUBY</span>
+</span><span class='line'><span class="c">#  Set default value</span>
+</span><span class='line'><span class="err">!ifndef</span> <span class="err">RUBY_VER</span>
+</span><span class='line'><span class="nv">RUBY_VER</span> <span class="o">=</span> 18
+</span><span class='line'>!endif
+</span><span class='line'>!ifndef RUBY_VER_LONG
+</span><span class='line'><span class="nv">RUBY_VER_LONG</span> <span class="o">=</span> 1.8
+</span><span class='line'>!endif
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Replace <code>18</code> and <code>1.8</code> with <code>19</code> and <code>1.9</code>. So it should look this way:</p>
+
+<figure class='code'><figcaption><span>src/Make_mvc.mak</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='make'><span class='line'><span class="c">#</span>
+</span><span class='line'><span class="c"># Support Ruby interface</span>
+</span><span class='line'><span class="c">#</span>
+</span><span class='line'><span class="err">!ifdef</span> <span class="err">RUBY</span>
+</span><span class='line'><span class="c">#  Set default value</span>
+</span><span class='line'><span class="err">!ifndef</span> <span class="err">RUBY_VER</span>
+</span><span class='line'><span class="nv">RUBY_VER</span> <span class="o">=</span> 19
+</span><span class='line'>!endif
+</span><span class='line'>!ifndef RUBY_VER_LONG
+</span><span class='line'><span class="nv">RUBY_VER_LONG</span> <span class="o">=</span> 1.9
+</span><span class='line'>!endif
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Configure and compile</h2>
+
+<p>At first make sure your current ruby version is which one you need:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>rvm use 1.9.3 --default
+</span><span class='line'><span class="nv">$ </span>ruby -v
+</span><span class='line'>ruby 1.9.3p194 <span class="o">(</span>2012-04-20 revision 35410<span class="o">)</span> <span class="o">[</span>x86_64-linux<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>No we are ready to run <code>./configure</code> script:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>./configure --enable-rubyinterp<span class="o">=</span>yes --prefix<span class="o">=</span>/where/you/want/ruby/to/be/installed/
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If everything is OK we can go ahead and compile it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>make -j 3
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>-j</code> option defines number of processes to make builing faster. It&#8217;s useful if number of CPU cores is greater than one.</p>
+
+<p>Finally install built Vim to <code>/where/you/want/ruby/to/be/installed/</code> directory which you passed as <code>--prefix</code> option:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>make install
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Verify Ruby version</h2>
+
+<p>Now let&#8217;s open your new Vim:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span><span class="nb">cd</span> /where/you/want/ruby/to/be/installed/
+</span><span class='line'><span class="nv">$ </span>./bin/vim
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And run the next command:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='vim'><span class='line'><span class="p">:</span><span class="k">ruby</span> puts RUBY_DESCRIPTION
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The ouput should looks similar to this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='vim'><span class='line'><span class="k">ruby</span> <span class="m">1</span>.<span class="m">9</span>.<span class="m">3</span>p<span class="m">194</span> <span class="p">(</span><span class="m">2012-04-20</span> revision <span class="m">35410</span><span class="p">)</span> [x86_64<span class="p">-</span>linux]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So, everything is OK. Enjoy Vim and builtin ruby 1.9 ;)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Тестируем вложенные ActiveRecord-модели с RSpec]]></title>
+    <link href="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/"/>
+    <updated>2012-07-06T22:19:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec</id>
+    <content type="html"><![CDATA[<p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
+и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, как нужно. На самом деле
+задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
+
+<!--more-->
+
+
+<p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
+(На практике обычно моделей намного больше с большим количеством свойств).</p>
+
+<figure class='code'><figcaption><span>user.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:first_name</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">has_one</span> <span class="ss">:account</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>account.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Account</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:last_visit_date</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
+</span><span class='line'>  <span class="n">has_one</span> <span class="ss">:preference</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>preference.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Preference</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:language</span><span class="p">,</span> <span class="ss">:weapon</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Предположим у нас есть некий builder, который строит объект User и все завимимые
+модели(Account и Preference). Всё что мы хотим сделать - это протестировать,
+что граф объектов построен правильно.</p>
+
+<p>Вот пример реализации стандартного rspec-теста, который первым приходит на ум:</p>
+
+<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">describe</span> <span class="s1">&#39;user&#39;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
+</span><span class='line'>      <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">its</span><span class="p">(</span><span class="ss">:first_name</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>      <span class="p">}</span>
+</span><span class='line'>      <span class="n">its</span><span class="p">(</span><span class="ss">:last_name</span><span class="p">)</span>  <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">describe</span> <span class="s1">&#39;account&#39;</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span><span class="o">.</span><span class="n">account</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">its</span><span class="p">(</span><span class="ss">:email</span><span class="p">)</span>           <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>       <span class="p">}</span>
+</span><span class='line'>        <span class="n">its</span><span class="p">(</span><span class="ss">:last_visit_date</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">describe</span> <span class="s1">&#39;preference&#39;</span> <span class="k">do</span>
+</span><span class='line'>          <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="n">its</span><span class="p">(</span><span class="ss">:language</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span> <span class="p">}</span>
+</span><span class='line'>          <span class="n">its</span><span class="p">(</span><span class="ss">:weapon</span><span class="p">)</span>   <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>      <span class="p">}</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Всё читаемо, красиво и просто. Но проблема в том, что получилось шесть тестов(по тесту на
+каждый атрибут), которые тестируют лишь одно действие - постороение объекта. Когда операция построения
+занимает немало времени, а количество атрибутов на порядок больше, такой подход
+становится далеко не самым лучшим, поскольку возрастает время выполнения.
+Если объект не сохраняется в базе то вполне разумным будет использовать <code>before :all</code>. Но если
+вам приходится сохранять объект и вы используете опцию <code>config.use_transactional_fixtures = true</code>,
+потому что не хотите &#8220;гадить&#8221; в базу, то этот вариант не подойдёт.</p>
+
+<p>Можно пойти по пути классического unit-тестирования и сделать тест подобным этому:</p>
+
+<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">it</span> <span class="s1">&#39;should correctly build a user&#39;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="o">.</span><span class="n">should</span>  <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">should</span>           <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">last_visit_date</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span><span class="o">.</span><span class="n">weapon</span><span class="o">.</span><span class="n">should</span>   <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Получилось даже лаконичнее, но менее читаемо(уж когда будет больше вложенность объектов,
+будет точно менее читаемо). Так же раздрожает длинные цепочки одинаковых методов.</p>
+
+<p>Помедитировав над проблемой, я нашёл компроммиссное решение на основе метода <code>instance_eval</code>.</p>
+
+<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">it</span> <span class="s1">&#39;should correctly build a user&#39;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">first_name</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>
+</span><span class='line'>        <span class="n">last_name</span><span class="o">.</span><span class="n">should</span>  <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">account</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
+</span><span class='line'>          <span class="n">email</span><span class="o">.</span><span class="n">should</span>           <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>
+</span><span class='line'>          <span class="n">last_visit_date</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="n">preference</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
+</span><span class='line'>            <span class="n">language</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span>
+</span><span class='line'>            <span class="n">weapon</span><span class="o">.</span><span class="n">should</span>   <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Это по-прежнему один тест, но мы избавились от длинных цепочек методов.
+Нужно заметить, что у такого подхода есть тоже свои недостатки: используя <code>instance_eval</code>
+мы покидаем контекст теста, и переходим прямо в контекст объекта, в котором не существует методов подобных
+<code>be_valid</code>, <code>be_instance_of</code>, etc.</p>
+
+<p>Надеюсь, эта идея будет вам полезной. Буду рад узнать чужое мнение.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[I released Smartdict version 0.1.0]]></title>
+    <link href="http://greyblake.com/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/"/>
+    <updated>2012-06-11T03:20:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0</id>
+    <content type="html"><![CDATA[<p>Today I released <a href="http://smartdict.net/blog/2012/06/11/smartdict-0-dot-1-0-is-released/">Smartdict version 0.1.0</a>.
+Please give me a favour and check it out.</p>
+
+<p>I&#8217;m gonna implement a vim plugin based on <a href="https://github.com/smartdict/smartdict-core">smartdict-core</a>.
+That will the next step in this direction, since I realy need it.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Получаем Premium на busuu.com бесплатно]]></title>
+    <link href="http://greyblake.com/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/"/>
+    <updated>2012-05-21T17:42:20+03:00</updated>
+    <id>http://greyblake.com/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno</id>
+    <content type="html"><![CDATA[<p>Недавно я начал пользоваться сервисом <a href="http://www.busuu.com">busuu.com</a>. Очень классная вещь, но вот беда: спустя неделю часть функционала перестала работать, предлагая купить Premium аккаунт за 69,99 EUR.</p>
+
+<p>Одна из полезностей которые пропали, была возможность прослушивания ключевых фраз во время изучения новых слов. Кнопка, при нажатие на которую должна произносится фраза, превратилась в обычную ссылку на страницу, которая предлагает купить Premium.</p>
+
+<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/play_button.png" alt="bussu play button" /></p>
+
+<p>Мне стало интересно, а можно ли это обойти? Оказалось, что можно! Файловый сервер, который отдаёт аудио-файлы никак не проверяет права пользователя, а сами ссылки на файлы можно прямо получить из ответов сервера на AJAX-запросы, которые отсылаются при нажатии на следующее/предыдущее слово.</p>
+
+<!--more-->
+
+
+<p>После полутора часов изучения и дебага родился скрипт, приведенный в конце статьи, который делает то, что мне нужно:</p>
+
+<ul>
+<li>Возвращает старую кнопку, вместо ссылки</li>
+<li>Переопределяет callback AJAX-запроса так, чтобы он получал из ответа ссылку на аудио-файл.</li>
+</ul>
+
+
+<h2>Как этим воспользоваться?</h2>
+
+<p>Предполагаю, что статью будут читать и нетехнические люди, поэтому опишу в деталях, как использовать эту уязвимость в своё благо.</p>
+
+<h3>Установка Firebug</h3>
+
+<p>Firebug - это расширение для Firefox, которым обычно пользуются веб-разработчики. Вам придётся его установить.
+Сделать это можно по <a href="http://getfirebug.com/">этой ссылке</a>, нажав на кнопку &#8220;Install Firebug&#8221;. После чего броузер должен перезагрузиться.</p>
+
+<h3>Основной трюк</h3>
+
+<p>Зайдите на busuu.com на страницу изучения слов. Откройте Firebug.
+В моём случае это делается через меню: Tools -> Web Developer -> Firebug -> открыть Firebug. Возможно в разных сборках Firefox, это может быть по-разному.</p>
+
+<p>Откройте консоль и полностью скопируйте в неё Javascript код, приведенный в конце этой статьи, как показано на рисунке. После чего нажмите кнопку &#8220;Выполнить&#8221;.</p>
+
+<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/firebug-1.png" alt="firebug" /></p>
+
+<h3>Изучайте ваш любимый язык</h3>
+
+<p>Дело сделано, вы можете закрыть Firebug. Теперь, кликнув на следующее слово у вас будет возможность прослушать ключевую фразу. Всё это будет работать до тех пор, пока вы не перезагрузите страницу.</p>
+
+<h2>Если у вас не Firefox</h2>
+
+<p>В большинстве других броузеров есть подобные инструменты для отладки, которые позволят вам проделать такой же трюк. Например, в броузере Google Chrome он встроенный, и открывается при нажатии клавиш Ctrl+Shift+J. В видео ниже показано, как именно это делается.</p>
+
+<iframe width="420" height="315" src="http://www.youtube.com/embed/cVn7IkkQFBU" frameborder="0" allowfullscreen></iframe>
+
+
+<h2>Javascript код</h2>
+
+<figure class='code'><figcaption><span>put it into Firebug console</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// Define languages</span>
+</span><span class='line'><span class="nx">hack_native_lang</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;lang&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">hack_matched</span> <span class="o">=</span> <span class="nx">location</span><span class="p">.</span><span class="nx">pathname</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/\/(enc|ar|zh|fr|de|it|ja|pl|pt|ru|es|tr)\//</span><span class="p">)</span>
+</span><span class='line'><span class="nx">hack_learning_lang</span> <span class="o">=</span> <span class="nx">hack_matched</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Replace link to subsribe with real play button</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">hack_player_div</span> <span class="o">=</span> <span class="s1">&#39;&lt;div id=&quot;player2&quot; class=&quot;busuu-player&quot;&gt;&lt;/div&gt;&#39;</span>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp-audio&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">hack_player_div</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Update onClick event</span>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player2&quot;</span><span class="p">).</span><span class="nx">click</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>   <span class="k">if</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">hasClass</span><span class="p">(</span><span class="s2">&quot;busuu-player-pause&quot;</span><span class="p">)){</span>
+</span><span class='line'>     <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">data</span><span class="p">(</span><span class="s2">&quot;jPlayer&quot;</span><span class="p">).</span><span class="nx">status</span><span class="p">.</span><span class="nx">paused</span><span class="p">){</span>
+</span><span class='line'>       <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">removeClass</span><span class="p">(</span><span class="s2">&quot;busuu-player-pause&quot;</span><span class="p">);</span>
+</span><span class='line'>       <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;pause&quot;</span><span class="p">);</span>
+</span><span class='line'>     <span class="p">}</span>
+</span><span class='line'>     <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>       <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;play&quot;</span><span class="p">);</span>
+</span><span class='line'>     <span class="p">}</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">else</span><span class="p">{</span>
+</span><span class='line'>     <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;setMedia&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">mp3</span><span class="o">:</span><span class="nx">kp_audio</span><span class="p">}).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;play&quot;</span><span class="p">);</span>
+</span><span class='line'>     <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s2">&quot;busuu-player-pause&quot;</span><span class="p">);</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Redefine function getEnt() to make it set global variable kp_audio with link to mp3 file</span>
+</span><span class='line'><span class="kd">function</span> <span class="nx">getEnt</span><span class="p">(</span><span class="nx">pl</span><span class="p">,</span><span class="nx">entid</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>   <span class="nx">p_entid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">entities</span><span class="p">[</span><span class="nx">index</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">entities</span><span class="p">[</span><span class="nx">index</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>   <span class="nx">n_entid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">entities</span><span class="p">[</span><span class="nx">index</span> <span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">entities</span><span class="p">[</span><span class="nx">index</span> <span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>   <span class="k">if</span> <span class="p">(</span><span class="nx">entid</span> <span class="o">==</span> <span class="mi">14069255</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">7312</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">1305</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">3279</span> <span class="o">||</span>
+</span><span class='line'>       <span class="nx">entid</span> <span class="o">==</span> <span class="mi">2310</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">81017</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">1450</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">30872</span><span class="p">){</span>
+</span><span class='line'>     <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#ge&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">(</span><span class="s2">&quot;drop&quot;</span><span class="p">);</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#ge&quot;</span><span class="p">).</span><span class="nx">hide</span><span class="p">();</span>
+</span><span class='line'>   <span class="p">}</span>
+</span><span class='line'>   <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">({</span>
+</span><span class='line'>       <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+</span><span class='line'>       <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/js/busuuajax/entity/&quot;</span><span class="o">+</span><span class="nx">entid</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="nx">hack_learning_lang</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="nx">hack_native_lang</span><span class="o">+</span><span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nx">p_entid</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nx">n_entid</span><span class="p">,</span>
+</span><span class='line'>       <span class="nx">cache</span><span class="o">:</span><span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>       <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;xml&quot;</span><span class="p">,</span>
+</span><span class='line'>       <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">xml</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#report_link&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;href&quot;</span><span class="p">,</span> <span class="s2">&quot;/js/busuuajax/user_report_entity/&quot;</span><span class="o">+</span><span class="nx">hack_learning_lang</span><span class="o">+</span><span class="s2">&quot;/1_1_4/&quot;</span><span class="o">+</span><span class="nx">entid</span><span class="o">+</span><span class="s2">&quot;?KeepThis=true&amp;TB_iframe=true&amp;height=270&amp;width=300&quot;</span><span class="p">);</span>
+</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#star&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;src&quot;</span><span class="p">,</span><span class="s2">&quot;http://static3.bscdn.net/sites/all/themes/busuunew/images/star_off.png&quot;</span><span class="p">);</span>
+</span><span class='line'>              <span class="nx">already_selected</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;flagged&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span> <span class="o">?</span> <span class="kc">true</span> <span class="o">:</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="nx">already_selected</span> <span class="p">)</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#star&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;src&quot;</span><span class="p">,</span><span class="s2">&quot;http://static1.bscdn.net/sites/all/themes/busuunew/images/star_on.png&quot;</span><span class="p">);</span>
+</span><span class='line'>              <span class="nx">image</span> <span class="o">=</span> <span class="s2">&quot;&lt;img style=&#39;display:none;&#39; src=&#39;&quot;</span><span class="o">+</span><span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot;&#39; /&gt;&quot;</span><span class="p">;</span>
+</span><span class='line'>              <span class="nx">prev_image</span><span class="o">=</span><span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;prev_image&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="nx">next_image</span><span class="o">=</span><span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;next_image&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="nx">audio</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;audio&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="nx">word1</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;value1&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="nx">word2</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;value2&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="nx">phrase1</span> <span class="o">=</span>  <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;keyphrase1&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="nx">phrase2</span><span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;keyphrase2&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="nx">phonetics</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;entity_phonetics&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="k">if</span><span class="p">(</span><span class="nx">phonetics</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
+</span><span class='line'>                <span class="nx">entity_phonetics</span> <span class="o">=</span> <span class="s2">&quot;&lt;br&gt;&lt;div dir=\&quot;ltr\&quot; lang=\&quot;enc\&quot; class=\&quot;phonetics\&quot;&gt;&quot;</span><span class="p">;</span>
+</span><span class='line'>                <span class="nx">entity_phonetics</span> <span class="o">+=</span> <span class="nx">phonetics</span><span class="p">;</span>
+</span><span class='line'>                <span class="nx">entity_phonetics</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/div&gt;&quot;</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="nx">phonetics</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;kp_phonetics&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>              <span class="k">if</span><span class="p">(</span><span class="nx">phonetics</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
+</span><span class='line'>                <span class="nx">kp_phonetics</span> <span class="o">=</span> <span class="s2">&quot;&lt;br&gt;&lt;div dir=\&quot;ltr\&quot; lang=\&quot;enc\&quot; class=\&quot;phonetics\&quot;&gt;&quot;</span><span class="p">;</span>
+</span><span class='line'>                <span class="nx">kp_phonetics</span> <span class="o">+=</span>  <span class="nx">phonetics</span><span class="p">;</span>
+</span><span class='line'>                <span class="nx">kp_phonetics</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/div&gt;&quot;</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="nx">kp_audio</span><span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;kp_audio&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>              <span class="k">if</span><span class="p">(</span><span class="nx">navigator</span><span class="p">.</span><span class="nx">platform</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s2">&quot;iPad&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">){</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;setMedia&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">mp3</span><span class="o">:</span> <span class="nx">audio</span><span class="p">});</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="k">else</span><span class="p">{</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;setMedia&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">mp3</span><span class="o">:</span> <span class="nx">audio</span><span class="p">}).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;play&quot;</span><span class="p">);</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player1&quot;</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s2">&quot;busuu-player-pause&quot;</span><span class="p">);</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="nx">index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">){</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#left&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&lt;img style=&#39;cursor:pointer;&#39; src=&#39;&quot;</span><span class="o">+</span> <span class="nx">prev_image</span> <span class="o">+</span> <span class="s2">&quot;&#39; width=100  height=66&gt;&quot;</span><span class="p">);</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#left_arrow&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#left_border&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#left&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>                <span class="k">if</span> <span class="p">(</span><span class="nx">index</span> <span class="o">&lt;</span> <span class="nx">entities</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span><span class="mi">1</span> <span class="p">){</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#right&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&lt;img style=&#39;cursor:pointer;&#39;  src=&#39;&quot;</span><span class="o">+</span> <span class="nx">next_image</span> <span class="o">+</span> <span class="s2">&quot;&#39; width=100  height=66&gt;&quot;</span><span class="p">);</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#right&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#right_arrow&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#right_border&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.lu-learn-phraseA&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">word1</span> <span class="o">+</span> <span class="nx">entity_phonetics</span><span class="p">);</span>
+</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.lu-learn-phraseB&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">word2</span><span class="p">);</span>
+</span><span class='line'>             <span class="nx">kp_audio_html</span><span class="o">=</span><span class="s1">&#39;&lt;div id=&quot;player2&quot; class=&quot;busuu-player&quot;&gt;&lt;/div&gt;&#39;</span><span class="p">;</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;keyphrase1&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">()</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.table-lu-key-phrases&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">kp_audio</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp1&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">phrase1</span> <span class="o">+</span> <span class="nx">kp_phonetics</span><span class="p">);</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp_divider&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp2&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">phrase2</span><span class="p">);</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp-audio&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">kp_audio_html</span><span class="p">);</span>
+</span><span class='line'>                  <span class="nx">activatePlayer2</span><span class="p">();</span>
+</span><span class='line'>                <span class="p">}</span>
+</span><span class='line'>                <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp1&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">phrase1</span> <span class="o">+</span> <span class="nx">kp_phonetics</span><span class="p">);</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp_divider&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp2&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">phrase2</span><span class="p">);</span>
+</span><span class='line'>                <span class="p">}</span>
+</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.table-lu-key-phrases&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp_divider&quot;</span><span class="p">).</span><span class="nx">hide</span><span class="p">();</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.table-lu-key-phrases&quot;</span><span class="p">).</span><span class="nx">hide</span><span class="p">();</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.lu-review-ratio&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">((</span><span class="nx">index</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span><span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nx">entities</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#middle&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">image</span><span class="p">);</span>
+</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#middle&quot;</span><span class="p">).</span><span class="nx">children</span><span class="p">().</span><span class="nx">fadeIn</span><span class="p">(</span><span class="mi">300</span><span class="p">);</span>
+</span><span class='line'>           <span class="p">}</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Разгоняем мозг]]></title>
+    <link href="http://greyblake.com/blog/2012/01/30/razgonyaem-mozg/"/>
+    <updated>2012-01-30T00:33:36+02:00</updated>
+    <id>http://greyblake.com/blog/2012/01/30/razgonyaem-mozg</id>
+    <content type="html"><![CDATA[<p>Несколько месяцев назад я был очень сильно озабочен своей продуктивностью. Здесь собраны некоторые рецепты повышения эффективности мозговой деятельности, которые мне удалось отыскать, большинство из них взяты из книги Вина Венгера &#8220;Фактор Эйнштейна&#8221;.</p>
+
+<!--more-->
+
+
+<ul>
+<li><a href="http://www.youtube.com/watch?v=-Q3cW5pBd6Q">Соната Моцарта для 2х фортепиано в Ре мажоре K.448</a>. 10 минут прослушивания поднимают IQ на 8-9 пунктов на 15 минут.</li>
+<li>Задержка дыхания. Возможно, даже стоит заняться подводным плаванием. Улучшается кровоснабжение мозга.</li>
+<li>Упражнение &#8220;Поток образов&#8221; (читай книгу &#8220;Фактор Эйнштейна&#8221;).</li>
+<li>Голод. Стимулирует творческую деятельность.</li>
+<li>Воздержание от секса, если верить Фрейду, ибо либидо направляется в нужное русло. Но я ему не верю ;)</li>
+<li>Запах лимона <a href="http://persona.rin.ru/news/147136/f/zapah-limona-stimuliruet-rabotu-golovnogo-mozga">улучшает мозговую деятельность</a></li>
+<li>Метроном 60 ударов в минуту или музыка эпохи Барокко - вводит человека в лучшее состояние для обучения и запоминание информации.  <a href="http://www.yugzone.ru/psy/iq.htm">http://www.yugzone.ru/psy/iq.htm</a></li>
+</ul>
+
+
+<p>Кроме всего перечисленного выше, не стоит забывать, что восьмичасовой сон никто не отменял ;)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Synchonize application data using git ]]></title>
+    <link href="http://greyblake.com/blog/2011/11/27/synchonize-application-data-using-git/"/>
+    <updated>2011-11-27T00:43:11+02:00</updated>
+    <id>http://greyblake.com/blog/2011/11/27/synchonize-application-data-using-git</id>
+    <content type="html"><![CDATA[<p>I started writing a diary using <a href="http://rednotebook.sourceforge.net">rednotebook</a> application. It&#8217;s realy cool, but I stuck with a problem: I want to use it everywhere on any device and keep all my notes synchonized. So I decided to create a simple tool called <strong>gync</strong> to help me.</p>
+
+<p>Please check it out on Github: <a href="https://github.com/greyblake/gync">https://github.com/greyblake/gync</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Perfomance benchmakrs ExecJS VS Ruby]]></title>
+    <link href="http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/"/>
+    <updated>2011-10-23T08:49:33+03:00</updated>
+    <id>http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby</id>
+    <content type="html"><![CDATA[<p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you&#8217;re are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google&#8217;s V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
+
+<!--more-->
+
+
+
+
+<figure class='code'><figcaption><span>benchmark.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;rubygems&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;execjs&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">js</span> <span class="o">=&lt;&lt;</span><span class="no">JAVASCRIPT</span>
+</span><span class='line'><span class="sh">function fib(a){</span>
+</span><span class='line'><span class="sh">  if(a &lt; 2)</span>
+</span><span class='line'><span class="sh">    return a;</span>
+</span><span class='line'><span class="sh">  return fib(a-1) + fib(a-2);</span>
+</span><span class='line'><span class="sh">}</span>
+</span><span class='line'><span class="no">JAVASCRIPT</span>
+</span><span class='line'><span class="n">context</span> <span class="o">=</span> <span class="no">ExecJS</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">js</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">fib</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">a</span> <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">2</span>
+</span><span class='line'>  <span class="n">fib</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="o">].</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;N = </span><span class="si">#{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;Ruby:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;ExecJS:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">context</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;fib&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s1">&#39;-&#39;</span> <span class="o">*</span> <span class="mi">52</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here is the output:</p>
+
+<pre><code>N = 1
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.000008)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000318)
+----------------------------------------------------
+N = 10
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.000026)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000156)
+----------------------------------------------------
+N = 20
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.002585)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000550)
+----------------------------------------------------
+N = 30
+             user     system      total        real
+Ruby:    0.310000   0.000000   0.310000 (  0.312819)
+ExecJS:  0.040000   0.000000   0.040000 (  0.043603)
+----------------------------------------------------
+N = 40
+             user     system      total        real
+Ruby:   39.780000   0.050000  39.830000 ( 39.955098)
+ExecJS:  3.940000   0.020000   3.960000 (  3.943733)
+----------------------------------------------------
+</code></pre>
+
+<p>Looks like ExecJS needs some time for &#8220;initializing&#8221; and there is no reason to use it for small calculation. But it can be ten times faster in case of long time computing!</p>
+
+<p>I would not decide to use ExecJS for validation but however the benchmark results were amazing, and we&#8217;ve got to keep in mind that ExecJS can provide such perfomance benefits.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How to Install Firefox (Iceweasel) 7 on Debian Squeeze]]></title>
+    <link href="http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/"/>
+    <updated>2011-10-03T18:12:54+03:00</updated>
+    <id>http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze</id>
+    <content type="html"><![CDATA[<p>First remove lagacy version of Iceweasel:</p>
+
+<pre><code>aptitude remove iceweasel
+</code></pre>
+
+<p>Create <code>/etc/apt/sources.list.d/squeeze-backports.list</code> file:</p>
+
+<pre><code># New Mozilla packages for Squeeze
+deb http://mozilla.debian.net/ squeeze-backports iceweasel-release
+deb http://backports.debian.org/debian-backports squeeze-backports main
+</code></pre>
+
+<p>Then run:</p>
+
+<pre><code>aptitude update
+aptitude install iceweasel -t squeeze-backports
+</code></pre>
+
+<p>Enjoy!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Powering less to highlight syntax and display line numbers]]></title>
+    <link href="http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/"/>
+    <updated>2011-09-23T17:38:35+03:00</updated>
+    <id>http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers</id>
+    <content type="html"><![CDATA[<p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
+
+<!--more-->
+
+
+<h2>Making less highlight syntax</h2>
+
+<p>It didn&#8217;t take a long time to find a solution.  There is a pretty tool called <strong>source-highlight</strong>.</p>
+
+<p>It might be exist in standard repository of your system. In Debian like Linux distribution(Debian, Ubuntu, Mint, etc) you can install it with command:</p>
+
+<pre><code>apt-get install source-highlight
+</code></pre>
+
+<p>It supports a realy big list of languages(in my case 143) and 12 output formats(esc, html, javadoc, latex, etc). You can use man to get closer with it:</p>
+
+<pre><code>man source-highlight
+</code></pre>
+
+<p><strong>source-highlight</strong> package provides a little script which receives a source code file and prints highlighted code. Its path is <code>/usr/share/source-highlight/src-hilite-lesspipe.sh</code>. So we&#8217;re gonna to use it with <strong>less</strong>.</p>
+
+<p>Fortunately <em>_less</em> is require flexible tool and we can customize it with number of invironment variables. One of them is <code>LESSOPEN</code>. A quote from <code>man less</code>:</p>
+
+<pre><code>LESSOPEN
+    Command line to invoke the (optional) input-preprocessor.
+</code></pre>
+
+<p>So we can you any pipes to prepare an input for <strong>less</strong>.</p>
+
+<p>Another variable we are going to use is <code>LESS</code>:</p>
+
+<pre><code>LESS
+    Options which are passed to less automatically.
+</code></pre>
+
+<p>We will use <code>-R</code> option to allow ANSI colors.</p>
+
+<p>So just set up this to variables:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">export </span><span class="nv">LESSOPEN</span><span class="o">=</span><span class="s2">&quot;| /usr/share/source-highlight/src-hilite-lesspipe.sh %s&quot;</span>
+</span><span class='line'><span class="nb">export </span><span class="nv">LESS</span><span class="o">=</span><span class="s1">&#39; -R &#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Making less display line numbers</h2>
+
+<p>To display line numbers just use <code>-N</code> option. If you want <strong>less</strong> to use it everytime add it to <code>LESS</code> variable as well:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">export </span><span class="nv">LESS</span><span class="o">=</span><span class="s1">&#39; -RN &#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Make it work everytime</h2>
+
+<p>To make it work in all shell session just add the next code to the end of you <code>$HOME/.bashrc</code> file:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c"># syntax highlight for less</span>
+</span><span class='line'><span class="nb">export </span><span class="nv">LESSOPEN</span><span class="o">=</span><span class="s2">&quot;| /usr/share/source-highlight/src-hilite-lesspipe.sh %s&quot;</span>
+</span><span class='line'><span class="nb">export </span><span class="nv">LESS</span><span class="o">=</span><span class="s1">&#39; -R -N&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Hope this was useful for you. Don&#8217;t be shy and leave you comments.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Using update-rc.d]]></title>
+    <link href="http://greyblake.com/blog/2011/09/18/using-update-rc-d/"/>
+    <updated>2011-09-18T21:00:00+03:00</updated>
+    <id>http://greyblake.com/blog/2011/09/18/using-update-rc-d</id>
+    <content type="html"><![CDATA[<p><code>update-rc.d</code> is tool for adding daemons to /etc/rc[1-6]d files.</p>
+
+<p>If you are using OS with System-V style init scripts you can find you <code>/etc</code> the next directories:</p>
+
+<ul>
+<li>rc0.d/</li>
+<li>rc1.d/</li>
+<li>rc2.d/</li>
+<li>rc3.d/</li>
+<li>rc4.d/</li>
+<li>rc5.d/</li>
+<li>rc6.d/</li>
+<li>rcS.d/</li>
+</ul>
+
+
+<p>So, what are they for?</p>
+
+<!--more-->
+
+
+<p>Every directory contains symbol links to daemons located in <code>/etc/init.d/</code>. And every directory represents run level. Usually your system uses third level which means multi user mode with networking. When the system is initializing it starts daemons which have appropriate symbol links in rc3.d.</p>
+
+<p>Here is a short description of every run level:</p>
+
+<ul>
+<li><strong>0 (Halt)</strong>  Shuts down the system.</li>
+<li><strong>1 (Single-User Mode)</strong>  Mode for administrative tasks.[2][3]</li>
+<li><strong>2 (Multi-User Mode)</strong>   Does not configure network interfaces and does not export networks services.[4]</li>
+<li><strong>3 (Multi-User Mode with Networking)</strong>   Starts the system normally.[5]</li>
+<li><strong>4 (Not used/User-definable)</strong>   For special purposes.</li>
+<li><strong>5 (Start the system normally with appropriate display manager.)</strong>   As runlevel 3 + display manager.</li>
+<li><strong>6 (Reboot)</strong>    Reboots the system.</li>
+</ul>
+
+
+<p>Usualy you don&#8217;t need to switch levels, but if you do you should use <code>init</code> command. Take care of what you doing.</p>
+
+<p>OK, take a look at a head of some daemon scripts. For example <code>/etc/init.d/postgresql</code>:</p>
+
+<figure class='code'><figcaption><span>/etc/init.d/postgresql</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'><span class="nb">set</span> -e
+</span><span class='line'>
+</span><span class='line'><span class="c">### BEGIN INIT INFO</span>
+</span><span class='line'><span class="c"># Provides:             postgresql</span>
+</span><span class='line'><span class="c"># Required-Start:       $local_fs $remote_fs $network $time</span>
+</span><span class='line'><span class="c"># Required-Stop:        $local_fs $remote_fs $network $time</span>
+</span><span class='line'><span class="c"># Should-Start:         $syslog</span>
+</span><span class='line'><span class="c"># Should-Stop:          $syslog</span>
+</span><span class='line'><span class="c"># Default-Start:        2 3 4 5</span>
+</span><span class='line'><span class="c"># Default-Stop:         0 1 6</span>
+</span><span class='line'><span class="c"># Short-Description:    PostgreSQL RDBMS server</span>
+</span><span class='line'><span class="c">### END INIT INFO</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It has a self descriptive comment in an appropriate format. <code>Default-Start</code> section contains numbers of levels which runs postgres daemon. <code>Default-Stop</code> section contains number of levels which should not run PostgreSQL, so when you switch to them PostgreSQL daemon will be stopped.</p>
+
+<p>So, let&#8217;s assume you have created you own daemon which knows how to process <code>start</code> and <code>stop</code> arguments and want it to run on appropriate levels. You need to create symbol links like these:</p>
+
+<pre><code>/etc/rc1.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc4.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc0.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc2.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc3.d/S02postgresql -&gt; ../init.d/postgresql
+/etc/rc6.d/K03postgresql -&gt; ../init.d/postgresql
+/etc/rc5.d/S02postgresql -&gt; ../init.d/postgresql
+</code></pre>
+
+<p>By the way prefix <code>K</code> means kill(stop) process and <code>S</code> means start.
+It&#8217;s a little routine work, right? But in case if you have descriptive comment I metioned above you just can use <code>update-rc.d</code> tool. It creates all necessary symbol links based on the comment. So just run:</p>
+
+<pre><code>update-rc.d postgres defaults
+</code></pre>
+
+<p>Change <code>postgres</code> with name of your daemon.</p>
+
+<h2>Why?</h2>
+
+<p>Unfortunatly I often forget how this tool is called.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[RSpec matchers for DataMapper (dm-rspec)]]></title>
+    <link href="http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/"/>
+    <updated>2011-09-12T22:25:15+03:00</updated>
+    <id>http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec</id>
+    <content type="html"><![CDATA[<p>I am currently developing a number of RSpec matchers for DataMapper models testing. You can try it. Just add the next in your Gemfile under <code>test</code> group:</p>
+
+<pre><code>gem 'dm-rspec'
+</code></pre>
+
+<p>And run <code>bundle install</code> to install new gems.</p>
+
+<p>The main idea is to provide the same (almost the same) interface which Shoulda provides to test ActiveRecord models.</p>
+
+<p>At the moment I implemented the next matchers:</p>
+
+<ul>
+<li>belong_to</li>
+<li>have_many</li>
+<li>have_many_and_belong_to</li>
+<li>have_property</li>
+<li>have(n).errors_on(:property)</li>
+<li>have_many(:association).trough(:another_association)</li>
+<li>validate_presence_of(:property)</li>
+<li>validate_uniqueness_of(:property)</li>
+<li>validate_format_of(:property).with(/regexp/)</li>
+</ul>
+
+
+<p>More information you can find on <a href="https://github.com/greyblake/dm-rspec">DataMapper RSpec github page</a>.</p>
+
+<p>Anyone is welcome to join me in developing:)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Backuping and restoring PostgreSQL databases]]></title>
+    <link href="http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases/"/>
+    <updated>2011-02-04T23:48:55+02:00</updated>
+    <id>http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases</id>
+    <content type="html"><![CDATA[<p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
+
+<p>The first one is for backup:</p>
+
+<figure class='code'><figcaption><span>backup.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">BASE_BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;/backups/postgres/&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">timeslot</span><span class="o">=</span><span class="k">$(</span>date +<span class="s2">&quot;%F_%Hh%Mm%Ss&quot;</span><span class="k">)</span>
+</span><span class='line'><span class="nv">backup_dir</span><span class="o">=</span><span class="s2">&quot;${BASE_BACKUP_DIR}/${timeslot}&quot;</span>
+</span><span class='line'><span class="nv">databases</span><span class="o">=</span><span class="k">$(</span>sudo -u postgres sh -c <span class="s2">&quot;psql  -c &#39;\l&#39;&quot;</span> 2&gt; /dev/null | sed <span class="se">\</span>
+</span><span class='line'>-n 4,/<span class="se">\e</span>of/p | grep -v rows<span class="se">\)</span> | awk <span class="s1">&#39;{print $1}&#39;</span> | egrep <span class="s1">&#39;^\w&#39;</span><span class="k">)</span>
+</span><span class='line'>
+</span><span class='line'>mkdir -p <span class="nv">$backup_dir</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">for </span>db in <span class="nv">$databases</span>; <span class="k">do</span>
+</span><span class='line'><span class="k">    </span>sudo -u postgres sh -c <span class="s2">&quot;pg_dump -C ${db}&quot;</span> 2&gt; /dev/null | xz -9e &gt; <span class="nv">$backup_dir</span>/<span class="nv">$db</span>.xz
+</span><span class='line'><span class="k">done</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After executing script you&#8217;ll have all you database dumps in <code>/backups/postgres/date_time</code> directory compressed with <code>xz</code>. Sure instead of <code>xz</code> you can use <code>gzip</code> or <code>bzip2</code>.</p>
+
+<p>Okay. Now let&#8217;s take a look at the restore script:</p>
+
+<figure class='code'><figcaption><span>restore.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="o">[</span> <span class="nv">$# </span>-lt 1 <span class="o">]</span> ; <span class="k">then</span>
+</span><span class='line'><span class="k">    </span><span class="nb">echo</span> <span class="s2">&quot;Error: You should specify backup directory path&quot;</span> 1&gt;&amp;2
+</span><span class='line'>    <span class="nb">exit </span>1
+</span><span class='line'><span class="k">fi</span>
+</span><span class='line'><span class="nv">backup_dir</span><span class="o">=</span><span class="nv">$1</span>
+</span><span class='line'><span class="k">if</span> <span class="o">[</span> ! -d <span class="nv">$backup_dir</span> <span class="o">]</span>; <span class="k">then</span>
+</span><span class='line'><span class="k">    </span><span class="nb">echo</span> <span class="s2">&quot;Error: directory ${backup_dir} does not exist&quot;</span> 1&gt;&amp;2
+</span><span class='line'>    <span class="nb">exit </span>1
+</span><span class='line'><span class="k">fi</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">for </span>db_xz in <span class="nv">$backup_dir</span>/*.xz; <span class="k">do</span>
+</span><span class='line'><span class="k">    </span><span class="nv">db_name</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="nv">$db_xz</span> | sed <span class="s1">&#39;s/\.xz$//; s/^.*\///g&#39;</span><span class="k">)</span>
+</span><span class='line'>    sudo -u postgres sh -c <span class="s2">&quot;xz -cd ${db_xz} | psql&quot;</span>
+</span><span class='line'><span class="k">done</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It takes one parameter: a path to back directory with *.xz archives.</p>
+
+<p>Both scripts should be executed with with root permissions, cause they use <code>sudo</code> to execute <code>pg_dump</code> and <code>pg_restore</code> commands with <code>postgres</code> user permissions. It allows avoiding asking a password for database. It&#8217;s not the only way, but I decided to use this one.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Beep alarm]]></title>
+    <link href="http://greyblake.com/blog/2011/01/23/beep-alarm/"/>
+    <updated>2011-01-23T23:24:39+02:00</updated>
+    <id>http://greyblake.com/blog/2011/01/23/beep-alarm</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>Someone would say I am brainsick&#8230; So may be I am.</p>
+
+<p>By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
+So I decided to create an alarm based on <code>beep</code> Unix tool. This tool allows you to play sound with specified frequency and delay on your speaker.</p>
+
+<p>Some times after I decided that simple &#8220;Be-e-e-e-p&#8221; sound is borring and I created a player.
+It can play tunes defined in format for old Nokia mobiles.
+Have you ever type something like this:</p>
+
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
+</code></pre>
+
+<p>&#8230;to add new ringtone for your mobile?</p>
+
+<!--more-->
+
+
+<h2>Getting and usage</h2>
+
+<p>You should clone my <a href="http://github.com/greyblake/beep-alarm">repository from github</a>:</p>
+
+<pre><code>git clone git://github.com/greyblake/beep-alarm.git
+</code></pre>
+
+<p>And to try it just type:</p>
+
+<pre><code>./beep-alarm/bin/beep-alarm
+</code></pre>
+
+<p>You should listen a sound of russian song &#8220;Kalinka&#8221;. Unfortunately the only way to stop it is to send INT signal with pressing <code>Ctrl-C</code>.</p>
+
+<p>With this tool you can specify time at what you want a tune to play. Next example make it play at 8:00:</p>
+
+<pre><code>beep-alarm 8:00
+</code></pre>
+
+<p>It has 7 bultin melodies(to see them use <code>--help</code>), so you can choose another one with <code>-m</code> option:</p>
+
+<pre><code># play Metallica - Unforgiven
+beep-alarm -m 3
+</code></pre>
+
+<p>You can even change tempo of tune(default is 120)!</p>
+
+<pre><code>beep-alarm -t 200
+</code></pre>
+
+<p>And even play a tune in different keynote:</p>
+
+<pre><code># Down for 2 semitones
+beep-alarm -o -2
+</code></pre>
+
+<p>To get more information and example use <code>--help</code> option.</p>
+
+<h2>So&#8230;</h2>
+
+<p>I hope you&#8217;ll enjoy it and will never oversleep your work:)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Vim preview plugin]]></title>
+    <link href="http://greyblake.com/blog/2011/01/23/vim-preview-plugin/"/>
+    <updated>2011-01-23T03:13:14+02:00</updated>
+    <id>http://greyblake.com/blog/2011/01/23/vim-preview-plugin</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>Preview plugin is a tool developed to help you to preview markup files such as .markdown, .rdoc, .textile, .ronn and .html when you are editing them. It builds html files and opens them in your browser.</p>
+
+<h2>Supported Formats</h2>
+
+<p>The plugin supports the next formats:</p>
+
+<ul>
+<li>markdown(md, mkd, mkdn, mdown) - depends on <code>bluecloth</code> ruby gem</li>
+<li>rdoc - depends on <code>github-markup</code> ruby gem</li>
+<li>textile - depends on <code>RedCloth</code> ruby gem</li>
+<li>html(htm)</li>
+<li>ronn - depends on <code>ronn</code> ruby gem</li>
+</ul>
+
+
+<!--more-->
+
+
+<h2>Dependencies</h2>
+
+<p>The plugin requires a builtin ruby interpreter. It means that your Vim
+should be compiled with <code>--enable-rubyinterp</code> option.
+To find out does you Vim have builtin ruby interpreter you can do the next:</p>
+
+<pre><code>:echo has('ruby')
+</code></pre>
+
+<p>If output is <code>1</code> the ruby interpreter is builtin.</p>
+
+<p>The second thing you should verify is that you have installed all necessary
+ruby gems. Please see &#8220;Supported Formats&#8221; section to find out what gems you need.</p>
+
+<h2>Installation</h2>
+
+<p>At first you should get the plugin. You can clone my repository from github like this:</p>
+
+<pre><code>git clone git://github.com/greyblake/vim-preview.git
+</code></pre>
+
+<p>Or download it from <a href="http://www.vim.org/scripts/script.php?script_id=3344">vim.org</a></p>
+
+<p>To install the plugin just copy <code>autoload</code>, <code>plugin</code>, <code>doc</code> directories into your <code>.vim</code> directory:</p>
+
+<pre><code>cd vim-preview
+cp ./autoload ~/.vim -R
+cp ./plugin ~/.vim -R
+cp ./doc ~/.vim -R
+</code></pre>
+
+<p>If you use <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a> just unzip/clone the plugin to <code>~/.vim/bundle</code> directory.
+If don&#8217;t use  <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a>, I would recommend you to start.</p>
+
+<h2>Usage</h2>
+
+<ul>
+<li><code>&lt;Leader&gt;P</code> - will open current file converted to HTML in your browser.</li>
+</ul>
+
+
+<p>I want to remind that <code>&lt;Leader&gt;</code> in most cases is <code>\</code> key.</p>
+
+<p>To get more information about the plugin and how it can be customized read help in Vim editor:</p>
+
+<pre><code>:help Preview
+</code></pre>
+
+<h2>If you found a bug &#8230;</h2>
+
+<p>Report it me!</p>
+]]></content>
+  </entry>
+  
+</feed>

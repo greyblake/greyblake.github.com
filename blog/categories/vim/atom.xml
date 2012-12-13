@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Vim | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/vim/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How to build Vim against specific Ruby version]]></title>
+    <link href="http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/"/>
+    <updated>2012-07-15T23:00:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version</id>
+    <content type="html"><![CDATA[<p>Let's say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
+But what if you need Vim compiled with Ruby 1.9.x?
+I'm gonna tell you how to do it.</p>
+
+<!--more-->
+
+
+<h2>Clone vim repository</h2>
+
+<p>Make sure you have installed <code>mercurial</code> package:</p>
+
+<p><code>sh
+$ sudo apt-get install mercurial
+</code></p>
+
+<p>Clone Vim repository from google code:</p>
+
+<p><code>sh
+$ hg clone https://vim.googlecode.com/hg/ vim_sources
+$ cd vim_sources
+</code></p>
+
+<h2>Patching</h2>
+
+<p>There is no option to specify Ruby version to compile Vim against.
+But it's easy to patch vim sources to force it to use <code>1.9</code> instead of <code>1.8</code>.</p>
+
+<p>Open file <code>src/Make_mvc.mak</code> in vim sources directory.</p>
+
+<p>Find lines like this:</p>
+
+<p>```make src/Make_mvc.mak</p>
+
+<p>#</p>
+
+<h1>Support Ruby interface</h1>
+
+<p>#
+!ifdef RUBY</p>
+
+<h1>Set default value</h1>
+
+<p>!ifndef RUBY_VER
+RUBY_VER = 18
+!endif
+!ifndef RUBY_VER_LONG
+RUBY_VER_LONG = 1.8
+!endif</p>
+
+<p>```</p>
+
+<p>Replace <code>18</code> and <code>1.8</code> with <code>19</code> and <code>1.9</code>. So it should look this way:</p>
+
+<p>```make src/Make_mvc.mak</p>
+
+<p>#</p>
+
+<h1>Support Ruby interface</h1>
+
+<p>#
+!ifdef RUBY</p>
+
+<h1>Set default value</h1>
+
+<p>!ifndef RUBY_VER
+RUBY_VER = 19
+!endif
+!ifndef RUBY_VER_LONG
+RUBY_VER_LONG = 1.9
+!endif</p>
+
+<p>```</p>
+
+<h2>Configure and compile</h2>
+
+<p>At first make sure your current ruby version is which one you need:</p>
+
+<p><code>sh
+$ rvm use 1.9.3 --default
+$ ruby -v
+ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
+</code></p>
+
+<p>No we are ready to run <code>./configure</code> script:</p>
+
+<p><code>sh
+$ ./configure --enable-rubyinterp=yes --prefix=/where/you/want/ruby/to/be/installed/
+</code></p>
+
+<p>If everything is OK we can go ahead and compile it:</p>
+
+<p><code>sh
+$ make -j 3
+</code></p>
+
+<p><code>-j</code> option defines number of processes to make builing faster. It's useful if number of CPU cores is greater than one.</p>
+
+<p>Finally install built Vim to <code>/where/you/want/ruby/to/be/installed/</code> directory which you passed as <code>--prefix</code> option:</p>
+
+<p><code>sh
+$ make install
+</code></p>
+
+<h2>Verify Ruby version</h2>
+
+<p>Now let's open your new Vim:</p>
+
+<p><code>sh
+$ cd /where/you/want/ruby/to/be/installed/
+$ ./bin/vim
+</code></p>
+
+<p>And run the next command:</p>
+
+<p><code>vim
+:ruby puts RUBY_DESCRIPTION
+</code></p>
+
+<p>The ouput should looks similar to this:</p>
+
+<p><code>
+ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
+</code></p>
+
+<p>So, everything is OK. Enjoy Vim and builtin ruby 1.9 ;)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Vim preview plugin]]></title>
+    <link href="http://greyblake.com/blog/2011/01/23/vim-preview-plugin/"/>
+    <updated>2011-01-23T03:13:14+02:00</updated>
+    <id>http://greyblake.com/blog/2011/01/23/vim-preview-plugin</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>Preview plugin is a tool developed to help you to preview markup files such as .markdown, .rdoc, .textile, .ronn and .html when you are editing them. It builds html files and opens them in your browser.</p>
+
+<h2>Supported Formats</h2>
+
+<p>The plugin supports the next formats:</p>
+
+<ul>
+<li>markdown(md, mkd, mkdn, mdown) - depends on <code>bluecloth</code> ruby gem</li>
+<li>rdoc - depends on <code>github-markup</code> ruby gem</li>
+<li>textile - depends on <code>RedCloth</code> ruby gem</li>
+<li>html(htm)</li>
+<li>ronn - depends on <code>ronn</code> ruby gem</li>
+</ul>
+
+
+<!--more-->
+
+
+<h2>Dependencies</h2>
+
+<p>The plugin requires a builtin ruby interpreter. It means that your Vim
+should be compiled with <code>--enable-rubyinterp</code> option.
+To find out does you Vim have builtin ruby interpreter you can do the next:</p>
+
+<pre><code>:echo has('ruby')
+</code></pre>
+
+<p>If output is <code>1</code> the ruby interpreter is builtin.</p>
+
+<p>The second thing you should verify is that you have installed all necessary
+ruby gems. Please see "Supported Formats" section to find out what gems you need.</p>
+
+<h2>Installation</h2>
+
+<p>At first you should get the plugin. You can clone my repository from github like this:</p>
+
+<pre><code>git clone git://github.com/greyblake/vim-preview.git
+</code></pre>
+
+<p>Or download it from <a href="http://www.vim.org/scripts/script.php?script_id=3344">vim.org</a></p>
+
+<p>To install the plugin just copy <code>autoload</code>, <code>plugin</code>, <code>doc</code> directories into your <code>.vim</code> directory:</p>
+
+<pre><code>cd vim-preview
+cp ./autoload ~/.vim -R
+cp ./plugin ~/.vim -R
+cp ./doc ~/.vim -R
+</code></pre>
+
+<p>If you use <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a> just unzip/clone the plugin to <code>~/.vim/bundle</code> directory.
+If don't use  <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a>, I would recommend you to start.</p>
+
+<h2>Usage</h2>
+
+<ul>
+<li><code>&lt;Leader&gt;P</code> - will open current file converted to HTML in your browser.</li>
+</ul>
+
+
+<p>I want to remind that <code>&lt;Leader&gt;</code> in most cases is <code>\</code> key.</p>
+
+<p>To get more information about the plugin and how it can be customized read help in Vim editor:</p>
+
+<pre><code>:help Preview
+</code></pre>
+
+<h2>If you found a bug ...</h2>
+
+<p>Report it me!</p>
+]]></content>
+  </entry>
+  
+</feed>

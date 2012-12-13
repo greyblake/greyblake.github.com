@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Perfomance benchmakrs ExecJS VS Ruby - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Yesterday on RubyShift Thorben Schröder talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Perfomance Benchmakrs ExecJS vs Ruby</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-23T08:49:33+03:00" pubdate data-updated="true">Oct 23<span>rd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you&#8217;re are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google&#8217;s V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
+
+<!--more-->
+
+
+
+
+<figure class='code'><figcaption><span>benchmark.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;rubygems&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;execjs&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">js</span> <span class="o">=&lt;&lt;</span><span class="no">JAVASCRIPT</span>
+</span><span class='line'><span class="sh">function fib(a){</span>
+</span><span class='line'><span class="sh">  if(a &lt; 2)</span>
+</span><span class='line'><span class="sh">    return a;</span>
+</span><span class='line'><span class="sh">  return fib(a-1) + fib(a-2);</span>
+</span><span class='line'><span class="sh">}</span>
+</span><span class='line'><span class="no">JAVASCRIPT</span>
+</span><span class='line'><span class="n">context</span> <span class="o">=</span> <span class="no">ExecJS</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">js</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">fib</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">a</span> <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">2</span>
+</span><span class='line'>  <span class="n">fib</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="o">].</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;N = </span><span class="si">#{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;Ruby:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;ExecJS:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">context</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;fib&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="nb">puts</span> <span class="s1">&#39;-&#39;</span> <span class="o">*</span> <span class="mi">52</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here is the output:</p>
+
+<pre><code>N = 1
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.000008)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000318)
+----------------------------------------------------
+N = 10
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.000026)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000156)
+----------------------------------------------------
+N = 20
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.002585)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000550)
+----------------------------------------------------
+N = 30
+             user     system      total        real
+Ruby:    0.310000   0.000000   0.310000 (  0.312819)
+ExecJS:  0.040000   0.000000   0.040000 (  0.043603)
+----------------------------------------------------
+N = 40
+             user     system      total        real
+Ruby:   39.780000   0.050000  39.830000 ( 39.955098)
+ExecJS:  3.940000   0.020000   3.960000 (  3.943733)
+----------------------------------------------------
+</code></pre>
+
+<p>Looks like ExecJS needs some time for &#8220;initializing&#8221; and there is no reason to use it for small calculation. But it can be ten times faster in case of long time computing!</p>
+
+<p>I would not decide to use ExecJS for validation but however the benchmark results were amazing, and we&#8217;ve got to keep in mind that ExecJS can provide such perfomance benefits.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-23T08:49:33+03:00" pubdate data-updated="true">Oct 23<span>rd</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/execjs/'>ExecJS</a>, <a class='category' href='/blog/categories/benchmark/'>benchmark</a>, <a class='category' href='/blog/categories/javascript/'>javascript</a>, <a class='category' href='/blog/categories/perfomance/'>perfomance</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/" title="Previous Post: How to Install Firefox (Iceweasel) 7 on Debian Squeeze">&laquo; How to Install Firefox (Iceweasel) 7 on Debian Squeeze</a>
+      
+      
+        <a class="basic-alignment right articlenav" href="/blog/2011/11/27/synchonize-application-data-using-git/" title="Next Post: Synchonize application data using git ">Synchonize application data using git  &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">pg_power - ActiveRecord extension for PostgreSQL</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby performance tricks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/08/10/unexpected-ruby-behaviour/">Unexpected Ruby behaviour</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">How to build Vim against specific Ruby version</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Тестируем вложенные ActiveRecord-модели с RSpec</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/';
+        var disqus_url = 'http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

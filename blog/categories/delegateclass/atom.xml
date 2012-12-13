@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: DelegateClass | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/delegateclass/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-09-07T00:37:07+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Unexpected Ruby behaviour]]></title>
+    <link href="http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour/"/>
+    <updated>2012-08-10T23:28:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour</id>
+    <content type="html"><![CDATA[<p>Ruby is a cool language with intuitive grammar. However there are a number of things which don't seem to be expected.
+It might take long hours to debug some weird issues for unenlightened newbies.</p>
+
+<!--more-->
+
+
+<h2>Implicitly variable declaration</h2>
+
+<p>Variable mentioned in conditional block of code become declared and initialized with <code>nil</code> even if the declaration was not executed.</p>
+
+<p><code>ruby
+if false
+  var = "never executed"
+end
+var # =&gt; nil
+</code></p>
+
+<p><strong>Expected:</strong> addressing to <code>var</code> raises <code>NameError: undefined local variable or method 'var'</code></p>
+
+<h2>Calling #utc and #gmt on Time object removes time zone information</h2>
+
+<p>```ruby
+t = Time.new  # => Sat Aug 11 01:11:52 +0300 2012
+t.utc         # => Fri Aug 10 22:11:52 UTC 2012
+t             # => Fri Aug 10 22:11:52 UTC 2012, WTF? O_o</p>
+
+<p>t = Time.new  # => Sat Aug 11 01:17:06 +0300 2012
+t.gmtime      # => Fri Aug 10 22:17:06 UTC 2012
+t             # => Fri Aug 10 22:17:06 UTC 2012, WTF? O_o
+```</p>
+
+<p>IMHO, this methods should be called <code>utc!</code> and <code>gmtime!</code> instead.
+I have an experience when it caused a really voodoo thing: a test failed only from 20:00 to 00:00
+in USA on CI server, and could never be reproduced in my time zone.</p>
+
+<p>Instead it's better to use <code>getutc</code> and <code>getgm</code> methods which return UTC and GMT time accordingly,
+but don't change Time object:</p>
+
+<p>```ruby
+t = Time.new  # => Sat Aug 11 01:11:52 +0300 2012
+t.getutc      # => Fri Aug 10 22:11:52 UTC 2012
+t             # => Sat Aug 11 01:11:52 +0300 2012</p>
+
+<p>t = Time.new  # => Sat Aug 11 01:17:06 +0300 2012
+t.getgm       # => Fri Aug 10 22:17:06 UTC 2012
+t             # => Sat Aug 11 01:17:06 +0300 2012
+```</p>
+
+<h2>Methods do not return value from ensure statement</h2>
+
+<p>Usually ruby methods return the value of the last method line unless <code>return</code> is called explicitly.
+But how about this?</p>
+
+<p>```ruby
+def run
+  1
+ensure
+  puts "ensure block..."
+  2
+end</p>
+
+<p>run # => 1</p>
+
+<h1>pints <code>ensure block...</code></h1>
+
+<p>```</p>
+
+<p>So if you want to return a value from <code>ensure</code> statement use <code>return</code> word:</p>
+
+<p>```ruby
+def run
+  1
+ensure
+  return 2
+end</p>
+
+<p>run # => 2
+```</p>
+
+<h2>Anchors ^ and $ do not mean a start and an end of a string</h2>
+
+<p>Most of script languages uses anchors <code>^</code> and <code>$</code> of regular expressions as a start and an end of string accordingly.
+But not in Ruby! In Ruby they are a start and an end of a <strong>line</strong>.
+See the difference:</p>
+
+<p>```ruby
+pattern      = /<sup>[a-zA-Z]{3,12}$/</sup>    # 3-12 alphabetic characters
+valid_name   = "Tatiana"
+invalid_name = "23\nabc\n!"</p>
+
+<p>valid_name   =~ pattern   # => 0, matchers
+invalid_name =~ pattern   # => 3, matchers
+```</p>
+
+<p>Instead use <code>\A</code> and <code>\z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
+
+<p>```ruby
+pattern      = /\A[a-zA-Z]{3,12}\z/    # 3-12 alphabetic characters
+valid_name   = "Tatiana"
+invalid_name = "23\nabc\n!"</p>
+
+<p>valid_name   =~ pattern   # => 0, matchers
+invalid_name =~ pattern   # => nil
+```</p>
+
+<p>Pay attention when you write validations.
+<a href="http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html">Read Egor Homakov's article</a>
+to get more information about it.</p>
+
+<h2>\m regexp option</h2>
+
+<p>When other languages use <code>\s</code> option to make <code>.</code> match newline, Ruby uses <code>\m</code>:</p>
+
+<p><code>ruby
+ "\n" =~ /./   # =&gt; nil
+ "\n" =~ /./m  # =&gt; 0
+</code></p>
+
+<h2>Calling super and super() are not the same</h2>
+
+<p>There is no matter for ruby methods do you use parentheses or not. But be careful with <code>super</code>
+since it's not a method, but a key word.
+Let me show an example when parentheses matter:</p>
+
+<p>```ruby
+class Parent
+  def m1(arg)</p>
+
+<pre><code>puts "Parent m1: arg = #{arg.inspect}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2(arg)</p>
+
+<pre><code>puts "Parent m2: arg = #{arg.inspect}"
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>class Child &lt; Parent
+  def m1(arg)</p>
+
+<pre><code>puts "Child m1: arg = #{arg.inspect}"
+super
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2(arg)</p>
+
+<pre><code>puts "Child m2: arg = #{arg.inspect}"
+super()
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>child = Child.new
+child.m1("foo")
+child.m2("bar")
+```</p>
+
+<p>Output:</p>
+
+<pre><code>Child m1: arg = "foo"
+Parent m1: arg = "foo"
+Child m2: arg = "bar"
+super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
+        from super.rb:19:in `m2'
+        from super.rb:25:in `&lt;main&gt;'
+</code></pre>
+
+<p>When you use <code>super</code> it calls same method of parent class passing same arguments to it.
+But when you use <code>super(...)</code> you have to pass arguments manually. In my example <code>ArgumentError</code>
+was raised because <code>Parent#m2</code> expects to receive exactly one argument, but nothing was passed to <code>super()</code></p>
+
+<p>However <code>super()</code> still delegates a passed block. If you don't wanna pass
+a block you have to do it explicitly using <code>super(&amp;nil)</code>:</p>
+
+<p>```ruby
+class Parent
+  def m1</p>
+
+<pre><code>yield
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2</p>
+
+<pre><code>yield
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>class Child &lt; Parent
+  def m1</p>
+
+<pre><code>super()
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2</p>
+
+<pre><code>super(&amp;nil)
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>child = Child.new
+child.m1 { puts "Hi, m1" }
+child.m2 { puts "Hi, m2" }
+```</p>
+
+<p>Output:</p>
+
+<pre><code>Hi, m1
+/tmp/super.rb:7:in `m2': no block given (yield) (LocalJumpError)
+</code></pre>
+
+<h2>lambda and Proc.new act differently</h2>
+
+<p>It's a well known thing but I want to remind.
+There 2 differences between proc objects created with <code>lambda</code> and <code>Proc.new</code>:</p>
+
+<ul>
+<li><code>lambda</code> raises <code>ArgumentError</code> if parameter is missing when <code>Proc.new</code> uses <code>nil</code> instead.</li>
+</ul>
+
+
+<p>```ruby
+lm = lambda   {|a, b| "#{a.inspect} and #{b.inspect}" }
+pr = Proc.new {|a, b| "#{a.inspect} and #{b.inspect}" }</p>
+
+<p>lm.call(10)  # => ArgumentError: wrong number of arguments (1 for 2)
+pr.call(10)  # => "10 and nil"
+```</p>
+
+<ul>
+<li>For <code>lambda</code> word <code>return</code> means returning from proc object, when for <code>Proc.new</code> it means returning from scope where proc is defined.</li>
+</ul>
+
+
+<p>```ruby
+def lambda_method
+  lm = lambda { return 10 }     # return from lambda
+  half = lm.call
+  half * 2
+end</p>
+
+<p>def proc_method
+  pr = Proc.new { return 10 }   # return from proc_method
+  half = pr.call
+  half * 2
+end</p>
+
+<p>lambda_method   # => 20
+proc_method     # => 10
+```</p>
+
+<p>Note there is also method <code>proc</code>. In Ruby 1.8 it's a synonym for <code>lambda</code>
+but in Ruby 1.9 it's a synonym for <code>Proc.new</code>. So avoid using <code>proc</code> to keep you code compatible
+for both ruby versions.</p>
+
+<h2>DelegateClass instance does not eql itself</h2>
+
+<p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
+which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.
+But some things are not so obvious about it:</p>
+
+<p>```ruby
+require 'delegate'</p>
+
+<p>class Animal
+end</p>
+
+<p>class Dog &lt; DelegateClass(Animal)
+end</p>
+
+<p>animal = Animal.new
+dog = Dog.new(animal)</p>
+
+<p>dog.eql?(dog)  # => false, WTF? O_o
+```</p>
+
+<p>It happens because <code>eql?</code> is delegated to base object(animal):</p>
+
+<p><code>ruby
+dog.eql?(animal)  # =&gt; true
+</code></p>
+
+<p>On other hand <code>equal?</code> is not:</p>
+
+<p><code>ruby
+dog.equal?(dog)     # =&gt; true
+dog.equal?(animal)  # =&gt; false
+</code></p>
+
+<h2>dup method do not work for all objects</h2>
+
+<p>As you might know every object in Ruby has <a href="http://ruby-doc.org/core-1.9.3/Object.html#method-i-dup">dup</a>
+method inherited from <code>Object</code> class. It's convenient, I like it. But <strong>it does not mean that every object
+can be duplicated</strong>.</p>
+
+<p><code>ruby
+[:symbol, true, false].all? { |obj| obj.respond_to? :dup } # =&gt; true
+:symbol.dup   # =&gt; TypeError: can't dup Symbol
+true.dup      # =&gt; TypeError: can't dup TrueClass
+false.dup     # =&gt; TypeError: can't dup FalseClass
+</code></p>
+
+<p>It means you can't make a deep copy of an array (with one level depth) like this:</p>
+
+<p><code>ruby
+copy = array.map(&amp;:dup)
+</code></p>
+
+<p>Or like this:</p>
+
+<p><code>
+copy = array.map { |val| val.respond_to?(:dup) ? val.dup : val }
+</code></p>
+
+<p>Since all your objects respond to <code>#dup</code>.</p>
+
+<p>ActiveSupport provides <code>duplicable?</code> method to inspect an ability
+to duplicate an object, so finally your solution would look the next way:</p>
+
+<p><code>ruby
+copy = array.map { |val| val.duplicable? ? val.dup : val }
+</code></p>
+
+<p>Internally ruby symbols and booleans point to constant memory addresses, and
+there is no reason to copy them since they are unchangable.
+But I wish the implementation of their <code>#dup</code> methods looked like this:</p>
+
+<p>```ruby
+class Symbol
+  def dup</p>
+
+<pre><code>self
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<br />
+
+
+<br />
+
+
+<p>So I hope the article was useful for you.
+If you know some fancy Ruby things I haven't mentioned please let me know.</p>
+
+<p>Thanks.</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,675 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="First remove lagacy version of Iceweasel: aptitude remove iceweasel Create /etc/apt/sources.list.d/squeeze-backports.list file: # New Mozilla &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/page/2/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/">How to Install Firefox (Iceweasel) 7 on Debian Squeeze</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-03T18:12:54+03:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>First remove lagacy version of Iceweasel:</p>
+
+<pre><code>aptitude remove iceweasel
+</code></pre>
+
+<p>Create <code>/etc/apt/sources.list.d/squeeze-backports.list</code> file:</p>
+
+<pre><code># New Mozilla packages for Squeeze
+deb http://mozilla.debian.net/ squeeze-backports iceweasel-release
+deb http://backports.debian.org/debian-backports squeeze-backports main
+</code></pre>
+
+<p>Then run:</p>
+
+<pre><code>aptitude update
+aptitude install iceweasel -t squeeze-backports
+</code></pre>
+
+<p>Enjoy!</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/">Powering Less to Highlight Syntax and Display Line Numbers</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-23T17:38:35+03:00" pubdate data-updated="true">Sep 23<span>rd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/09/18/using-update-rc-d/">Using update-rc.d</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-18T21:00:00+03:00" pubdate data-updated="true">Sep 18<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><code>update-rc.d</code> is tool for adding daemons to /etc/rc[1-6]d files.</p>
+
+<p>If you are using OS with System-V style init scripts you can find you <code>/etc</code> the next directories:</p>
+
+<ul>
+<li>rc0.d/</li>
+<li>rc1.d/</li>
+<li>rc2.d/</li>
+<li>rc3.d/</li>
+<li>rc4.d/</li>
+<li>rc5.d/</li>
+<li>rc6.d/</li>
+<li>rcS.d/</li>
+</ul>
+
+
+<p>So, what are they for?</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2011/09/18/using-update-rc-d/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/">RSpec Matchers for DataMapper (Dm-rspec)</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-09-12T22:25:15+03:00" pubdate data-updated="true">Sep 12<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I am currently developing a number of RSpec matchers for DataMapper models testing. You can try it. Just add the next in your Gemfile under <code>test</code> group:</p>
+
+<pre><code>gem 'dm-rspec'
+</code></pre>
+
+<p>And run <code>bundle install</code> to install new gems.</p>
+
+<p>The main idea is to provide the same (almost the same) interface which Shoulda provides to test ActiveRecord models.</p>
+
+<p>At the moment I implemented the next matchers:</p>
+
+<ul>
+<li>belong_to</li>
+<li>have_many</li>
+<li>have_many_and_belong_to</li>
+<li>have_property</li>
+<li>have(n).errors_on(:property)</li>
+<li>have_many(:association).trough(:another_association)</li>
+<li>validate_presence_of(:property)</li>
+<li>validate_uniqueness_of(:property)</li>
+<li>validate_format_of(:property).with(/regexp/)</li>
+</ul>
+
+
+<p>More information you can find on <a href="https://github.com/greyblake/dm-rspec">DataMapper RSpec github page</a>.</p>
+
+<p>Anyone is welcome to join me in developing:)</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/02/04/backuping-and-restoring-postgresql-databases/">Backuping and Restoring PostgreSQL Databases</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-04T23:48:55+02:00" pubdate data-updated="true">Feb 4<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
+
+<p>The first one is for backup:</p>
+
+<figure class='code'><figcaption><span>backup.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">BASE_BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;/backups/postgres/&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">timeslot</span><span class="o">=</span><span class="k">$(</span>date +<span class="s2">&quot;%F_%Hh%Mm%Ss&quot;</span><span class="k">)</span>
+</span><span class='line'><span class="nv">backup_dir</span><span class="o">=</span><span class="s2">&quot;${BASE_BACKUP_DIR}/${timeslot}&quot;</span>
+</span><span class='line'><span class="nv">databases</span><span class="o">=</span><span class="k">$(</span>sudo -u postgres sh -c <span class="s2">&quot;psql  -c &#39;\l&#39;&quot;</span> 2&gt; /dev/null | sed <span class="se">\</span>
+</span><span class='line'>-n 4,/<span class="se">\e</span>of/p | grep -v rows<span class="se">\)</span> | awk <span class="s1">&#39;{print $1}&#39;</span> | egrep <span class="s1">&#39;^\w&#39;</span><span class="k">)</span>
+</span><span class='line'>
+</span><span class='line'>mkdir -p <span class="nv">$backup_dir</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">for </span>db in <span class="nv">$databases</span>; <span class="k">do</span>
+</span><span class='line'><span class="k">    </span>sudo -u postgres sh -c <span class="s2">&quot;pg_dump -C ${db}&quot;</span> 2&gt; /dev/null | xz -9e &gt; <span class="nv">$backup_dir</span>/<span class="nv">$db</span>.xz
+</span><span class='line'><span class="k">done</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After executing script you&#8217;ll have all you database dumps in <code>/backups/postgres/date_time</code> directory compressed with <code>xz</code>. Sure instead of <code>xz</code> you can use <code>gzip</code> or <code>bzip2</code>.</p>
+
+<p>Okay. Now let&#8217;s take a look at the restore script:</p>
+
+<figure class='code'><figcaption><span>restore.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="o">[</span> <span class="nv">$# </span>-lt 1 <span class="o">]</span> ; <span class="k">then</span>
+</span><span class='line'><span class="k">    </span><span class="nb">echo</span> <span class="s2">&quot;Error: You should specify backup directory path&quot;</span> 1&gt;&amp;2
+</span><span class='line'>    <span class="nb">exit </span>1
+</span><span class='line'><span class="k">fi</span>
+</span><span class='line'><span class="nv">backup_dir</span><span class="o">=</span><span class="nv">$1</span>
+</span><span class='line'><span class="k">if</span> <span class="o">[</span> ! -d <span class="nv">$backup_dir</span> <span class="o">]</span>; <span class="k">then</span>
+</span><span class='line'><span class="k">    </span><span class="nb">echo</span> <span class="s2">&quot;Error: directory ${backup_dir} does not exist&quot;</span> 1&gt;&amp;2
+</span><span class='line'>    <span class="nb">exit </span>1
+</span><span class='line'><span class="k">fi</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">for </span>db_xz in <span class="nv">$backup_dir</span>/*.xz; <span class="k">do</span>
+</span><span class='line'><span class="k">    </span><span class="nv">db_name</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="nv">$db_xz</span> | sed <span class="s1">&#39;s/\.xz$//; s/^.*\///g&#39;</span><span class="k">)</span>
+</span><span class='line'>    sudo -u postgres sh -c <span class="s2">&quot;xz -cd ${db_xz} | psql&quot;</span>
+</span><span class='line'><span class="k">done</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It takes one parameter: a path to back directory with *.xz archives.</p>
+
+<p>Both scripts should be executed with with root permissions, cause they use <code>sudo</code> to execute <code>pg_dump</code> and <code>pg_restore</code> commands with <code>postgres</code> user permissions. It allows avoiding asking a password for database. It&#8217;s not the only way, but I decided to use this one.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/01/23/beep-alarm/">Beep Alarm</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-01-23T23:24:39+02:00" pubdate data-updated="true">Jan 23<span>rd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Intro</h2>
+
+<p>Someone would say I am brainsick&#8230; So may be I am.</p>
+
+<p>By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
+So I decided to create an alarm based on <code>beep</code> Unix tool. This tool allows you to play sound with specified frequency and delay on your speaker.</p>
+
+<p>Some times after I decided that simple &#8220;Be-e-e-e-p&#8221; sound is borring and I created a player.
+It can play tunes defined in format for old Nokia mobiles.
+Have you ever type something like this:</p>
+
+<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
+</code></pre>
+
+<p>&#8230;to add new ringtone for your mobile?</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2011/01/23/beep-alarm/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/01/23/vim-preview-plugin/">Vim Preview Plugin</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-01-23T03:13:14+02:00" pubdate data-updated="true">Jan 23<span>rd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Intro</h2>
+
+<p>Preview plugin is a tool developed to help you to preview markup files such as .markdown, .rdoc, .textile, .ronn and .html when you are editing them. It builds html files and opens them in your browser.</p>
+
+<h2>Supported Formats</h2>
+
+<p>The plugin supports the next formats:</p>
+
+<ul>
+<li>markdown(md, mkd, mkdn, mdown) - depends on <code>bluecloth</code> ruby gem</li>
+<li>rdoc - depends on <code>github-markup</code> ruby gem</li>
+<li>textile - depends on <code>RedCloth</code> ruby gem</li>
+<li>html(htm)</li>
+<li>ronn - depends on <code>ronn</code> ruby gem</li>
+</ul>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2011/01/23/vim-preview-plugin/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">pg_power - ActiveRecord extension for PostgreSQL</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby performance tricks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/08/10/unexpected-ruby-behaviour/">Unexpected Ruby behaviour</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">How to build Vim against specific Ruby version</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Тестируем вложенные ActiveRecord-модели с RSpec</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
