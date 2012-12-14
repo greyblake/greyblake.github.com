@@ -15,8 +15,6 @@ expect { raise("Boom!") }.to raise_error(RuntimeError, "Boom!")
 We often write our own custom matchers and I wanna show how is easy to write
 custom expectation.
 
-<!--more-->
-
 
 ## Desired DSL
 
@@ -35,6 +33,8 @@ expect { puts "Hello!" }.to write("Hello!")
 # Test text written to standard error
 expect { warn "Stop it!" }.to write("Stop it!").to(:error)
 ```
+
+<!--more-->
 
 ## Expectation
 
