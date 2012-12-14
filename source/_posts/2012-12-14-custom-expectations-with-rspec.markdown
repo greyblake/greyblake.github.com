@@ -22,7 +22,7 @@ Usually when I do things like this I start with DSL. I think it's important sinc
 it must be convenient to use and easy to read.
 So turn on your imagination and spend some time on it.
 
-In my example I'm gonna create an expectation to test text written standard output
+In my example I'm gonna create an expectation to test text written to standard output
 and standard error.
 There are samples how I wanna use it(desired DSL):
 
