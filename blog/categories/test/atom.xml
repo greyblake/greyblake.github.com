@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: test | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/test/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-12-14T02:22:29+02:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Custom expectations with RSpec]]></title>
+    <link href="http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec/"/>
+    <updated>2012-12-14T00:34:00+02:00</updated>
+    <id>http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec</id>
+    <content type="html"><![CDATA[<p>I know you love RSpec's <code>expect</code> DSL like this:</p>
+
+<p><code>ruby
+expect { raise("Boom!") }.to raise_error(RuntimeError, "Boom!")
+</code></p>
+
+<p>We often write our own custom matchers and I wanna show how is easy to write
+custom expectation.</p>
+
+<!--more-->
+
+
+<h2>Desired DSL</h2>
+
+<p>Usually when I do things like this I start with DSL. I think it's important since
+it must be convenient to use and easy to read.
+So turn on your imagination and spend some time on it.</p>
+
+<p>In my example I'm gonna create an expectation to test text written standard output
+and standard error.
+There are samples how I wanna use it(desired DSL):</p>
+
+<p>```ruby</p>
+
+<h1>Test text written to standard output</h1>
+
+<p>expect { puts "Hello!" }.to write("Hello!")</p>
+
+<h1>Test text written to standard error</h1>
+
+<p>expect { warn "Stop it!" }.to write("Stop it!").to(:error)
+```</p>
+
+<h2>Expectation</h2>
+
+<p>I bet you've already created number of custom matchers. What about custom expectations?
+They are usual custom matches which test blocks of code!</p>
+
+<p>I'm gonna locate the expectation in <code>spec/support/custom_expecations/write_expecation.rb</code> file.
+I think <code>spec/support/custom_expecations/</code> directory is the right place for it since
+custom matchers usually are located in <code>spec/support/custom_matchers/</code>.</p>
+
+<p>So finally the expectation looks this way:</p>
+
+<p>```ruby spec/support/custom_expecations/write_expecation.rb
+RSpec::Matchers.define :write do |message|
+  chain(:to) do |io|</p>
+
+<pre><code>@io = io
+</code></pre>
+
+<p>  end</p>
+
+<p>  match do |block|</p>
+
+<pre><code>output =
+  case io
+  when :output then fake_stdout(&amp;block)
+  when :error  then fake_stderr(&amp;block)
+  else raise("Allowed values for `to` are :output and :error, got `#{io.inspect}`")
+  end
+output.include? message
+</code></pre>
+
+<p>  end</p>
+
+<p>  description do</p>
+
+<pre><code>"write \"#{message}\" #{io_name}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  failure_message_for_should do</p>
+
+<pre><code>"expected to #{description}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  failure_message_for_should_not do</p>
+
+<pre><code>"expected to not #{description}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  # Fake STDERR and return a string written to it.
+  def fake_stderr</p>
+
+<pre><code>original_stderr = $stderr
+$stderr = StringIO.new
+yield
+$stderr.string
+</code></pre>
+
+<p>  ensure</p>
+
+<pre><code>$stderr = original_stderr
+</code></pre>
+
+<p>  end</p>
+
+<p>  # Fake STDOUT and return a string written to it.
+  def fake_stdout</p>
+
+<pre><code>original_stdout = $stdout
+$stdout = StringIO.new
+yield
+$stdout.string
+</code></pre>
+
+<p>  ensure</p>
+
+<pre><code>$stdout = original_stdout
+</code></pre>
+
+<p>  end</p>
+
+<p>  # default IO is standard output
+  def io</p>
+
+<pre><code>@io ||= :output
+</code></pre>
+
+<p>  end</p>
+
+<p>  # IO name is used for description message
+  def io_name</p>
+
+<pre><code>{:output =&gt; "standard output", :error =&gt; "standard error"}[io]
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>```</p>
+
+<p>And that's it. You can try it against the examples from "Desired DSL" section.</p>
+
+<p>Hope that's was useful. I look forward for your comments and suggestions. You know I do! =)</p>
+]]></content>
+  </entry>
+  
+</feed>

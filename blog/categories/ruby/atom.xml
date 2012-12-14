@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Ruby | Sergey Potapov]]></title>
+  <title><![CDATA[Category: ruby | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-09-07T00:37:07+03:00</updated>
+  <updated>2012-12-14T02:22:29+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -14,284 +14,932 @@
 
   
   <entry>
-    <title type="html"><![CDATA[How to build Vim against specific Ruby version]]></title>
-    <link href="http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/"/>
-    <updated>2012-07-15T23:00:00+03:00</updated>
-    <id>http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version</id>
-    <content type="html"><![CDATA[<p>Let's say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
-But what if you need Vim compiled with Ruby 1.9.x?
-I'm gonna tell you how to do it.</p>
+    <title type="html"><![CDATA[Ruby performance tricks]]></title>
+    <link href="http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/"/>
+    <updated>2012-09-02T23:34:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks</id>
+    <content type="html"><![CDATA[<p>I did some benchmarks to find out which alternatives to write code work faster. I wanna
+share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.</p>
+
+<h2>Do not use exceptions for a control flow</h2>
+
+<p>The next example is pretty stupid but it shows how exceptions slow against
+conditional statements.</p>
+
+<p>```ruby
+require 'benchmark'</p>
+
+<p>class Obj
+  def with_condition</p>
+
+<pre><code>respond_to?(:mythical_method) ? self.mythical_method : nil
+</code></pre>
+
+<p>  end</p>
+
+<p>  def with_rescue</p>
+
+<pre><code>self.mythical_method
+</code></pre>
+
+<p>  rescue NoMethodError</p>
+
+<pre><code>nil
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>obj = Obj.new
+N = 10_000_000</p>
+
+<p>puts RUBY_DESCRIPTION</p>
+
+<p>Benchmark.bm(15, "rescue/condition") do |x|
+  rescue_report     = x.report("rescue:")    { N.times { obj.with_rescue  } }
+  condition_report  = x.report("condition:") { N.times { obj.with_if      } }
+  [rescue_report / condition_report]
+end
+```</p>
+
+<p>MRI 1.9.3:</p>
+
+<pre><code>ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
+                        user     system      total        real
+rescue:           111.530000   2.650000 114.180000 (115.837103)
+condition:          2.620000   0.010000   2.630000 (  2.633154)
+rescue/condition:  42.568702 265.000000        NaN ( 43.991767)
+</code></pre>
+
+<p>MRI 1.8.7 (REE has similar result):</p>
+
+<pre><code>ruby 1.8.7 (2011-12-28 patchlevel 357) [x86_64-linux]
+                        user     system      total        real
+rescue:            80.510000   0.940000  81.450000 ( 81.529022)
+if:                 3.320000   0.000000   3.320000 (  3.330166)
+rescue/condition:  24.250000        inf       -nan ( 24.481970)
+</code></pre>
 
 <!--more-->
 
 
-<h2>Clone vim repository</h2>
+<h2>String concatenation</h2>
 
-<p>Make sure you have installed <code>mercurial</code> package:</p>
+<p>Avoid using <code>+=</code> to concatenate strings in favor of <code>&lt;&lt;</code> method.
+The result is absolutely the same: add a string to the end of an existing one.
+What is the difference then?</p>
 
-<p><code>sh
-$ sudo apt-get install mercurial
+<p>See the example:</p>
+
+<p>```ruby
+str1 = "first"
+str2 = "second"
+str1.object_id       # => 16241320</p>
+
+<p>str1 += str2    # str1 = str1 + str2
+str1.object_id  # => 16241240, id is changed</p>
+
+<p>str1 &lt;&lt; str2
+str1.object_id  # => 16241240, id is the same
+```</p>
+
+<p>When you use <code>+=</code> ruby creates a temporal object which is result of <code>str1 + str2</code>.
+Then it overrides <code>str1</code> variable with reference to the new built object.
+On other hand <code>&lt;&lt;</code> modifies existing one.</p>
+
+<p>As a result of using <code>+=</code> you have the next disadvantages:</p>
+
+<ul>
+<li>More calculation to join strings.</li>
+<li>Redundant string object in memory (previous value of <code>str1</code>), which approximates time when
+<a href="http://en.wikipedia.org/wiki/Garbage_collection_%28computer_science%29">GC</a> will trigger.</li>
+</ul>
+
+
+<p>How <code>+=</code> is slow? Basically it depends on length of strings you have operation with.</p>
+
+<p>```ruby
+require 'benchmark'</p>
+
+<p>N = 1000
+BASIC_LENGTH = 10</p>
+
+<p>5.times do |factor|
+  length = BASIC_LENGTH * (10 ** factor)
+  puts "_" * 60 + "\nLENGTH: #{length}"</p>
+
+<p>  Benchmark.bm(10, '+= VS &lt;&lt;') do |x|</p>
+
+<pre><code>concat_report = x.report("+=")  do
+  str1 = ""
+  str2 = "s" * length
+  N.times { str1 += str2 }
+end
+
+modify_report = x.report("&lt;&lt;")  do
+  str1 = "s"
+  str2 = "s" * length
+  N.times { str1 &lt;&lt; str2 }
+end
+
+[concat_report / modify_report]
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Output:</p>
+
+<pre><code>____________________________________________________________
+LENGTH: 10
+                 user     system      total        real
++=           0.000000   0.000000   0.000000 (  0.004671)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.000176)
++= VS &lt;&lt;          NaN        NaN        NaN ( 26.508796)
+____________________________________________________________
+LENGTH: 100
+                 user     system      total        real
++=           0.020000   0.000000   0.020000 (  0.022995)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.000226)
++= VS &lt;&lt;          Inf        NaN        NaN (101.845829)
+____________________________________________________________
+LENGTH: 1000
+                 user     system      total        real
++=           0.270000   0.120000   0.390000 (  0.390888)
+&lt;&lt;           0.000000   0.000000   0.000000 (  0.001730)
++= VS &lt;&lt;          Inf        Inf        NaN (225.920077)
+____________________________________________________________
+LENGTH: 10000
+                 user     system      total        real
++=           3.660000   1.570000   5.230000 (  5.233861)
+&lt;&lt;           0.000000   0.010000   0.010000 (  0.015099)
++= VS &lt;&lt;          Inf 157.000000        NaN (346.629692)
+____________________________________________________________
+LENGTH: 100000
+                 user     system      total        real
++=          31.270000  16.990000  48.260000 ( 48.328511)
+&lt;&lt;           0.050000   0.050000   0.100000 (  0.105993)
++= VS &lt;&lt;   625.400000 339.800000        NaN (455.961373)
+</code></pre>
+
+<h2>Be careful with calculation within iterators</h2>
+
+<p>Assume you need to write a function to convert an array into a hash
+where keys and values are same as elements of the array:</p>
+
+<p><code>ruby
+func([1, 2, 3])  # =&gt; {1 =&gt; 1, 2 =&gt; 2, 3 =&gt; 3}
 </code></p>
 
-<p>Clone Vim repository from google code:</p>
+<p>The next solution would satisfy the requirements:</p>
 
-<p><code>sh
-$ hg clone https://vim.googlecode.com/hg/ vim_sources
-$ cd vim_sources
-</code></p>
+<p><code>ruby
+def func(array)
+  array.inject({}) { |h, e| h.merge(e =&gt; e) }
+end
+</code>
+And would be extremely slow with big portions of data because it contains
+nested methods (<code>inject</code> and <code>merge</code>), so it's <strong> O(n<sup>2</sup>) </strong> algorithm.
+But it's obviously that it must be <strong> O(n) </strong>.
+Consider the next:</p>
 
-<h2>Patching</h2>
+<p><code>ruby
+def func(array)
+  array.inject({}) { |h, e| h[e] = e; h }
+end
+</code>
+In this case we do only one iteration over an array without any hard calculation
+within the iterator.</p>
 
-<p>There is no option to specify Ruby version to compile Vim against.
-But it's easy to patch vim sources to force it to use <code>1.9</code> instead of <code>1.8</code>.</p>
+<p>See the benchmark:</p>
 
-<p>Open file <code>src/Make_mvc.mak</code> in vim sources directory.</p>
+<p>```
+require 'benchmark'</p>
 
-<p>Find lines like this:</p>
+<p>def n_func(array)
+  array.inject({}) { |h, e| h[e] = e; h }
+end</p>
 
-<p>```make src/Make_mvc.mak</p>
+<p>def n2_func(array)
+  array.inject({}) { |h, e| h.merge(e => e) }
+end</p>
 
-<p>#</p>
+<p>BASE_SIZE = 10</p>
 
-<h1>Support Ruby interface</h1>
+<p>4.times do |factor|
+  size   = BASE_SIZE * (10 ** factor)
+  params = (0..size).to_a
+  puts "_" * 60 + "\nSIZE: #{size}"
+  Benchmark.bm(10) do |x|</p>
 
-<p>#
-!ifdef RUBY</p>
+<pre><code>x.report("O(n)" ) { n_func(params)  }
+x.report("O(n2)") { n2_func(params) }
+</code></pre>
 
-<h1>Set default value</h1>
+<p>  end
+end
+```</p>
 
-<p>!ifndef RUBY_VER
-RUBY_VER = 18
-!endif
-!ifndef RUBY_VER_LONG
-RUBY_VER_LONG = 1.8
-!endif</p>
+<p>Output:</p>
 
-<p>```</p>
+<pre><code>____________________________________________________________
+SIZE: 10
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000014)
+O(n2)       0.000000   0.000000   0.000000 (  0.000033)
+____________________________________________________________
+SIZE: 100
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000043)
+O(n2)       0.000000   0.000000   0.000000 (  0.001070)
+____________________________________________________________
+SIZE: 1000
+                user     system      total        real
+O(n)        0.000000   0.000000   0.000000 (  0.000347)
+O(n2)       0.130000   0.000000   0.130000 (  0.127638)
+____________________________________________________________
+SIZE: 10000
+                user     system      total        real
+O(n)        0.020000   0.000000   0.020000 (  0.019067)
+O(n2)      17.850000   0.080000  17.930000 ( 17.983827)
+</code></pre>
 
-<p>Replace <code>18</code> and <code>1.8</code> with <code>19</code> and <code>1.9</code>. So it should look this way:</p>
+<p>It's an obvious and trivial example. Just keep in mind to not do
+hard calculation within iterators if it's possible.</p>
 
-<p>```make src/Make_mvc.mak</p>
+<h2>Use bang! methods</h2>
 
-<p>#</p>
+<p>In many cases bang methods do the same as there non-bang analogues but without
+duplication an object. The previous example with <code>merge!</code> would be much faster:</p>
 
-<h1>Support Ruby interface</h1>
+<p>```ruby
+require 'benchmark'</p>
 
-<p>#
-!ifdef RUBY</p>
+<p>def merge!(array)
+  array.inject({}) { |h, e| h.merge!(e => e) }
+end</p>
 
-<h1>Set default value</h1>
+<p>def merge(array)
+  array.inject({}) { |h, e| h.merge(e => e) }
+end</p>
 
-<p>!ifndef RUBY_VER
-RUBY_VER = 19
-!endif
-!ifndef RUBY_VER_LONG
-RUBY_VER_LONG = 1.9
-!endif</p>
+<p>N = 10_000
+array = (0..N).to_a</p>
 
-<p>```</p>
+<p>Benchmark.bm(10) do |x|
+  x.report("merge!") { merge!(array) }
+  x.report("merge")  { merge(array)  }
+end
+```</p>
 
-<h2>Configure and compile</h2>
+<p>Output:</p>
 
-<p>At first make sure your current ruby version is which one you need:</p>
+<pre><code>                 user     system      total        real
+merge!       0.010000   0.000000   0.010000 (  0.011370)
+merge       17.710000   0.000000  17.710000 ( 17.840856)
+</code></pre>
 
-<p><code>sh
-$ rvm use 1.9.3 --default
-$ ruby -v
-ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
-</code></p>
+<h2>Use instance variables</h2>
 
-<p>No we are ready to run <code>./configure</code> script:</p>
+<p>Accessing instance variable directly is about two times faster than accessing
+them with accessor methods:</p>
 
-<p><code>sh
-$ ./configure --enable-rubyinterp=yes --prefix=/where/you/want/ruby/to/be/installed/
-</code></p>
+<p>```ruby
+require 'benchmark'</p>
 
-<p>If everything is OK we can go ahead and compile it:</p>
+<p>class Metric
+  attr_accessor :var</p>
 
-<p><code>sh
-$ make -j 3
-</code></p>
+<p>  def initialize(n)</p>
 
-<p><code>-j</code> option defines number of processes to make builing faster. It's useful if number of CPU cores is greater than one.</p>
+<pre><code>@n   = n
+@var = 22
+</code></pre>
 
-<p>Finally install built Vim to <code>/where/you/want/ruby/to/be/installed/</code> directory which you passed as <code>--prefix</code> option:</p>
+<p>  end</p>
 
-<p><code>sh
-$ make install
-</code></p>
+<p>  def run</p>
 
-<h2>Verify Ruby version</h2>
+<pre><code>Benchmark.bm(10) do |x|
+  x.report("@var") { @n.times { @var } }
+  x.report("var" ) { @n.times { var  } }
+  x.report("@var =")     { @n.times {|i| @var = i     } }
+  x.report("self.var =") { @n.times {|i| self.var = i } }
+end
+</code></pre>
 
-<p>Now let's open your new Vim:</p>
+<p>  end
+end</p>
 
-<p><code>sh
-$ cd /where/you/want/ruby/to/be/installed/
-$ ./bin/vim
-</code></p>
+<p>metric = Metric.new(100_000_000)
+metric.run
+```</p>
 
-<p>And run the next command:</p>
+<p>Output:</p>
 
-<p><code>vim
-:ruby puts RUBY_DESCRIPTION
-</code></p>
+<pre><code>                 user     system      total        real
+@var         6.980000   0.010000   6.990000 (  7.193725)
+var         13.040000   0.000000  13.040000 ( 13.131711)
+@var =       7.960000   0.000000   7.960000 (  8.242603)
+self.var =  14.910000   0.010000  14.920000 ( 15.960125)
+</code></pre>
 
-<p>The ouput should looks similar to this:</p>
+<h2>Parallel assignment is slower</h2>
 
-<p><code>
-ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
-</code></p>
+<p>```ruby
+require 'benchmark'</p>
 
-<p>So, everything is OK. Enjoy Vim and builtin ruby 1.9 ;)</p>
+<p>N = 10_000_000</p>
+
+<p>Benchmark.bm(15) do |x|
+  x.report('parallel') do</p>
+
+<pre><code>N.times do
+  a, b = 10, 20
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>  x.report('consequentially') do |x|</p>
+
+<pre><code>N.times do
+  a = 10
+  b = 20
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Output:</p>
+
+<pre><code>                      user     system      total        real
+parallel          1.900000   0.000000   1.900000 (  1.928063)
+consequentially   0.880000   0.000000   0.880000 (  0.879675)
+</code></pre>
+
+<h2>Dynamic method defention</h2>
+
+<p>What is the faster way to define method dynamically: <code>class_eval</code> with a code string
+or using <code>define_method</code>? Which way generated methods work faster?</p>
+
+<p>```ruby
+require 'benchmark'</p>
+
+<p>class Metric
+  N = 1_000_000</p>
+
+<p>  def self.class_eval_with_string</p>
+
+<pre><code>N.times do |i|
+  class_eval(&lt;&lt;-eorb, __FILE__, __LINE__ + 1)
+    def smeth_#{i}
+      #{i}
+    end
+  eorb
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>  def self.with_define_method</p>
+
+<pre><code>N.times do |i|
+  define_method("dmeth_#{i}") do
+    i
+  end
+end
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>Benchmark.bm(22) do |x|
+  x.report("class_eval with string") { Metric.class_eval_with_string }
+  x.report("define_method")          { Metric.with_define_method     }</p>
+
+<p>  metric = Metric.new
+  x.report("string method")  { Metric::N.times { metric.smeth_1 } }
+  x.report("dynamic method") { Metric::N.times { metric.dmeth_1 } }
+end
+```</p>
+
+<p>Output:</p>
+
+<pre><code>                             user     system      total        real
+class_eval with string 219.840000   0.720000 220.560000 (221.933074)
+define_method           61.280000   0.240000  61.520000 ( 62.070911)
+string method            0.110000   0.000000   0.110000 (  0.111433)
+dynamic method           0.150000   0.000000   0.150000 (  0.156537)
+</code></pre>
+
+<p>So <code>class_eval</code> works slower but it's preferred since methods generated with
+<code>class_eval</code> and a string of code work faster.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="http://www.simonecarletti.com/blog/2010/01/how-slow-are-ruby-exceptions/">How Slow Are Ruby Exceptions</a></li>
+<li><a href="http://www.igvita.com/2008/07/08/6-optimization-tips-for-ruby-mri/">6 Optimization Tips for Ruby MRI</a>
+(NOTE: <code>Symbol#to_proc</code> was ported to Ruby and it's not slow anymore)</li>
+<li><a href="http://my.safaribooksonline.com/book/web-development/ruby/9780321540034">"Writing Efficient Ruby Code" by Dr. Stefan Kaes</a></li>
+<li><a href="http://programmingzen.com/2007/02/10/top-10-ruby-on-rails-performance-tips/">Top 10 Ruby on Rails performance tips </a></li>
+<li><a href="http://blog.monitis.com/index.php/2012/02/08/20-ruby-performance-tips/">20 Ruby Performance Tips</a></li>
+<li><a href="http://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/">A Beginner’s Guide to Big O Notation</a></li>
+</ul>
+
+
+<p>Danke.</p>
 ]]></content>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Тестируем вложенные ActiveRecord-модели с RSpec]]></title>
-    <link href="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/"/>
-    <updated>2012-07-06T22:19:00+03:00</updated>
-    <id>http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec</id>
-    <content type="html"><![CDATA[<p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
-и конечно же протестировать, что ваш "builder" работает так, как нужно. На самом деле
-задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
+    <title type="html"><![CDATA[Unexpected Ruby behaviour]]></title>
+    <link href="http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour/"/>
+    <updated>2012-08-10T23:28:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour</id>
+    <content type="html"><![CDATA[<p>Ruby is a cool language with intuitive grammar. However there are a number of things which don't seem to be expected.
+It might take long hours to debug some weird issues for unenlightened newbies.</p>
 
 <!--more-->
 
 
-<p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
-(На практике обычно моделей намного больше с большим количеством свойств).</p>
+<h2>Implicitly variable declaration</h2>
 
-<p>```ruby user.rb
-class User &lt; ActiveRecord::Base
-  attr_accessible :last_name, :first_name</p>
+<p>Variable mentioned in conditional block of code become declared and initialized with <code>nil</code> even if the declaration was not executed.</p>
 
-<p>  has_one :account
+<p><code>ruby
+if false
+  var = "never executed"
 end
+var # =&gt; nil
+</code></p>
+
+<p><strong>Expected:</strong> addressing to <code>var</code> raises <code>NameError: undefined local variable or method 'var'</code></p>
+
+<h2>Calling #utc and #gmt on Time object removes time zone information</h2>
+
+<p>```ruby
+t = Time.new  # => Sat Aug 11 01:11:52 +0300 2012
+t.utc         # => Fri Aug 10 22:11:52 UTC 2012
+t             # => Fri Aug 10 22:11:52 UTC 2012, WTF? O_o</p>
+
+<p>t = Time.new  # => Sat Aug 11 01:17:06 +0300 2012
+t.gmtime      # => Fri Aug 10 22:17:06 UTC 2012
+t             # => Fri Aug 10 22:17:06 UTC 2012, WTF? O_o
 ```</p>
 
-<p>```ruby account.rb
-class Account &lt; ActiveRecord::Base
-  attr_accessible :email, :last_visit_date</p>
+<p>IMHO, this methods should be called <code>utc!</code> and <code>gmtime!</code> instead.
+I have an experience when it caused a really voodoo thing: a test failed only from 20:00 to 00:00
+in USA on CI server, and could never be reproduced in my time zone.</p>
 
-<p>  belongs_to :user
-  has_one :preference
-end
+<p>Instead it's better to use <code>getutc</code> and <code>getgm</code> methods which return UTC and GMT time accordingly,
+but don't change Time object:</p>
+
+<p>```ruby
+t = Time.new  # => Sat Aug 11 01:11:52 +0300 2012
+t.getutc      # => Fri Aug 10 22:11:52 UTC 2012
+t             # => Sat Aug 11 01:11:52 +0300 2012</p>
+
+<p>t = Time.new  # => Sat Aug 11 01:17:06 +0300 2012
+t.getgm       # => Fri Aug 10 22:17:06 UTC 2012
+t             # => Sat Aug 11 01:17:06 +0300 2012
 ```</p>
 
-<p>```ruby preference.rb
-class Preference &lt; ActiveRecord::Base
-  attr_accessible :language, :weapon</p>
+<h2>Methods do not return value from ensure statement</h2>
 
-<p>  belongs_to :user
-end
+<p>Usually ruby methods return the value of the last method line unless <code>return</code> is called explicitly.
+But how about this?</p>
+
+<p>```ruby
+def run
+  1
+ensure
+  puts "ensure block..."
+  2
+end</p>
+
+<p>run # => 1</p>
+
+<h1>pints <code>ensure block...</code></h1>
+
+<p>```</p>
+
+<p>So if you want to return a value from <code>ensure</code> statement use <code>return</code> word:</p>
+
+<p>```ruby
+def run
+  1
+ensure
+  return 2
+end</p>
+
+<p>run # => 2
 ```</p>
 
-<p>Предположим у нас есть некий builder, который строит объект User и все завимимые
-модели(Account и Preference). Всё что мы хотим сделать - это протестировать,
-что граф объектов построен правильно.</p>
+<h2>Anchors ^ and $ do not mean a start and an end of a string</h2>
 
-<p>Вот пример реализации стандартного rspec-теста, который первым приходит на ум:</p>
+<p>Most of script languages uses anchors <code>^</code> and <code>$</code> of regular expressions as a start and an end of string accordingly.
+But not in Ruby! In Ruby they are a start and an end of a <strong>line</strong>.
+See the difference:</p>
 
-<p>```ruby user_builder_spec.rb
-describe UserBuilder do
-  describe '#build' do</p>
+<p>```ruby
+pattern      = /<sup>[a-zA-Z]{3,12}$/</sup>    # 3-12 alphabetic characters
+valid_name   = "Tatiana"
+invalid_name = "23\nabc\n!"</p>
 
-<pre><code>describe 'user' do
-  let(:user) { described_class.new(some_attrs).build }
-  subject { user }
+<p>valid_name   =~ pattern   # => 0, matchers
+invalid_name =~ pattern   # => 3, matchers
+```</p>
 
-  its(:first_name) { should == "Rodion"      }
-  its(:last_name)  { should == "Raskolnikov" }
+<p>Instead use <code>\A</code> and <code>\z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
 
-  describe 'account' do
-    subject { user.account }
+<p>```ruby
+pattern      = /\A[a-zA-Z]{3,12}\z/    # 3-12 alphabetic characters
+valid_name   = "Tatiana"
+invalid_name = "23\nabc\n!"</p>
 
-    its(:email)           { should == "rodion@mail.ru"       }
-    its(:last_visit_date) { should == Date.new(1866, 11, 27) }
+<p>valid_name   =~ pattern   # => 0, matchers
+invalid_name =~ pattern   # => nil
+```</p>
 
-    describe 'preference' do
-      subject { user.account.preference }
+<p>Pay attention when you write validations.
+<a href="http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html">Read Egor Homakov's article</a>
+to get more information about it.</p>
 
-      its(:language) { should == "Russian" }
-      its(:weapon)   { should == "ax"      }
-    end
-  end
-end
+<h2>\m regexp option</h2>
+
+<p>When other languages use <code>\s</code> option to make <code>.</code> match newline, Ruby uses <code>\m</code>:</p>
+
+<p><code>ruby
+ "\n" =~ /./   # =&gt; nil
+ "\n" =~ /./m  # =&gt; 0
+</code></p>
+
+<h2>Calling super and super() are not the same</h2>
+
+<p>There is no matter for ruby methods do you use parentheses or not. But be careful with <code>super</code>
+since it's not a method, but a key word.
+Let me show an example when parentheses matter:</p>
+
+<p>```ruby
+class Parent
+  def m1(arg)</p>
+
+<pre><code>puts "Parent m1: arg = #{arg.inspect}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2(arg)</p>
+
+<pre><code>puts "Parent m2: arg = #{arg.inspect}"
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>class Child &lt; Parent
+  def m1(arg)</p>
+
+<pre><code>puts "Child m1: arg = #{arg.inspect}"
+super
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2(arg)</p>
+
+<pre><code>puts "Child m2: arg = #{arg.inspect}"
+super()
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>child = Child.new
+child.m1("foo")
+child.m2("bar")
+```</p>
+
+<p>Output:</p>
+
+<pre><code>Child m1: arg = "foo"
+Parent m1: arg = "foo"
+Child m2: arg = "bar"
+super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
+        from super.rb:19:in `m2'
+        from super.rb:25:in `&lt;main&gt;'
+</code></pre>
+
+<p>When you use <code>super</code> it calls same method of parent class passing same arguments to it.
+But when you use <code>super(...)</code> you have to pass arguments manually. In my example <code>ArgumentError</code>
+was raised because <code>Parent#m2</code> expects to receive exactly one argument, but nothing was passed to <code>super()</code></p>
+
+<p>However <code>super()</code> still delegates a passed block. If you don't wanna pass
+a block you have to do it explicitly using <code>super(&amp;nil)</code>:</p>
+
+<p>```ruby
+class Parent
+  def m1</p>
+
+<pre><code>yield
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2</p>
+
+<pre><code>yield
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>class Child &lt; Parent
+  def m1</p>
+
+<pre><code>super()
+</code></pre>
+
+<p>  end</p>
+
+<p>  def m2</p>
+
+<pre><code>super(&amp;nil)
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>child = Child.new
+child.m1 { puts "Hi, m1" }
+child.m2 { puts "Hi, m2" }
+```</p>
+
+<p>Output:</p>
+
+<pre><code>Hi, m1
+/tmp/super.rb:7:in `m2': no block given (yield) (LocalJumpError)
+</code></pre>
+
+<h2>lambda and Proc.new act differently</h2>
+
+<p>It's a well known thing but I want to remind.
+There 2 differences between proc objects created with <code>lambda</code> and <code>Proc.new</code>:</p>
+
+<ul>
+<li><code>lambda</code> raises <code>ArgumentError</code> if parameter is missing when <code>Proc.new</code> uses <code>nil</code> instead.</li>
+</ul>
+
+
+<p>```ruby
+lm = lambda   {|a, b| "#{a.inspect} and #{b.inspect}" }
+pr = Proc.new {|a, b| "#{a.inspect} and #{b.inspect}" }</p>
+
+<p>lm.call(10)  # => ArgumentError: wrong number of arguments (1 for 2)
+pr.call(10)  # => "10 and nil"
+```</p>
+
+<ul>
+<li>For <code>lambda</code> word <code>return</code> means returning from proc object, when for <code>Proc.new</code> it means returning from scope where proc is defined.</li>
+</ul>
+
+
+<p>```ruby
+def lambda_method
+  lm = lambda { return 10 }     # return from lambda
+  half = lm.call
+  half * 2
+end</p>
+
+<p>def proc_method
+  pr = Proc.new { return 10 }   # return from proc_method
+  half = pr.call
+  half * 2
+end</p>
+
+<p>lambda_method   # => 20
+proc_method     # => 10
+```</p>
+
+<p>Note there is also method <code>proc</code>. In Ruby 1.8 it's a synonym for <code>lambda</code>
+but in Ruby 1.9 it's a synonym for <code>Proc.new</code>. So avoid using <code>proc</code> to keep you code compatible
+for both ruby versions.</p>
+
+<h2>DelegateClass instance does not eql itself</h2>
+
+<p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
+which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.
+But some things are not so obvious about it:</p>
+
+<p>```ruby
+require 'delegate'</p>
+
+<p>class Animal
+end</p>
+
+<p>class Dog &lt; DelegateClass(Animal)
+end</p>
+
+<p>animal = Animal.new
+dog = Dog.new(animal)</p>
+
+<p>dog.eql?(dog)  # => false, WTF? O_o
+```</p>
+
+<p>It happens because <code>eql?</code> is delegated to base object(animal):</p>
+
+<p><code>ruby
+dog.eql?(animal)  # =&gt; true
+</code></p>
+
+<p>On other hand <code>equal?</code> is not:</p>
+
+<p><code>ruby
+dog.equal?(dog)     # =&gt; true
+dog.equal?(animal)  # =&gt; false
+</code></p>
+
+<h2>dup method do not work for all objects</h2>
+
+<p>As you might know every object in Ruby has <a href="http://ruby-doc.org/core-1.9.3/Object.html#method-i-dup">dup</a>
+method inherited from <code>Object</code> class. It's convenient, I like it. But <strong>it does not mean that every object
+can be duplicated</strong>.</p>
+
+<p><code>ruby
+[:symbol, true, false].all? { |obj| obj.respond_to? :dup } # =&gt; true
+:symbol.dup   # =&gt; TypeError: can't dup Symbol
+true.dup      # =&gt; TypeError: can't dup TrueClass
+false.dup     # =&gt; TypeError: can't dup FalseClass
+</code></p>
+
+<p>It means you can't make a deep copy of an array (with one level depth) like this:</p>
+
+<p><code>ruby
+copy = array.map(&amp;:dup)
+</code></p>
+
+<p>Or like this:</p>
+
+<p><code>
+copy = array.map { |val| val.respond_to?(:dup) ? val.dup : val }
+</code></p>
+
+<p>Since all your objects respond to <code>#dup</code>.</p>
+
+<p>ActiveSupport provides <code>duplicable?</code> method to inspect an ability
+to duplicate an object, so finally your solution would look the next way:</p>
+
+<p><code>ruby
+copy = array.map { |val| val.duplicable? ? val.dup : val }
+</code></p>
+
+<p>Internally ruby symbols and booleans point to constant memory addresses, and
+there is no reason to copy them since they are unchangable.
+But I wish the implementation of their <code>#dup</code> methods looked like this:</p>
+
+<p>```ruby
+class Symbol
+  def dup</p>
+
+<pre><code>self
 </code></pre>
 
 <p>  end
 end
 ```</p>
 
-<p>Всё читаемо, красиво и просто. Но проблема в том, что получилось шесть тестов(по тесту на
-каждый атрибут), которые тестируют лишь одно действие - постороение объекта. Когда операция построения
-занимает немало времени, а количество атрибутов на порядок больше, такой подход
-становится далеко не самым лучшим, поскольку возрастает время выполнения.
-Если объект не сохраняется в базе то вполне разумным будет использовать <code>before :all</code>. Но если
-вам приходится сохранять объект и вы используете опцию <code>config.use_transactional_fixtures = true</code>,
-потому что не хотите "гадить" в базу, то этот вариант не подойдёт.</p>
+<br />
 
-<p>Можно пойти по пути классического unit-тестирования и сделать тест подобным этому:</p>
 
-<p>```ruby user_builder_spec.rb
-describe UserBuilder do
-  describe '#build' do</p>
+<br />
 
-<pre><code>let(:user) { described_class.new(some_attrs).build }
 
-it 'should correctly build a user' do
-  user.first_name.should == "Rodion"
-  user.last_name.should  == "Raskolnikov"
-  user.account.email.should           == "rodion@mail.ru"
-  user.account.last_visit_date.should == Date.new(1866, 11, 27)
-  user.account.preference.language.should == "Russian"
-  user.account.preference.weapon.should   == "ax"
-end
+<p>So I hope the article was useful for you.
+If you know some fancy Ruby things I haven't mentioned please let me know.</p>
+
+<p>Thanks.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Perfomance benchmakrs ExecJS VS Ruby]]></title>
+    <link href="http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/"/>
+    <updated>2011-10-23T08:49:33+03:00</updated>
+    <id>http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby</id>
+    <content type="html"><![CDATA[<p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you're are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google's V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
+
+<!--more-->
+
+
+<p>```ruby benchmark.rb</p>
+
+<p>require 'rubygems'
+require 'execjs'
+require 'benchmark'</p>
+
+<p>js =&lt;&lt;JAVASCRIPT
+function fib(a){
+  if(a &lt; 2)</p>
+
+<pre><code>return a;
+</code></pre>
+
+<p>  return fib(a-1) + fib(a-2);
+}
+JAVASCRIPT
+context = ExecJS.compile(js)</p>
+
+<p>def fib(a)
+  return a if a &lt; 2
+  fib(a-1) + fib(a-2)
+end</p>
+
+<p>[1, 10, 20, 30, 40].each do |n|
+  puts "N = #{n}"
+  Benchmark.bm(7) do |x|</p>
+
+<pre><code>x.report("Ruby:") { fib(n) }
+x.report("ExecJS:") { context.call("fib", n) }
 </code></pre>
 
 <p>  end
-end
-```</p>
+  puts '-' * 52
+end</p>
 
-<p>Получилось даже лаконичнее, но менее читаемо(уж когда будет больше вложенность объектов,
-будет точно менее читаемо). Так же раздрожает длинные цепочки одинаковых методов.</p>
+<p>```</p>
 
-<p>Помедитировав над проблемой, я нашёл компроммиссное решение на основе метода <code>instance_eval</code>.</p>
+<p>Here is the output:</p>
 
-<p>```ruby user_builder_spec.rb
-describe UserBuilder do
-  describe '#build' do</p>
-
-<pre><code>let(:user) { described_class.new(some_attrs).build }
-
-it 'should correctly build a user' do
-  user.instance_eval do
-    first_name.should == "Rodion"
-    last_name.should  == "Raskolnikov"
-
-    account.instance_eval do
-      email.should           == "rodion@mail.ru"
-      last_visit_date.should == Date.new(1866, 11, 27)
-
-      preference.instance_eval do
-        language.should == "Russian"
-        weapon.should   == "ax"
-      end
-    end
-  end
-end
+<pre><code>N = 1
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.000008)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000318)
+----------------------------------------------------
+N = 10
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.000026)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000156)
+----------------------------------------------------
+N = 20
+             user     system      total        real
+Ruby:    0.000000   0.000000   0.000000 (  0.002585)
+ExecJS:  0.000000   0.000000   0.000000 (  0.000550)
+----------------------------------------------------
+N = 30
+             user     system      total        real
+Ruby:    0.310000   0.000000   0.310000 (  0.312819)
+ExecJS:  0.040000   0.000000   0.040000 (  0.043603)
+----------------------------------------------------
+N = 40
+             user     system      total        real
+Ruby:   39.780000   0.050000  39.830000 ( 39.955098)
+ExecJS:  3.940000   0.020000   3.960000 (  3.943733)
+----------------------------------------------------
 </code></pre>
 
-<p>  end
-end
-```</p>
+<p>Looks like ExecJS needs some time for "initializing" and there is no reason to use it for small calculation. But it can be ten times faster in case of long time computing!</p>
 
-<p>Это по-прежнему один тест, но мы избавились от длинных цепочек методов.
-Нужно заметить, что у такого подхода есть тоже свои недостатки: используя <code>instance_eval</code>
-мы покидаем контекст теста, и переходим прямо в контекст объекта, в котором не существует методов подобных
-<code>be_valid</code>, <code>be_instance_of</code>, etc.</p>
+<p>I would not decide to use ExecJS for validation but however the benchmark results were amazing, and we've got to keep in mind that ExecJS can provide such perfomance benefits.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[RSpec matchers for DataMapper (dm-rspec)]]></title>
+    <link href="http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/"/>
+    <updated>2011-09-12T22:25:15+03:00</updated>
+    <id>http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec</id>
+    <content type="html"><![CDATA[<p>I am currently developing a number of RSpec matchers for DataMapper models testing. You can try it. Just add the next in your Gemfile under <code>test</code> group:</p>
 
-<p>Надеюсь, эта идея будет вам полезной. Буду рад узнать чужое мнение.</p>
+<pre><code>gem 'dm-rspec'
+</code></pre>
+
+<p>And run <code>bundle install</code> to install new gems.</p>
+
+<p>The main idea is to provide the same (almost the same) interface which Shoulda provides to test ActiveRecord models.</p>
+
+<p>At the moment I implemented the next matchers:</p>
+
+<ul>
+<li>belong_to</li>
+<li>have_many</li>
+<li>have_many_and_belong_to</li>
+<li>have_property</li>
+<li>have(n).errors_on(:property)</li>
+<li>have_many(:association).trough(:another_association)</li>
+<li>validate_presence_of(:property)</li>
+<li>validate_uniqueness_of(:property)</li>
+<li>validate_format_of(:property).with(/regexp/)</li>
+</ul>
+
+
+<p>More information you can find on <a href="https://github.com/greyblake/dm-rspec">DataMapper RSpec github page</a>.</p>
+
+<p>Anyone is welcome to join me in developing:)</p>
 ]]></content>
   </entry>
   

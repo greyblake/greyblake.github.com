@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-09-07T00:37:07+03:00</updated>
+  <updated>2012-12-14T02:22:29+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,181 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Custom expectations with RSpec]]></title>
+    <link href="http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec/"/>
+    <updated>2012-12-14T00:34:00+02:00</updated>
+    <id>http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec</id>
+    <content type="html"><![CDATA[<p>I know you love RSpec&#8217;s <code>expect</code> DSL like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="k">raise</span><span class="p">(</span><span class="s2">&quot;Boom!&quot;</span><span class="p">)</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">raise_error</span><span class="p">(</span><span class="no">RuntimeError</span><span class="p">,</span> <span class="s2">&quot;Boom!&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We often write our own custom matchers and I wanna show how is easy to write
+custom expectation.</p>
+
+<!--more-->
+
+
+<h2>Desired DSL</h2>
+
+<p>Usually when I do things like this I start with DSL. I think it&#8217;s important since
+it must be convenient to use and easy to read.
+So turn on your imagination and spend some time on it.</p>
+
+<p>In my example I&#8217;m gonna create an expectation to test text written standard output
+and standard error.
+There are samples how I wanna use it(desired DSL):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Test text written to standard output</span>
+</span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hello!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Hello!&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Test text written to standard error</span>
+</span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">warn</span> <span class="s2">&quot;Stop it!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Stop it!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="ss">:error</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Expectation</h2>
+
+<p>I bet you&#8217;ve already created number of custom matchers. What about custom expectations?
+They are usual custom matches which test blocks of code!</p>
+
+<p>I&#8217;m gonna locate the expectation in <code>spec/support/custom_expecations/write_expecation.rb</code> file.
+I think <code>spec/support/custom_expecations/</code> directory is the right place for it since
+custom matchers usually are located in <code>spec/support/custom_matchers/</code>.</p>
+
+<p>So finally the expectation looks this way:</p>
+
+<figure class='code'><figcaption><span>spec/support/custom_expecations/write_expecation.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">RSpec</span><span class="o">::</span><span class="no">Matchers</span><span class="o">.</span><span class="n">define</span> <span class="ss">:write</span> <span class="k">do</span> <span class="o">|</span><span class="n">message</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">chain</span><span class="p">(</span><span class="ss">:to</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">io</span><span class="o">|</span>
+</span><span class='line'>    <span class="vi">@io</span> <span class="o">=</span> <span class="n">io</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">match</span> <span class="k">do</span> <span class="o">|</span><span class="n">block</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">output</span> <span class="o">=</span>
+</span><span class='line'>      <span class="k">case</span> <span class="n">io</span>
+</span><span class='line'>      <span class="k">when</span> <span class="ss">:output</span> <span class="k">then</span> <span class="n">fake_stdout</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">when</span> <span class="ss">:error</span>  <span class="k">then</span> <span class="n">fake_stderr</span><span class="p">(</span><span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">else</span> <span class="k">raise</span><span class="p">(</span><span class="s2">&quot;Allowed values for `to` are :output and :error, got `</span><span class="si">#{</span><span class="n">io</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="n">output</span><span class="o">.</span><span class="n">include?</span> <span class="n">message</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">description</span> <span class="k">do</span>
+</span><span class='line'>    <span class="s2">&quot;write </span><span class="se">\&quot;</span><span class="si">#{</span><span class="n">message</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> </span><span class="si">#{</span><span class="n">io_name</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">failure_message_for_should</span> <span class="k">do</span>
+</span><span class='line'>    <span class="s2">&quot;expected to </span><span class="si">#{</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">failure_message_for_should_not</span> <span class="k">do</span>
+</span><span class='line'>    <span class="s2">&quot;expected to not </span><span class="si">#{</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Fake STDERR and return a string written to it.</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">fake_stderr</span>
+</span><span class='line'>    <span class="n">original_stderr</span> <span class="o">=</span> <span class="vg">$stderr</span>
+</span><span class='line'>    <span class="vg">$stderr</span> <span class="o">=</span> <span class="no">StringIO</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'>    <span class="k">yield</span>
+</span><span class='line'>    <span class="vg">$stderr</span><span class="o">.</span><span class="n">string</span>
+</span><span class='line'>  <span class="k">ensure</span>
+</span><span class='line'>    <span class="vg">$stderr</span> <span class="o">=</span> <span class="n">original_stderr</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Fake STDOUT and return a string written to it.</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">fake_stdout</span>
+</span><span class='line'>    <span class="n">original_stdout</span> <span class="o">=</span> <span class="vg">$stdout</span>
+</span><span class='line'>    <span class="vg">$stdout</span> <span class="o">=</span> <span class="no">StringIO</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'>    <span class="k">yield</span>
+</span><span class='line'>    <span class="vg">$stdout</span><span class="o">.</span><span class="n">string</span>
+</span><span class='line'>  <span class="k">ensure</span>
+</span><span class='line'>    <span class="vg">$stdout</span> <span class="o">=</span> <span class="n">original_stdout</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># default IO is standard output</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">io</span>
+</span><span class='line'>    <span class="vi">@io</span> <span class="o">||=</span> <span class="ss">:output</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># IO name is used for description message</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">io_name</span>
+</span><span class='line'>    <span class="p">{</span><span class="ss">:output</span> <span class="o">=&gt;</span> <span class="s2">&quot;standard output&quot;</span><span class="p">,</span> <span class="ss">:error</span> <span class="o">=&gt;</span> <span class="s2">&quot;standard error&quot;</span><span class="p">}</span><span class="o">[</span><span class="n">io</span><span class="o">]</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And that&#8217;s it. You can try it against the examples from &#8220;Desired DSL&#8221; section.</p>
+
+<p>Hope that&#8217;s was useful. I look forward for your comments and suggestions. You know I do! =)</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[pg_power - ActiveRecord extension for PostgreSQL]]></title>
