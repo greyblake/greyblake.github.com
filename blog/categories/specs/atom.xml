@@ -4,7 +4,7 @@
   <title><![CDATA[Category: specs | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/specs/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-12-14T02:25:59+02:00</updated>
+  <updated>2012-12-14T02:56:28+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -33,7 +33,7 @@ custom expectation.</p>
 it must be convenient to use and easy to read.
 So turn on your imagination and spend some time on it.</p>
 
-<p>In my example I'm gonna create an expectation to test text written standard output
+<p>In my example I'm gonna create an expectation to test text written to standard output
 and standard error.
 There are samples how I wanna use it(desired DSL):</p>
 
