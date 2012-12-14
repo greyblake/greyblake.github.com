@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-12-14T02:22:29+02:00</updated>
+  <updated>2012-12-14T02:25:59+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -28,9 +28,6 @@
 <p>We often write our own custom matchers and I wanna show how is easy to write
 custom expectation.</p>
 
-<!--more-->
-
-
 <h2>Desired DSL</h2>
 
 <p>Usually when I do things like this I start with DSL. I think it&#8217;s important since
@@ -52,6 +49,11 @@ There are samples how I wanna use it(desired DSL):</p>
 </span><span class='line'><span class="c1"># Test text written to standard error</span>
 </span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">warn</span> <span class="s2">&quot;Stop it!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Stop it!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="ss">:error</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!--more-->
 
 
 <h2>Expectation</h2>

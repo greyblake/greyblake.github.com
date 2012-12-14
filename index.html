@@ -128,6 +128,31 @@ expect { raise(&quot;Boom!&quot;) }.to raise_error(RuntimeError, &quot;Boom!&quo
 <p>We often write our own custom matchers and I wanna show how is easy to write
 custom expectation.</p>
 
+<h2>Desired DSL</h2>
+
+<p>Usually when I do things like this I start with DSL. I think it&#8217;s important since
+it must be convenient to use and easy to read.
+So turn on your imagination and spend some time on it.</p>
+
+<p>In my example I&#8217;m gonna create an expectation to test text written standard output
+and standard error.
+There are samples how I wanna use it(desired DSL):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Test text written to standard output</span>
+</span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hello!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Hello!&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Test text written to standard error</span>
+</span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">warn</span> <span class="s2">&quot;Stop it!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Stop it!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="ss">:error</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
 </div>
   
   
