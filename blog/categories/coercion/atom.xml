@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: coercion | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/coercion/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2012-12-23T00:07:17+02:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Rational can't be coerced into BigDecimal on ruby 1.9.3]]></title>
+    <link href="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/"/>
+    <updated>2012-12-20T16:34:00+02:00</updated>
+    <id>http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3</id>
+    <content type="html"><![CDATA[<p>Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
+issue of <code>Rational</code> class.</p>
+
+<p>Ruby 1.9.3:
+```ruby
+require 'bigdecimal'
+require 'rational'</p>
+
+<h1>You can multiply Rational against BigDecimal</h1>
+
+<p>Rational(1) * BigDecimal('1')  # => &lt;BigDecimal:a566d0,'0.1E1',9(36)></p>
+
+<h1>But you can't do the same when you change order</h1>
+
+<p>BigDecimal('1') * Rational(1)  # => TypeError: Rational can't be coerced into BigDecimal
+```</p>
+
+<p>On other hand in Ruby 1.8.7:</p>
+
+<p>```ruby
+require 'bigdecimal'
+require 'rational'</p>
+
+<h1>BigDecimal * Rational works OK</h1>
+
+<p>BigDecimal('1') * Rational(1)  # => 1.0 (Float)</p>
+
+<h1>But Rational * BigDecimal doesn't</h1>
+
+<p>Rational(1) * BigDecimal('1')  # => TypeError: Rational can't be coerced into BigDecimal
+```</p>
+
+<p>It's looks weird. So I can only say for sure that <code>Rational</code> -> <code>BigDecimal</code>
+coercion is not implemented in Ruby.</p>
+
+<p>I've tried to fix it with simple monkey patch:</p>
+
+<p>```ruby</p>
+
+<h1>Works only for Ruby1.9.3</h1>
+
+<p>class Rational
+  def coerce(value)</p>
+
+<pre><code>case value
+when BigDecimal
+  return self, value
+else
+  super
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>And it works OK against simple examples:</p>
+
+<p><code>ruby
+Rational(1) * BigDecimal('1')  # =&gt; &lt;BigDecimal:a566d0,'0.1E1',9(36)&gt;
+BigDecimal('1') * Rational(1)  # =&gt; &lt;BigDecimal:a566d0,'0.1E1',9(36)&gt;
+</code></p>
+
+<p>But it causes intermittent segmentation faults when I run Rails application.</p>
+
+<p>Any ideas about the coercion? Is it expected behaviour of ruby1.9.3?
+I found no bugs reported this issue on
+<a href="bugs.ruby-lang.org">https://bugs.ruby-lang.org</a>.</p>
+
+<p>I'll appreciate any feedback. Thanks.</p>
+]]></content>
+  </entry>
+  
+</feed>

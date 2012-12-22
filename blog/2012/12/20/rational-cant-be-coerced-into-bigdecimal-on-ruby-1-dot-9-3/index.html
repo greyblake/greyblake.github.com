@@ -1,0 +1,407 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Rational can't be coerced into BigDecimal on ruby 1.9.3 - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
+issue of Rational class. Ruby 1.9.3: 1
+2
+3
+4
+5
+6
+7
+8
+require &#39; &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Rational Can't Be Coerced Into BigDecimal on Ruby 1.9.3</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-20T16:34:00+02:00" pubdate data-updated="true">Dec 20<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
+issue of <code>Rational</code> class.</p>
+
+<p>Ruby 1.9.3:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;bigdecimal&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;rational&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># You can multiply Rational against BigDecimal</span>
+</span><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># But you can&#39;t do the same when you change order</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; TypeError: Rational can&#39;t be coerced into BigDecimal</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On other hand in Ruby 1.8.7:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;bigdecimal&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;rational&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># BigDecimal * Rational works OK</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; 1.0 (Float)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># But Rational * BigDecimal doesn&#39;t</span>
+</span><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; TypeError: Rational can&#39;t be coerced into BigDecimal</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s looks weird. So I can only say for sure that <code>Rational</code> -> <code>BigDecimal</code>
+coercion is not implemented in Ruby.</p>
+
+<p>I&#8217;ve tried to fix it with simple monkey patch:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Works only for Ruby1.9.3</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">Rational</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">coerce</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">case</span> <span class="n">value</span>
+</span><span class='line'>    <span class="k">when</span> <span class="no">BigDecimal</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nb">self</span><span class="p">,</span> <span class="n">value</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="k">super</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And it works OK against simple examples:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But it causes intermittent segmentation faults when I run Rails application.</p>
+
+<p>Any ideas about the coercion? Is it expected behaviour of ruby1.9.3?
+I found no bugs reported this issue on
+<a href="bugs.ruby-lang.org">https://bugs.ruby-lang.org</a>.</p>
+
+<p>I&#8217;ll appreciate any feedback. Thanks.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-20T16:34:00+02:00" pubdate data-updated="true">Dec 20<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/bigdecimal/'>BigDecimal</a>, <a class='category' href='/blog/categories/rational/'>Rational</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/coercion/'>coercion</a>, <a class='category' href='/blog/categories/ruby1-9/'>ruby1.9</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2012/12/14/custom-expectations-with-rspec/" title="Previous Post: Custom expectations with RSpec">&laquo; Custom expectations with RSpec</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/">Rational can't be coerced into BigDecimal on ruby 1.9.3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/12/14/custom-expectations-with-rspec/">Custom expectations with RSpec</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">pg_power - ActiveRecord extension for PostgreSQL</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby performance tricks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/08/10/unexpected-ruby-behaviour/">Unexpected Ruby behaviour</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/';
+        var disqus_url = 'http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

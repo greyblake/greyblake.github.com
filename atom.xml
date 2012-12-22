@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-12-14T02:56:28+02:00</updated>
+  <updated>2012-12-23T00:07:17+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,105 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Rational can't be coerced into BigDecimal on ruby 1.9.3]]></title>
+    <link href="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/"/>
+    <updated>2012-12-20T16:34:00+02:00</updated>
+    <id>http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3</id>
+    <content type="html"><![CDATA[<p>Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
+issue of <code>Rational</code> class.</p>
+
+<p>Ruby 1.9.3:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;bigdecimal&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;rational&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># You can multiply Rational against BigDecimal</span>
+</span><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># But you can&#39;t do the same when you change order</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; TypeError: Rational can&#39;t be coerced into BigDecimal</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On other hand in Ruby 1.8.7:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;bigdecimal&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;rational&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># BigDecimal * Rational works OK</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; 1.0 (Float)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># But Rational * BigDecimal doesn&#39;t</span>
+</span><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; TypeError: Rational can&#39;t be coerced into BigDecimal</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s looks weird. So I can only say for sure that <code>Rational</code> -> <code>BigDecimal</code>
+coercion is not implemented in Ruby.</p>
+
+<p>I&#8217;ve tried to fix it with simple monkey patch:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Works only for Ruby1.9.3</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">Rational</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">coerce</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">case</span> <span class="n">value</span>
+</span><span class='line'>    <span class="k">when</span> <span class="no">BigDecimal</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nb">self</span><span class="p">,</span> <span class="n">value</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="k">super</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And it works OK against simple examples:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But it causes intermittent segmentation faults when I run Rails application.</p>
+
+<p>Any ideas about the coercion? Is it expected behaviour of ruby1.9.3?
+I found no bugs reported this issue on
+<a href="bugs.ruby-lang.org">https://bugs.ruby-lang.org</a>.</p>
+
+<p>I&#8217;ll appreciate any feedback. Thanks.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Custom expectations with RSpec]]></title>
