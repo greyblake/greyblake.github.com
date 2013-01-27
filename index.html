@@ -9,16 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
-issue of Rational class. Ruby 1.9.3: 1
-2
-3
-4
-5
-6
-7
-8
-require &#39; &hellip;">
+  <meta name="description" content="After migrating to Debian Wheezy (current test Debian repository) I faced a problem
+with installing a local USB printer: on attempt to add new USB &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,7 +94,69 @@ require &#39; &hellip;">
   <header>
     
       <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/">Rational Can&#8217;t Be Coerced Into BigDecimal on Ruby 1.9.3</a></h1>
+        <h1 class="entry-title"><a href="/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/">Failed to Add New Printer in Debian Wheezy</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-27T21:44:00+02:00" pubdate data-updated="true">Jan 27<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>After migrating to Debian Wheezy (current test Debian repository) I faced a problem
+with installing a local USB printer: on attempt to add new USB printer
+(HP LaserJet M1005) I got an error message: &#8220;Failed to add new printer in Debian Wheezy&#8221;
+(&#8220;Не удалось добавить новый принтер&#8221; if you have Russian localization).</p>
+
+<p>After googling for I a while I found a good workaround for it. All you need is
+to use <code>pk-helper</code> package from Sid (unstable Debian version), since it seems to
+be buggy in Wheezy.</p>
+
+<p>So add Sid repository to your <code>/etc/apt/source.list</code>:</p>
+
+<figure class='code'><figcaption><span>/etc/apt/source.list</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>deb http://ftp.ua.debian.org/debian/ sid main non-free contrib
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And reinstall <code>pg-helper</code> package using Sid repository:</p>
+
+<figure class='code'><figcaption><span>/etc/apt/source.list</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>aptitude reinstall cups-pk-helper --target sid
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s all. Now try to connect your USB printer.
+Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=695131">bug report</a>.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/">Rational Can&#8217;t Be Coerced Into BigDecimal in Ruby 1.9.3</a></h1>
       
     
     
@@ -840,49 +894,6 @@ That will the next step in this direction, since I realy need it.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/01/30/razgonyaem-mozg/">Разгоняем мозг</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-01-30T00:33:36+02:00" pubdate data-updated="true">Jan 30<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Несколько месяцев назад я был очень сильно озабочен своей продуктивностью. Здесь собраны некоторые рецепты повышения эффективности мозговой деятельности, которые мне удалось отыскать, большинство из них взяты из книги Вина Венгера &#8220;Фактор Эйнштейна&#8221;.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/01/30/razgonyaem-mozg/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -898,7 +909,11 @@ That will the next step in this direction, since I realy need it.</p>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/">Rational can&#8217;t be coerced into BigDecimal on ruby 1.9.3</a>
+        <a href="/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/">Failed to add new printer in Debian Wheezy</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/">Rational can&#8217;t be coerced into BigDecimal in ruby 1.9.3</a>
       </li>
     
       <li class="post">
@@ -911,10 +926,6 @@ That will the next step in this direction, since I realy need it.</p>
     
       <li class="post">
         <a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby performance tricks</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/08/10/unexpected-ruby-behaviour/">Unexpected Ruby behaviour</a>
       </li>
     
   </ul>
@@ -976,7 +987,7 @@ That will the next step in this direction, since I realy need it.</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2012 - Sergey Potapov -
+  Copyright &copy; 2013 - Sergey Potapov -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

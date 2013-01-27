@@ -4,7 +4,7 @@
   <title><![CDATA[Category: unix | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/unix/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-12-23T00:07:17+02:00</updated>
+  <updated>2013-01-27T22:20:42+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,131 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[pg_power - ActiveRecord extension for PostgreSQL]]></title>
+    <link href="http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/"/>
+    <updated>2012-09-06T23:24:00+03:00</updated>
+    <id>http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql</id>
+    <content type="html"><![CDATA[<p>I am happy to announce that  <a href="http://tmxcredit.com/">TMXCredit</a> released
+<a href="https://github.com/TMXCredit/pg_power">pg_power</a> gem - an ActiveRecord extension which
+allows to use number of PostgreSQL features with Rails.</p>
+
+<h2>What you can do with pg_power?</h2>
+
+<ul>
+<li>Use PostgresSQL schemas in your Rails project.</li>
+<li>Add comments to PostgreSQL database with Rails migrations.</li>
+<li>Use foreign keys (we imported foreigner functionality and made it schema aware).</li>
+<li>Use partial indexes.</li>
+<li>Add indexes concurrently.</li>
+</ul>
+
+
+<p>You'll find enough documentation in <a href="https://github.com/TMXCredit/pg_power/blob/master/README.markdown">README</a>
+file.</p>
+
+<h2>Quick usage example</h2>
+
+<p>Assume you want to create tables <code>countries</code> and <code>languages</code> in <code>demography</code> schema.</p>
+
+<p>At first we need to create <code>demography</code> schema:</p>
+
+<p>```ruby db/migrate/create_demography_schema.rb
+class CreateDemographySchema &lt; &lt; ActiveRecord::Migration
+  def change</p>
+
+<pre><code>create_schema 'demography'
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Now let's create tables:</p>
+
+<p>```ruby db/migrate/create_demography_languages.rb
+class CreateDemographyLanguages &lt; ActiveRecord::Migration
+  def change</p>
+
+<pre><code># Create table `languages` in schema `demography`
+create_table "languages", :schema =&gt; "demography" do |t|
+  t.string :name
+  t.string :code, :limit =&gt; 2
+end
+
+# Add PostgreSQL comments
+set_table_comment "demography.languages", "List of languages"
+set_column_comments "demography.languages",
+    :name =&gt; "Full name of language in English",
+    :code =&gt; "ISO 639-1 code"
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>```ruby db/migrate/create_demography_countries.rb
+class CreateDemographyContries &lt; ActiveRecord::Migration
+  def change</p>
+
+<pre><code># Create table `countries` in schema `demography`
+create_table "countries", :schema =&gt; "demography" do |t|
+  t.string :name
+
+  # In real life you likely would have many-to-many associaton
+  t.integer :language_id
+end
+
+# Add PostgreSQL comments
+set_table_comment "demography.countries", "List of world countries"
+set_column_comments "demography.languages",
+    :name        =&gt; "Full name of country in English",
+    :language_id =&gt; "Most popular language in the country"
+
+# Add foreign key and create index on demography.countries.language_id
+add_foreign_key("demography.countries", "demography.languages")
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Great! Now we need to set table names in models to make ActiveRecord know that
+these tables are located in <code>demography</code> schema.</p>
+
+<p><code>ruby app/models/language.rb
+class Language &lt; ActiveRecord::Base
+  set_table_name "demography.languages"
+end
+</code></p>
+
+<p>It will work. But I would recommend you to create module <code>Demography</code> which would represent
+<code>demography</code> schema and move those models to it. One more benefit is that you can define
+schema prefix in module and models will use it build table name automatically.</p>
+
+<p>```ruby app/models/demography.rb
+module Demography
+  def self.table_name_prefix</p>
+
+<pre><code>'demography.'
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p><code>ruby app/models/demography/language.rb
+module Demography::Language
+  # No need to use set_table_name anymore
+end
+</code></p>
+
+<p>I hope you will enjoy <a href="https://github.com/TMXCredit/pg_power">pg_power</a>. Let us know what you think!</p>
+
+<p>Thanks. Sergey Potapov.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Powering less to highlight syntax and display line numbers]]></title>

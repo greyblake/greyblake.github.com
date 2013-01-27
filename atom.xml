@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2012-12-23T00:07:17+02:00</updated>
+  <updated>2013-01-27T22:20:42+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -14,10 +14,43 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Rational can't be coerced into BigDecimal on ruby 1.9.3]]></title>
-    <link href="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3/"/>
+    <title type="html"><![CDATA[Failed to add new printer in Debian Wheezy]]></title>
+    <link href="http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/"/>
+    <updated>2013-01-27T21:44:00+02:00</updated>
+    <id>http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy</id>
+    <content type="html"><![CDATA[<p>After migrating to Debian Wheezy (current test Debian repository) I faced a problem
+with installing a local USB printer: on attempt to add new USB printer
+(HP LaserJet M1005) I got an error message: &#8220;Failed to add new printer in Debian Wheezy&#8221;
+(&#8220;Не удалось добавить новый принтер&#8221; if you have Russian localization).</p>
+
+<p>After googling for I a while I found a good workaround for it. All you need is
+to use <code>pk-helper</code> package from Sid (unstable Debian version), since it seems to
+be buggy in Wheezy.</p>
+
+<p>So add Sid repository to your <code>/etc/apt/source.list</code>:</p>
+
+<figure class='code'><figcaption><span>/etc/apt/source.list</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>deb http://ftp.ua.debian.org/debian/ sid main non-free contrib
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And reinstall <code>pg-helper</code> package using Sid repository:</p>
+
+<figure class='code'><figcaption><span>/etc/apt/source.list</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>aptitude reinstall cups-pk-helper --target sid
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s all. Now try to connect your USB printer.
+Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=695131">bug report</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Rational can't be coerced into BigDecimal in ruby 1.9.3]]></title>
+    <link href="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/"/>
     <updated>2012-12-20T16:34:00+02:00</updated>
-    <id>http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-on-ruby-1-dot-9-3</id>
+    <id>http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3</id>
     <content type="html"><![CDATA[<p>Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
 issue of <code>Rational</code> class.</p>
 
