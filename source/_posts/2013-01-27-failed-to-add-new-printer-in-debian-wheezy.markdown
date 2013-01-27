@@ -18,7 +18,7 @@ be buggy in Wheezy.
 
 So add Sid repository to your `/etc/apt/source.list`:
 
-```text /etc/apt/source.list
+```
 deb http://ftp.ua.debian.org/debian/ sid main non-free contrib
 ```
 
