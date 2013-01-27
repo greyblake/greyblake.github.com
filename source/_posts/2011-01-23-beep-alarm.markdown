@@ -3,7 +3,7 @@ layout: post
 title: "Beep alarm"
 date: "2011-01-23 23:24:39"
 comments: true
-categories: beep alarm Linux bash
+categories: beep alarm linux bash
 ---
 
 ## Intro

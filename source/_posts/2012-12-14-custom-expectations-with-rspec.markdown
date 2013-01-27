@@ -3,7 +3,7 @@ layout: post
 title: "Custom expectations with RSpec"
 date: 2012-12-14 00:34
 comments: true
-categories: Ruby RSpec specs test expectation
+categories: ruby rspec specs test expectation
 ---
 
 I know you love RSpec's `expect` DSL like this:

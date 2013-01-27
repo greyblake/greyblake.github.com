@@ -3,7 +3,7 @@ layout: post
 title: "I released Smartdict version 0.1.0"
 date: 2012-06-11 03:20
 comments: true
-categories:
+categories: smartdict dictionary ruby
 ---
 
 Today I released [Smartdict version 0.1.0](http://smartdict.net/blog/2012/06/11/smartdict-0-dot-1-0-is-released/).

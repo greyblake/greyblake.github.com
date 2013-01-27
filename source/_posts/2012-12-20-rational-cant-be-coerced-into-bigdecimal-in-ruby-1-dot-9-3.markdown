@@ -3,7 +3,7 @@ layout: post
 title: "Rational can't be coerced into BigDecimal in ruby 1.9.3"
 date: 2012-12-20 16:34
 comments: true
-categories:  Ruby ruby1.9 coercion Rational BigDecimal
+categories:  ruby ruby1.9 coercion rational BigDecimal
 ---
 
 Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion

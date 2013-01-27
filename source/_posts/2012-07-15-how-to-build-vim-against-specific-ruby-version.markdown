@@ -3,7 +3,7 @@ layout: post
 title: "How to build Vim against specific Ruby version"
 date: 2012-07-15 23:00
 comments: true
-categories: Ruby Vim make ruby1.9
+categories: ruby vim make ruby1.9
 ---
 
 Let's say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.

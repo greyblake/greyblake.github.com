@@ -3,7 +3,7 @@ layout: post
 title: "Using update-rc.d"
 date: "2011-09-18 21:00:00"
 comments: true
-categories: daemon update-rc unix Linux
+categories: daemon update-rc unix linux
 ---
 
 `update-rc.d` is tool for adding daemons to /etc/rc[1-6]d files.

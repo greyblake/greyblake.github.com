@@ -3,7 +3,7 @@ layout: post
 title: "Backuping and restoring PostgreSQL databases"
 date: "2011-02-04 23:48:55"
 comments: true
-categories: postgresql bash unix backup restore database db
+categories: postgresql bash unix backup restore database db linux
 ---
 
 Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.

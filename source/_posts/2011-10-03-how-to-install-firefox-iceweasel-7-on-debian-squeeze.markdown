@@ -3,7 +3,7 @@ layout: post
 title: "How to Install Firefox (Iceweasel) 7 on Debian Squeeze"
 date: "2011-10-03 18:12:54"
 comments: true
-categories: Firefox Iceweasel Debian Squeze install Linux
+categories: firefox iceweasel Debian squeeze install linux
 ---
 
 First remove lagacy version of Iceweasel:

@@ -3,7 +3,7 @@ layout: post
 title: "pg_power - ActiveRecord extension for PostgreSQL"
 date: 2012-09-06 23:24
 comments: true
-categories:
+categories: pg pogstgresql unix linux ruby pg_power rails
 ---
 
 I am happy to announce that  [TMXCredit](http://tmxcredit.com/) released

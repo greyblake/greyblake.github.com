@@ -3,7 +3,7 @@ layout: post
 title: "Powering less to highlight syntax and display line numbers"
 date: "2011-09-23 17:38:35"
 comments: true
-categories: less syntax-highlight syntax unix Linux bash
+categories: less syntax-highlight syntax unix linux bash
 ---
 
 Since I am a command line guy I use __less__ tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.

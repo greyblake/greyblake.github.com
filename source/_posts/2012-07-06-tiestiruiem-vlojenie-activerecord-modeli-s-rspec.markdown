@@ -3,7 +3,7 @@ layout: post
 title: "Тестируем вложенные ActiveRecord-модели с RSpec"
 date: 2012-07-06 22:19
 comments: true
-categories: Ruby, RSpec, test, unit, ActiveRecord, Ruby on Rails, тест, модель
+categories: ruby, rspec, test, unit, activerecord, rails, тест, модель
 ---
 
 Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
