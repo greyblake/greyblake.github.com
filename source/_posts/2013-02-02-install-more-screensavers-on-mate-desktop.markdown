@@ -25,7 +25,7 @@ Go to `/usr/share/applications/screensavers` directory:
 cd /usr/share/applications/screensavers
 ```
 
-There are located number of `.desktop` files. I should edit them by replacing a line
+There are located number of `.desktop` files. You should edit them by replacing the line
 
 ```
 OnlyShowIn=GNOME;
