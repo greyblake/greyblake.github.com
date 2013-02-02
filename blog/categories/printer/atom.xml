@@ -4,7 +4,7 @@
   <title><![CDATA[Category: printer | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/printer/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-01-27T22:30:15+02:00</updated>
+  <updated>2013-02-02T22:38:54+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -33,7 +33,7 @@ be buggy in Wheezy.</p>
 deb http://ftp.ua.debian.org/debian/ sid main non-free contrib
 </code></p>
 
-<p>And reinstall <code>pg-helper</code> package using Sid repository:</p>
+<p>And reinstall <code>cups-pk-helper</code> package using Sid repository:</p>
 
 <p><code>
 aptitude reinstall cups-pk-helper --target sid

@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-01-27T22:30:15+02:00</updated>
+  <updated>2013-02-02T22:38:54+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,55 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Install more screensavers on Mate desktop]]></title>
+    <link href="http://greyblake.com/blog/2013/02/02/install-more-screensavers-on-mate-desktop/"/>
+    <updated>2013-02-02T22:24:00+02:00</updated>
+    <id>http://greyblake.com/blog/2013/02/02/install-more-screensavers-on-mate-desktop</id>
+    <content type="html"><![CDATA[<p>I switched from Gnome3 to <a href="http://mate-desktop.org/">Mate desktop</a>
+and noticed that I&#8217;m able to use only few sreensavers.
+If you&#8217;re using Mate (it&#8217;s default for Linux Mint) you might experience the same problem.</p>
+
+<p>There is a workaround how to use much more screensavers with Mate as usually able
+to do with Gnome.</p>
+
+<p>Install packages with additional screensavers:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>apt-get install xscreensaver-data-extra xscreensaver-gl-extra</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Go to <code>/usr/share/applications/screensavers</code> directory:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cd /usr/share/applications/screensavers</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are located number of <code>.desktop</code> files. I should edit them by replacing a line</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>OnlyShowIn=GNOME;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>with</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>OnlyShowIn=GNOME;MATE;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>.</p>
+
+<p>Obviously it&#8217;s a routine to change them all manually. So use <code>sed</code> tool to edit all files in once:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>find . -name <span class="s1">&#39;*.desktop&#39;</span> | xargs sed -i <span class="s1">&#39;s/OnlyShowIn=GNOME;/OnlyShowIn=GNOME;MATE;/&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now you are able to use more than hundred screensavers on Mate!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Failed to add new printer in Debian Wheezy]]></title>
@@ -33,7 +82,7 @@ be buggy in Wheezy.</p>
 </pre></td><td class='code'><pre><code class=''><span class='line'>deb http://ftp.ua.debian.org/debian/ sid main non-free contrib</span></code></pre></td></tr></table></div></figure>
 
 
-<p>And reinstall <code>pg-helper</code> package using Sid repository:</p>
+<p>And reinstall <code>cups-pk-helper</code> package using Sid repository:</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>aptitude reinstall cups-pk-helper --target sid</span></code></pre></td></tr></table></div></figure>
@@ -2782,85 +2831,6 @@ beep-alarm -o -2
 <h2>So&#8230;</h2>
 
 <p>I hope you&#8217;ll enjoy it and will never oversleep your work:)</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Vim preview plugin]]></title>
-    <link href="http://greyblake.com/blog/2011/01/23/vim-preview-plugin/"/>
-    <updated>2011-01-23T03:13:14+02:00</updated>
-    <id>http://greyblake.com/blog/2011/01/23/vim-preview-plugin</id>
-    <content type="html"><![CDATA[<h2>Intro</h2>
-
-<p>Preview plugin is a tool developed to help you to preview markup files such as .markdown, .rdoc, .textile, .ronn and .html when you are editing them. It builds html files and opens them in your browser.</p>
-
-<h2>Supported Formats</h2>
-
-<p>The plugin supports the next formats:</p>
-
-<ul>
-<li>markdown(md, mkd, mkdn, mdown) - depends on <code>bluecloth</code> ruby gem</li>
-<li>rdoc - depends on <code>github-markup</code> ruby gem</li>
-<li>textile - depends on <code>RedCloth</code> ruby gem</li>
-<li>html(htm)</li>
-<li>ronn - depends on <code>ronn</code> ruby gem</li>
-</ul>
-
-
-<!--more-->
-
-
-<h2>Dependencies</h2>
-
-<p>The plugin requires a builtin ruby interpreter. It means that your Vim
-should be compiled with <code>--enable-rubyinterp</code> option.
-To find out does you Vim have builtin ruby interpreter you can do the next:</p>
-
-<pre><code>:echo has('ruby')
-</code></pre>
-
-<p>If output is <code>1</code> the ruby interpreter is builtin.</p>
-
-<p>The second thing you should verify is that you have installed all necessary
-ruby gems. Please see &#8220;Supported Formats&#8221; section to find out what gems you need.</p>
-
-<h2>Installation</h2>
-
-<p>At first you should get the plugin. You can clone my repository from github like this:</p>
-
-<pre><code>git clone git://github.com/greyblake/vim-preview.git
-</code></pre>
-
-<p>Or download it from <a href="http://www.vim.org/scripts/script.php?script_id=3344">vim.org</a></p>
-
-<p>To install the plugin just copy <code>autoload</code>, <code>plugin</code>, <code>doc</code> directories into your <code>.vim</code> directory:</p>
-
-<pre><code>cd vim-preview
-cp ./autoload ~/.vim -R
-cp ./plugin ~/.vim -R
-cp ./doc ~/.vim -R
-</code></pre>
-
-<p>If you use <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a> just unzip/clone the plugin to <code>~/.vim/bundle</code> directory.
-If don&#8217;t use  <a href="http://www.vim.org/scripts/script.php?script_id=2332">Pathogen</a>, I would recommend you to start.</p>
-
-<h2>Usage</h2>
-
-<ul>
-<li><code>&lt;Leader&gt;P</code> - will open current file converted to HTML in your browser.</li>
-</ul>
-
-
-<p>I want to remind that <code>&lt;Leader&gt;</code> in most cases is <code>\</code> key.</p>
-
-<p>To get more information about the plugin and how it can be customized read help in Vim editor:</p>
-
-<pre><code>:help Preview
-</code></pre>
-
-<h2>If you found a bug &#8230;</h2>
-
-<p>Report it me!</p>
 ]]></content>
   </entry>
   
