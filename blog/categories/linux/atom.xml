@@ -4,7 +4,7 @@
   <title><![CDATA[Category: linux | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-02-02T22:38:54+02:00</updated>
+  <updated>2013-02-02T22:41:26+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -37,7 +37,7 @@ apt-get install xscreensaver-data-extra xscreensaver-gl-extra
 cd /usr/share/applications/screensavers
 </code></p>
 
-<p>There are located number of <code>.desktop</code> files. I should edit them by replacing a line</p>
+<p>There are located number of <code>.desktop</code> files. You should edit them by replacing the line</p>
 
 <p><code>
 OnlyShowIn=GNOME;

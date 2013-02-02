@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-02-02T22:38:54+02:00</updated>
+  <updated>2013-02-02T22:41:26+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -37,7 +37,7 @@ to do with Gnome.</p>
 </pre></td><td class='code'><pre><code class=''><span class='line'>cd /usr/share/applications/screensavers</span></code></pre></td></tr></table></div></figure>
 
 
-<p>There are located number of <code>.desktop</code> files. I should edit them by replacing a line</p>
+<p>There are located number of <code>.desktop</code> files. You should edit them by replacing the line</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>OnlyShowIn=GNOME;</span></code></pre></td></tr></table></div></figure>
