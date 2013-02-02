@@ -22,7 +22,7 @@ So add Sid repository to your `/etc/apt/source.list`:
 deb http://ftp.ua.debian.org/debian/ sid main non-free contrib
 ```
 
-And reinstall `pg-helper` package using Sid repository:
+And reinstall `cups-pk-helper` package using Sid repository:
 
 
 ```
