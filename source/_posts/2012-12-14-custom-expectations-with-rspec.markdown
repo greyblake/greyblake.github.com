@@ -41,13 +41,13 @@ expect { warn "Stop it!" }.to write("Stop it!").to(:error)
 I bet you've already created number of custom matchers. What about custom expectations?
 They are usual custom matches which test blocks of code!
 
-I'm gonna locate the expectation in `spec/support/custom_expecations/write_expecation.rb` file.
-I think `spec/support/custom_expecations/` directory is the right place for it since
+I'm gonna locate the expectation in `spec/support/custom_expectations/write_expectation.rb` file.
+I think `spec/support/custom_expectations/` directory is the right place for it since
 custom matchers usually are located in `spec/support/custom_matchers/`.
 
 So finally the expectation looks this way:
 
-```ruby spec/support/custom_expecations/write_expecation.rb
+```ruby spec/support/custom_expectations/write_expectation.rb
 RSpec::Matchers.define :write do |message|
   chain(:to) do |io|
     @io = io
