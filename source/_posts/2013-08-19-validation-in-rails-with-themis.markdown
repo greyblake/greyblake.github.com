@@ -64,6 +64,7 @@ class Patient < ActiveRecord::Base
   validates :age, :presence => true
 end
 ```
+<!--more-->
 
 So now we keep common validation in one place.
 If you want you can include validation modules into each other to combine
