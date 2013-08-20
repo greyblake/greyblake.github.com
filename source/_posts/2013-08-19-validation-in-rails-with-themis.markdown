@@ -15,7 +15,7 @@ I'll take a brief look at possible alternative solutions.
 
 ## Modular validation
 
-Themis allows you to extract duplicated validation into model.
+Themis allows you to extract duplicated validations into module for reuse.
 Usually rails applications are small enough so you don't need it. But sometimes
 you do.
 
@@ -38,9 +38,9 @@ class Patient < ActiveRecord::Base
 end
 ```
 
-You see that both models have same validation of `first_name`, `last_name` and `email`.
+You see that both models have the same validation for `first_name`, `last_name` and `email`.
 
-Themis allows to fix the duplication problem by extracting common validations into
+Themis allows you to fix the duplication problem by extracting common validations into
 a module:
 
 ```ruby
@@ -66,8 +66,8 @@ end
 ```
 <!--more-->
 
-So now we keep common validation in one place.
-If you want you can include validation modules into each other to combine
+So now we keep the common validation in one place.
+If you want, you can include validation modules into each other to combine
 necessary validation.
 
 ## Validation scenarios
@@ -96,15 +96,15 @@ class UserAccount < ActiveRecord::Base
 end
 ```
 
-So we have model graph like this with `User` model on the top:
+So we have a model graph like this with `User` model on the top:
 
 ![Themis - model graph](http://i1078.photobucket.com/albums/w484/greyblake/themis_model_graph.png)
 
-it's pretty small, but in real life the graph can be much deeper.
+It's pretty small, but in real life the graph can be much deeper.
 
 What would you do if you needed to apply different validations depending on context?
 For example according to your business requirements users must be allowed to use
-your application only in case if they filled in all of the fields.
+your application only in case if they've filled in all of the fields.
 So you need to validate presense of `first_name`, `last_name` and `birhday`
 on `Person` model and `email`, `login` and `password` on `UserAccount`.
 
@@ -120,16 +120,16 @@ class UserAccount < ActiveRecord::Base
 end
 ```
 
-There are some percent of users who don't finish registration process.
+There is some percent of users who don't finish registration process.
 But your marketing department wants to have an ability to contact them
-in case if they have entered an email address.
+if they have entered an email address.
 
 So that's where the issue is: you can't save records using validation rules written above.
 
-With Themis can declare number of validation strategies
-and depending on context chose which one you need.
+With Themis you can declare number of validation strategies,
+and depending on context, chose which one you need.
 
-Here is how complete solution looks:
+Here is how a complete solution looks:
 
 ```ruby
 class User < ActiveRecord::Base
@@ -170,7 +170,7 @@ class UserAccount < ActiveRecord::Base
 end
 ```
 
-And here how you would use it somewhere in controller:
+And here is how you would use it somewhere in a controller:
 
 ```ruby
 # Create model initialized with params
@@ -217,7 +217,7 @@ end
 
 ### Using conditional validation
 
-If your requirements aren't so fancy you can be satisfied with simple
+If your requirements aren't so fancy, you can be satisfied with a simple
 conditional validation, e. g.
 
 ```ruby
@@ -252,7 +252,7 @@ on `person` inside the block.
 
 ### Vanguard
 
-Guys from [ROM project](http://rom-rb.org/) have own validator called
+The guys from [the ROM project](http://rom-rb.org/) have their own validator called
 [Vanguard](https://github.com/mbj/vanguard)(previous name is Aqeuitas).
 The sweet thing about it is that it allows to seperate validations and
 models according to DataMapper approach. The downside is if you use ActiveRecord
@@ -263,7 +263,7 @@ you to take a look at it.
 ## Conclusion
 
 ActiveRecord is good for plain and straightforward projects.
-In big enterprise applications usually we need more flexebility to meet different
+In big enterprise applications usually we need more flexibility to meet different
 exotic requiments.
 We've created [Themis](https://github.com/TMXCredit/themis) to extend ActiveRecord
 and solve some of the problems.
