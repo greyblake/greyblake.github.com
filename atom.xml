@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-08-20T19:55:42+03:00</updated>
+  <updated>2013-08-20T19:59:43+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -100,6 +100,9 @@ a module:</p>
 </span><span class='line'>  <span class="n">validates</span> <span class="ss">:age</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
 </span><span class='line'><span class="k">end</span>
 </span></code></pre></td></tr></table></div></figure>
+
+
+<!--more-->
 
 
 <p>So now we keep common validation in one place.
@@ -429,6 +432,9 @@ your feedback!</p>
     <id>http://greyblake.com/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto</id>
     <content type="html"><![CDATA[<p>Как вы знаете, я начал изучать Эсперанто, некоторым даже успел &#8220;съесть&#8221; мозг, но всё же большинство по-прежнему задают вопросы почему и для чего я это делаю. Из этого можно прийти к выводу, что либо я безумен, либо я понимаю что-то, что другие не могут понять.
 Поэтому я решил написать небольшую статью и постараться объясниться.</p>
+
+<!--more-->
+
 
 <h2>Эсперанто? Зачем?</h2>
 
