@@ -9,7 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Недавно я начал пользоваться сервисом busuu.com. Очень классная вещь, но вот беда: спустя неделю часть функционала перестала работать, предлагая &hellip;">
+  <meta name="description" content="Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
+и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -93,6 +94,93 @@
   <header>
     
       <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Тестируем вложенные ActiveRecord-модели с RSpec</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-07-06T22:19:00+03:00" pubdate data-updated="true">Jul 6<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
+и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, как нужно. На самом деле
+задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/">I Released Smartdict Version 0.1.0</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-11T03:20:00+03:00" pubdate data-updated="true">Jun 11<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Today I released <a href="http://smartdict.net/blog/2012/06/11/smartdict-0-dot-1-0-is-released/">Smartdict version 0.1.0</a>.
+Please give me a favour and check it out.</p>
+
+<p>I&#8217;m gonna implement a vim plugin based on <a href="https://github.com/smartdict/smartdict-core">smartdict-core</a>.
+That will the next step in this direction, since I realy need it.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
         <h1 class="entry-title"><a href="/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/">Получаем Premium на busuu.com бесплатно</a></h1>
       
     
@@ -117,7 +205,9 @@
   </header>
 
 
-  <div class="entry-content"><p>Недавно я начал пользоваться сервисом <a href="http://www.busuu.com">busuu.com</a>. Очень классная вещь, но вот беда: спустя неделю часть функционала перестала работать, предлагая купить Premium аккаунт за 69,99 EUR.</p>
+  <div class="entry-content"><p>Пожалуйста, прочтитайте так же мою статью <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>.</p>
+
+<p>Недавно я начал пользоваться сервисом <a href="http://www.busuu.com">busuu.com</a>. Очень классная вещь, но вот беда: спустя неделю часть функционала перестала работать, предлагая купить Premium аккаунт за 69,99 EUR.</p>
 
 <p>Одна из полезностей которые пропали, была возможность прослушивания ключевых фраз во время изучения новых слов. Кнопка, при нажатие на которую должна произносится фраза, превратилась в обычную ссылку на страницу, которая предлагает купить Premium.</p>
 
@@ -484,177 +574,6 @@ aptitude install iceweasel -t squeeze-backports
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2011/02/04/backuping-and-restoring-postgresql-databases/">Backuping and Restoring PostgreSQL Databases</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-02-04T23:48:55+02:00" pubdate data-updated="true">Feb 4<span>th</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
-
-<p>The first one is for backup:</p>
-
-<figure class='code'><figcaption><span>backup.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
-</span><span class='line'>
-</span><span class='line'><span class="nv">BASE_BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;/backups/postgres/&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nv">timeslot</span><span class="o">=</span><span class="k">$(</span>date +<span class="s2">&quot;%F_%Hh%Mm%Ss&quot;</span><span class="k">)</span>
-</span><span class='line'><span class="nv">backup_dir</span><span class="o">=</span><span class="s2">&quot;${BASE_BACKUP_DIR}/${timeslot}&quot;</span>
-</span><span class='line'><span class="nv">databases</span><span class="o">=</span><span class="k">$(</span>sudo -u postgres sh -c <span class="s2">&quot;psql  -c &#39;\l&#39;&quot;</span> 2&gt; /dev/null | sed <span class="se">\</span>
-</span><span class='line'>-n 4,/<span class="se">\e</span>of/p | grep -v rows<span class="se">\)</span> | awk <span class="s1">&#39;{print $1}&#39;</span> | egrep <span class="s1">&#39;^\w&#39;</span><span class="k">)</span>
-</span><span class='line'>
-</span><span class='line'>mkdir -p <span class="nv">$backup_dir</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">for </span>db in <span class="nv">$databases</span>; <span class="k">do</span>
-</span><span class='line'><span class="k">    </span>sudo -u postgres sh -c <span class="s2">&quot;pg_dump -C ${db}&quot;</span> 2&gt; /dev/null | xz -9e &gt; <span class="nv">$backup_dir</span>/<span class="nv">$db</span>.xz
-</span><span class='line'><span class="k">done</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>After executing script you&#8217;ll have all you database dumps in <code>/backups/postgres/date_time</code> directory compressed with <code>xz</code>. Sure instead of <code>xz</code> you can use <code>gzip</code> or <code>bzip2</code>.</p>
-
-<p>Okay. Now let&#8217;s take a look at the restore script:</p>
-
-<figure class='code'><figcaption><span>restore.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">if</span> <span class="o">[</span> <span class="nv">$# </span>-lt 1 <span class="o">]</span> ; <span class="k">then</span>
-</span><span class='line'><span class="k">    </span><span class="nb">echo</span> <span class="s2">&quot;Error: You should specify backup directory path&quot;</span> 1&gt;&amp;2
-</span><span class='line'>    <span class="nb">exit </span>1
-</span><span class='line'><span class="k">fi</span>
-</span><span class='line'><span class="nv">backup_dir</span><span class="o">=</span><span class="nv">$1</span>
-</span><span class='line'><span class="k">if</span> <span class="o">[</span> ! -d <span class="nv">$backup_dir</span> <span class="o">]</span>; <span class="k">then</span>
-</span><span class='line'><span class="k">    </span><span class="nb">echo</span> <span class="s2">&quot;Error: directory ${backup_dir} does not exist&quot;</span> 1&gt;&amp;2
-</span><span class='line'>    <span class="nb">exit </span>1
-</span><span class='line'><span class="k">fi</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">for </span>db_xz in <span class="nv">$backup_dir</span>/*.xz; <span class="k">do</span>
-</span><span class='line'><span class="k">    </span><span class="nv">db_name</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="nv">$db_xz</span> | sed <span class="s1">&#39;s/\.xz$//; s/^.*\///g&#39;</span><span class="k">)</span>
-</span><span class='line'>    sudo -u postgres sh -c <span class="s2">&quot;xz -cd ${db_xz} | psql&quot;</span>
-</span><span class='line'><span class="k">done</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It takes one parameter: a path to back directory with *.xz archives.</p>
-
-<p>Both scripts should be executed with with root permissions, cause they use <code>sudo</code> to execute <code>pg_dump</code> and <code>pg_restore</code> commands with <code>postgres</code> user permissions. It allows avoiding asking a password for database. It&#8217;s not the only way, but I decided to use this one.</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2011/01/23/beep-alarm/">Beep Alarm</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-01-23T23:24:39+02:00" pubdate data-updated="true">Jan 23<span>rd</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>Intro</h2>
-
-<p>Someone would say I am brainsick&#8230; So may be I am.</p>
-
-<p>By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
-So I decided to create an alarm based on <code>beep</code> Unix tool. This tool allows you to play sound with specified frequency and delay on your speaker.</p>
-
-<p>Some times after I decided that simple &#8220;Be-e-e-e-p&#8221; sound is borring and I created a player.
-It can play tunes defined in format for old Nokia mobiles.
-Have you ever type something like this:</p>
-
-<pre><code>8e2 8d2 8d2 8c2 8b1 8a1 8b1 8c2 8f1 8e2 8d2 8- 8- 8d2 8c2 8b1
-</code></pre>
-
-<p>&#8230;to add new ringtone for your mobile?</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2011/01/23/beep-alarm/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -672,6 +591,14 @@ Have you ever type something like this:</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in rails with Themis</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/02/02/install-more-screensavers-on-mate-desktop/">Install more screensavers on Mate desktop</a>
       </li>
     
@@ -681,14 +608,6 @@ Have you ever type something like this:</p>
     
       <li class="post">
         <a href="/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/">Rational can&#8217;t be coerced into BigDecimal in ruby 1.9.3</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/12/14/custom-expectations-with-rspec/">Custom expectations with RSpec</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">pg_power - ActiveRecord extension for PostgreSQL</a>
       </li>
     
   </ul>

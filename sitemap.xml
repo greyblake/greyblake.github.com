@@ -2,122 +2,130 @@
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
         <loc>http://greyblake.com/blog/2011/01/23/vim-preview-plugin/</loc>
-        <lastmod>2012-08-25T22:52:49+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2011/01/23/beep-alarm/</loc>
-        <lastmod>2013-01-27T22:14:41+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>
             http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases/
         </loc>
-        <lastmod>2013-01-27T22:15:19+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/</loc>
-        <lastmod>2012-08-25T22:52:49+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2011/09/18/using-update-rc-d/</loc>
-        <lastmod>2013-01-27T22:15:29+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>
             http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/
         </loc>
-        <lastmod>2013-01-27T22:15:36+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>
             http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/
         </loc>
-        <lastmod>2013-01-27T22:15:51+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/</loc>
-        <lastmod>2012-08-25T22:52:49+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2011/11/27/synchonize-application-data-using-git/</loc>
-        <lastmod>2012-08-25T22:52:49+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2012/01/30/razgonyaem-mozg/</loc>
-        <lastmod>2012-08-25T22:52:49+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/</loc>
-        <lastmod>2012-08-25T22:52:49+03:00</lastmod>
+        <lastmod>2013-08-19T17:19:43+03:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/</loc>
-        <lastmod>2013-01-27T22:16:21+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>
             http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/
         </loc>
-        <lastmod>2013-01-27T22:19:33+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>
             http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/
         </loc>
-        <lastmod>2013-01-27T22:17:02+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour/</loc>
-        <lastmod>2012-08-25T22:52:49+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/</loc>
-        <lastmod>2012-09-01T23:42:36+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>
             http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/
         </loc>
-        <lastmod>2013-01-27T22:18:14+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec/</loc>
-        <lastmod>2013-01-27T22:18:34+02:00</lastmod>
+        <lastmod>2013-08-19T17:19:43+03:00</lastmod>
     </url>
     <url>
         <loc>
             http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/
         </loc>
-        <lastmod>2013-01-27T22:18:45+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>
             http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/
         </loc>
-        <lastmod>2013-02-02T22:25:22+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2013/02/02/install-more-screensavers-on-mate-desktop/</loc>
-        <lastmod>2013-02-02T22:41:05+02:00</lastmod>
+        <lastmod>2013-06-14T13:53:43+03:00</lastmod>
     </url>
     <url>
-        <loc>http://greyblake.com/blog/archives/</loc>
-        <lastmod>2013-02-02T22:41:05+02:00</lastmod>
+        <loc>http://greyblake.com/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/</loc>
+        <lastmod>2013-08-19T17:19:43+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/</loc>
+        <lastmod>2013-08-20T19:54:18+03:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/projects/</loc>
-        <lastmod>2012-08-26T00:39:10+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/about-me/</loc>
-        <lastmod>2012-12-14T02:20:05+02:00</lastmod>
+        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
     </url>
     <url>
-        <loc>http://greyblake.com/</loc>
-        <lastmod>2013-02-02T22:41:05+02:00</lastmod>
+        <loc>http://greyblake.com/blog/archives/</loc>
+        <lastmod>2013-08-20T19:54:18+03:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/404.html</loc>
-        <lastmod>2012-08-25T22:52:49+03:00</lastmod>
+        <lastmod>2013-02-11T22:02:32+02:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/</loc>
+        <lastmod>2013-08-20T19:54:18+03:00</lastmod>
     </url>
 </urlset>

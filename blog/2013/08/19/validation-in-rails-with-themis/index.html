@@ -1,0 +1,710 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Validation in rails with Themis - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Sometimes ActiveRecord is not enough to meet complicated validation needs.
+At TMXCredit we&#8217;ve created Themis -
+ActiveRecord extension which &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Validation in Rails With Themis</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-19T17:21:00+03:00" pubdate data-updated="true">Aug 19<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Sometimes ActiveRecord is not enough to meet complicated validation needs.
+At <a href="http://tmxcredit.com/">TMXCredit</a> we&#8217;ve created <a href="https://github.com/TMXCredit/themis">Themis</a> -
+ActiveRecord extension which helps to organize validations in a better way and adds
+some flexibility. Here I&#8217;m gonna describe some problems which Themis solves after that
+I&#8217;ll take a brief look at possible alternative solutions.</p>
+
+<h2>Modular validation</h2>
+
+<p>Themis allows you to extract duplicated validation into model.
+Usually rails applications are small enough so you don&#8217;t need it. But sometimes
+you do.</p>
+
+<p>The next example is pretty flat(in real life you probably would use STI or composition to
+represent <code>Doctor</code> and <code>Patient</code> models) but it illustrates where Themis could be useful.</p>
+
+<p>Let&#8217;s say you have 2 models:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Doctor</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:diploma</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Patient</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:age</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You see that both models have same validation of <code>first_name</code>, <code>last_name</code> and <code>email</code>.</p>
+
+<p>Themis allows to fix the duplication problem by extracting common validations into
+a module:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Module with common validations.</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">PersonValidation</span>
+</span><span class='line'>  <span class="kp">extend</span> <span class="ss">Themis</span><span class="p">:</span><span class="ss">:Validation</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Doctor</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="c1"># import validation of first_name, last_name, email</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="no">PersonValidation</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:diploma</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Patient</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="no">PersonValidation</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:age</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So now we keep common validation in one place.
+If you want you can include validation modules into each other to combine
+necessary validation.</p>
+
+<h2>Validation scenarios</h2>
+
+<p>Here is another problem which Themis solves.</p>
+
+<p>We have the following models:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_one</span> <span class="ss">:person</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:user_accounts</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Person</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:birhday</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">UserAccount</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:login</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So we have model graph like this with <code>User</code> model on the top:</p>
+
+<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/themis_model_graph.png" alt="Themis - model graph" /></p>
+
+<p>it&#8217;s pretty small, but in real life the graph can be much deeper.</p>
+
+<p>What would you do if you needed to apply different validations depending on context?
+For example according to your business requirements users must be allowed to use
+your application only in case if they filled in all of the fields.
+So you need to validate presense of <code>first_name</code>, <code>last_name</code> and <code>birhday</code>
+on <code>Person</code> model and <code>email</code>, <code>login</code> and <code>password</code> on <code>UserAccount</code>.</p>
+
+<p>It&#8217;s not a problem, just add the validations to appropriate models:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Person</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:layout</span><span class="p">,</span> <span class="ss">:birhday</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">UserAccount</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:login</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are some percent of users who don&#8217;t finish registration process.
+But your marketing department wants to have an ability to contact them
+in case if they have entered an email address.</p>
+
+<p>So that&#8217;s where the issue is: you can&#8217;t save records using validation rules written above.</p>
+
+<p>With Themis can declare number of validation strategies
+and depending on context chose which one you need.</p>
+
+<p>Here is how complete solution looks:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">has_one</span> <span class="ss">:person</span>
+</span><span class='line'>  <span class="n">has_many</span> <span class="ss">:user_accounts</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">accepts_nested_attributes_for</span> <span class="ss">:person</span><span class="p">,</span> <span class="ss">:user_accounts</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Declare validations. Use :full as default.</span>
+</span><span class='line'>  <span class="n">has_validation</span> <span class="ss">:full</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="n">has_validation</span> <span class="ss">:partial</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Person</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:birhday</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Declare full validation</span>
+</span><span class='line'>  <span class="n">has_validation</span> <span class="ss">:full</span> <span class="k">do</span> <span class="o">|</span><span class="n">model</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">model</span><span class="o">.</span><span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:birhday</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Delcare partial validation. Nothing to validate.</span>
+</span><span class='line'>  <span class="n">has_validation</span> <span class="ss">:partial</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">UserAccount</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:login</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">has_validation</span> <span class="ss">:full</span> <span class="k">do</span> <span class="o">|</span><span class="n">model</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">model</span><span class="o">.</span><span class="n">validates</span> <span class="ss">:login</span><span class="p">,</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">has_validation</span> <span class="ss">:partial</span> <span class="k">do</span> <span class="o">|</span><span class="n">model</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">model</span><span class="o">.</span><span class="n">validates</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And here how you would use it somewhere in controller:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Create model initialized with params</span>
+</span><span class='line'><span class="n">user</span> <span class="o">=</span> <span class="no">User</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+</span><span class='line'>  <span class="ss">:person</span> <span class="o">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="ss">:first_name</span> <span class="o">=&gt;</span> <span class="s2">&quot;Alex&quot;</span><span class="p">,</span>
+</span><span class='line'>    <span class="ss">:last_name</span>  <span class="o">=&gt;</span> <span class="s2">&quot;DeLarge&quot;</span><span class="p">,</span>
+</span><span class='line'>    <span class="ss">:birhday</span>    <span class="o">=&gt;</span> <span class="s2">&quot;1962&quot;</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>  <span class="ss">:user_accounts</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="p">{</span>
+</span><span class='line'>    <span class="ss">:email</span> <span class="o">=&gt;</span> <span class="s2">&quot;clockwork@orange.com&quot;</span>
+</span><span class='line'>  <span class="p">}</span><span class="o">]</span>
+</span><span class='line'><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">user</span><span class="o">.</span><span class="n">valid?</span> <span class="c1"># =&gt; false, because login is missing</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Try to apply partial validation</span>
+</span><span class='line'><span class="n">user</span><span class="o">.</span><span class="n">use_validation</span><span class="p">(</span><span class="ss">:partial</span><span class="p">)</span>
+</span><span class='line'><span class="n">user</span><span class="o">.</span><span class="n">valid?</span> <span class="c1"># =&gt; true</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># We can save it</span>
+</span><span class='line'><span class="n">user</span><span class="o">.</span><span class="n">save!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Alternative solutions</h2>
+
+<p>If you think Themis is overkill for your project, you still have some options.</p>
+
+<h3>Using ActiveSupport::Concern for modularity</h3>
+
+<p><code>ActiveSupport::Concern</code> is another way which allows to extract common validations
+into module. Here how would <code>PersonValidation</code> module described above could look:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">PersonValidation</span>
+</span><span class='line'>  <span class="kp">extend</span> <span class="ss">ActiveSupport</span><span class="p">:</span><span class="ss">:Concern</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">included</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Using conditional validation</h3>
+
+<p>If your requirements aren&#8217;t so fancy you can be satisfied with simple
+conditional validation, e. g.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Person</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:birhday</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:if</span> <span class="o">=&gt;</span> <span class="ss">:use_full_validation?</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Lets add one more validation statement(for the next example)</span>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:length</span> <span class="o">=&gt;</span> <span class="p">{</span> <span class="ss">:maximum</span> <span class="o">=&gt;</span> <span class="mi">255</span> <span class="p">},</span>
+</span><span class='line'>            <span class="ss">:if</span> <span class="o">=&gt;</span> <span class="ss">:use_full_validation?</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">use_full_validation?</span>
+</span><span class='line'>    <span class="c1"># Some logic goes here</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To DRY up <code>:if</code> options it&#8217;s good to use <code>with_options</code> method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Person</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">with_options</span> <span class="ss">:if</span> <span class="o">=&gt;</span> <span class="ss">:use_full_validation?</span> <span class="k">do</span> <span class="o">|</span><span class="n">person</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">person</span><span class="o">.</span><span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:birhday</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'>    <span class="n">person</span><span class="o">.</span><span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:length</span> <span class="o">=&gt;</span> <span class="p">{</span> <span class="ss">:maximum</span> <span class="o">=&gt;</span> <span class="mi">255</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now <code>:if =&gt; :use_full_validation</code> will be additonaly passed to every method call
+on <code>person</code> inside the block.</p>
+
+<h3>Vanguard</h3>
+
+<p>Guys from <a href="http://rom-rb.org/">ROM project</a> have own validator called
+<a href="https://github.com/mbj/vanguard">Vanguard</a>(previous name is Aqeuitas).
+The sweet thing about it is that it allows to seperate validations and
+models according to DataMapper approach. The downside is if you use ActiveRecord
+you&#8217;ll have a zoo of validation tools. Also it may be still raw and I&#8217;m not sure
+is it possible to apply it to solve the described problem, but I&#8217;d encourage
+you to take a look at it.</p>
+
+<h2>Conclusion</h2>
+
+<p>ActiveRecord is good for plain and straightforward projects.
+In big enterprise applications usually we need more flexebility to meet different
+exotic requiments.
+We&#8217;ve created <a href="https://github.com/TMXCredit/themis">Themis</a> to extend ActiveRecord
+and solve some of the problems.
+Actually I hope that <a href="http://rom-rb.org/">ROM</a> will be ready soon and we&#8217;ll
+have an ability to select right ORM before diving into development.</p>
+
+<p>Thanks for reading. Hope the article was useful for you and I&#8217;m wating for
+your feedback!</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://github.com/TMXCredit/themis">Themis on Github</a> - you&#8217;ll find here comprehensive documentation in README;</li>
+<li><a href="http://guides.rubyonrails.org/active_record_validations.html#conditional-validation">Conditional validation</a> - extraction from Rails Guide;</li>
+<li><a href="https://github.com/mbj/vanguard">Vanguard on Github</a> - validator for ROM project;</li>
+<li><a href="http://railscasts.com/episodes/42-with-options">Railscast: #42</a> - Ryan Bates describes how <code>with_options</code> works.</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-19T17:21:00+03:00" pubdate data-updated="true">Aug 19<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/activerecord-/'>ActiveRecord,</a>, <a class='category' href='/blog/categories/rails-/'>Rails,</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/validation-/'>validation,</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/" title="Previous Post: Почему я изучаю Эсперанто">&laquo; Почему я изучаю Эсперанто</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in rails with Themis</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/02/02/install-more-screensavers-on-mate-desktop/">Install more screensavers on Mate desktop</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/">Failed to add new printer in Debian Wheezy</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/">Rational can't be coerced into BigDecimal in ruby 1.9.3</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/';
+        var disqus_url = 'http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

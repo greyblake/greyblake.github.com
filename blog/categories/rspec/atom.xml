@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rspec | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/rspec/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-02-02T22:41:26+02:00</updated>
+  <updated>2013-08-20T19:55:42+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -56,13 +56,13 @@ There are samples how I wanna use it(desired DSL):</p>
 <p>I bet you've already created number of custom matchers. What about custom expectations?
 They are usual custom matches which test blocks of code!</p>
 
-<p>I'm gonna locate the expectation in <code>spec/support/custom_expecations/write_expecation.rb</code> file.
-I think <code>spec/support/custom_expecations/</code> directory is the right place for it since
+<p>I'm gonna locate the expectation in <code>spec/support/custom_expectations/write_expectation.rb</code> file.
+I think <code>spec/support/custom_expectations/</code> directory is the right place for it since
 custom matchers usually are located in <code>spec/support/custom_matchers/</code>.</p>
 
 <p>So finally the expectation looks this way:</p>
 
-<p>```ruby spec/support/custom_expecations/write_expecation.rb
+<p>```ruby spec/support/custom_expectations/write_expectation.rb
 RSpec::Matchers.define :write do |message|
   chain(:to) do |io|</p>
 

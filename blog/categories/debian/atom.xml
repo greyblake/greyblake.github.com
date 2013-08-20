@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Debian | Sergey Potapov]]></title>
+  <title><![CDATA[Category: debian | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/debian/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-02-02T22:41:26+02:00</updated>
+  <updated>2013-08-20T19:55:42+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -14,29 +14,33 @@
 
   
   <entry>
-    <title type="html"><![CDATA[How to Install Firefox (Iceweasel) 7 on Debian Squeeze]]></title>
-    <link href="http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/"/>
-    <updated>2011-10-03T18:12:54+03:00</updated>
-    <id>http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze</id>
-    <content type="html"><![CDATA[<p>First remove lagacy version of Iceweasel:</p>
+    <title type="html"><![CDATA[Failed to add new printer in Debian Wheezy]]></title>
+    <link href="http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/"/>
+    <updated>2013-01-27T21:44:00+02:00</updated>
+    <id>http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy</id>
+    <content type="html"><![CDATA[<p>After migrating to Debian Wheezy (current test Debian repository) I faced a problem
+with installing a local USB printer: on attempt to add new USB printer
+(HP LaserJet M1005) I got an error message: "Failed to add new printer in Debian Wheezy"
+("Не удалось добавить новый принтер" if you have Russian localization).</p>
 
-<pre><code>aptitude remove iceweasel
-</code></pre>
+<p>After googling for I a while I found a good workaround for it. All you need is
+to use <code>pk-helper</code> package from Sid (unstable Debian version), since it seems to
+be buggy in Wheezy.</p>
 
-<p>Create <code>/etc/apt/sources.list.d/squeeze-backports.list</code> file:</p>
+<p>So add Sid repository to your <code>/etc/apt/source.list</code>:</p>
 
-<pre><code># New Mozilla packages for Squeeze
-deb http://mozilla.debian.net/ squeeze-backports iceweasel-release
-deb http://backports.debian.org/debian-backports squeeze-backports main
-</code></pre>
+<p><code>
+deb http://ftp.ua.debian.org/debian/ sid main non-free contrib
+</code></p>
 
-<p>Then run:</p>
+<p>And reinstall <code>cups-pk-helper</code> package using Sid repository:</p>
 
-<pre><code>aptitude update
-aptitude install iceweasel -t squeeze-backports
-</code></pre>
+<p><code>
+aptitude reinstall cups-pk-helper --target sid
+</code></p>
 
-<p>Enjoy!</p>
+<p>That's all. Now try to connect your USB printer.
+Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=695131">bug report</a>.</p>
 ]]></content>
   </entry>
   
