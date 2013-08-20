@@ -127,7 +127,7 @@ I&#8217;ll take a brief look at possible alternative solutions.</p>
 
 <h2>Modular validation</h2>
 
-<p>Themis allows you to extract duplicated validation into model.
+<p>Themis allows you to extract duplicated validations into module for reuse.
 Usually rails applications are small enough so you don&#8217;t need it. But sometimes
 you do.</p>
 
@@ -157,9 +157,9 @@ represent <code>Doctor</code> and <code>Patient</code> models) but it illustrate
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>You see that both models have same validation of <code>first_name</code>, <code>last_name</code> and <code>email</code>.</p>
+<p>You see that both models have the same validation for <code>first_name</code>, <code>last_name</code> and <code>email</code>.</p>
 
-<p>Themis allows to fix the duplication problem by extracting common validations into
+<p>Themis allows you to fix the duplication problem by extracting common validations into
 a module:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>

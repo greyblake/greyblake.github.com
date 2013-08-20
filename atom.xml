@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-08-20T19:59:43+03:00</updated>
+  <updated>2013-08-21T01:51:02+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -26,7 +26,7 @@ I&#8217;ll take a brief look at possible alternative solutions.</p>
 
 <h2>Modular validation</h2>
 
-<p>Themis allows you to extract duplicated validation into model.
+<p>Themis allows you to extract duplicated validations into module for reuse.
 Usually rails applications are small enough so you don&#8217;t need it. But sometimes
 you do.</p>
 
@@ -56,9 +56,9 @@ represent <code>Doctor</code> and <code>Patient</code> models) but it illustrate
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>You see that both models have same validation of <code>first_name</code>, <code>last_name</code> and <code>email</code>.</p>
+<p>You see that both models have the same validation for <code>first_name</code>, <code>last_name</code> and <code>email</code>.</p>
 
-<p>Themis allows to fix the duplication problem by extracting common validations into
+<p>Themis allows you to fix the duplication problem by extracting common validations into
 a module:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
@@ -105,8 +105,8 @@ a module:</p>
 <!--more-->
 
 
-<p>So now we keep common validation in one place.
-If you want you can include validation modules into each other to combine
+<p>So now we keep the common validation in one place.
+If you want, you can include validation modules into each other to combine
 necessary validation.</p>
 
 <h2>Validation scenarios</h2>
@@ -150,15 +150,15 @@ necessary validation.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>So we have model graph like this with <code>User</code> model on the top:</p>
+<p>So we have a model graph like this with <code>User</code> model on the top:</p>
 
 <p><img src="http://i1078.photobucket.com/albums/w484/greyblake/themis_model_graph.png" alt="Themis - model graph" /></p>
 
-<p>it&#8217;s pretty small, but in real life the graph can be much deeper.</p>
+<p>It&#8217;s pretty small, but in real life the graph can be much deeper.</p>
 
 <p>What would you do if you needed to apply different validations depending on context?
 For example according to your business requirements users must be allowed to use
-your application only in case if they filled in all of the fields.
+your application only in case if they&#8217;ve filled in all of the fields.
 So you need to validate presense of <code>first_name</code>, <code>last_name</code> and <code>birhday</code>
 on <code>Person</code> model and <code>email</code>, <code>login</code> and <code>password</code> on <code>UserAccount</code>.</p>
 
@@ -181,16 +181,16 @@ on <code>Person</code> model and <code>email</code>, <code>login</code> and <cod
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>There are some percent of users who don&#8217;t finish registration process.
+<p>There is some percent of users who don&#8217;t finish registration process.
 But your marketing department wants to have an ability to contact them
-in case if they have entered an email address.</p>
+if they have entered an email address.</p>
 
 <p>So that&#8217;s where the issue is: you can&#8217;t save records using validation rules written above.</p>
 
-<p>With Themis can declare number of validation strategies
-and depending on context chose which one you need.</p>
+<p>With Themis you can declare number of validation strategies,
+and depending on context, chose which one you need.</p>
 
-<p>Here is how complete solution looks:</p>
+<p>Here is how a complete solution looks:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -267,7 +267,7 @@ and depending on context chose which one you need.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>And here how you would use it somewhere in controller:</p>
+<p>And here is how you would use it somewhere in a controller:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -340,7 +340,7 @@ into module. Here how would <code>PersonValidation</code> module described above
 
 <h3>Using conditional validation</h3>
 
-<p>If your requirements aren&#8217;t so fancy you can be satisfied with simple
+<p>If your requirements aren&#8217;t so fancy, you can be satisfied with a simple
 conditional validation, e. g.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
@@ -392,7 +392,7 @@ on <code>person</code> inside the block.</p>
 
 <h3>Vanguard</h3>
 
-<p>Guys from <a href="http://rom-rb.org/">ROM project</a> have own validator called
+<p>The guys from <a href="http://rom-rb.org/">the ROM project</a> have their own validator called
 <a href="https://github.com/mbj/vanguard">Vanguard</a>(previous name is Aqeuitas).
 The sweet thing about it is that it allows to seperate validations and
 models according to DataMapper approach. The downside is if you use ActiveRecord
@@ -403,7 +403,7 @@ you to take a look at it.</p>
 <h2>Conclusion</h2>
 
 <p>ActiveRecord is good for plain and straightforward projects.
-In big enterprise applications usually we need more flexebility to meet different
+In big enterprise applications usually we need more flexibility to meet different
 exotic requiments.
 We&#8217;ve created <a href="https://github.com/TMXCredit/themis">Themis</a> to extend ActiveRecord
 and solve some of the problems.
