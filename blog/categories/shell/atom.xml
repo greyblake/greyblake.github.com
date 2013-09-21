@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: shell | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/shell/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2013-09-21T22:55:16+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How to call bash(not shell) from ruby]]></title>
+    <link href="http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/"/>
+    <updated>2013-09-21T21:53:00+03:00</updated>
+    <id>http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby</id>
+    <content type="html"><![CDATA[<p>Few days ago I was writing a ruby wrapper for <a href="http://sox.sourceforge.net/">SoX</a>
+command line tool. To reduce disk IO I wanted to use <a href="http://en.wikipedia.org/wiki/Process_substitution">process substitution</a>.
+It's a cool shell feature which allows to use command output as an input file for another command.
+It's pretty useful if the second command doesn't work with standard input or you need
+to pass more than 1 input.</p>
+
+<p>Let me show the classic example(works in bash and zsh):</p>
+
+<p>```bash
+cat &lt;(echo 'Saluton!') &lt;(echo 'Kiel vi fartas?')</p>
+
+<h1>=> Saluton! Kiel vi fartas?</h1>
+
+<p>```</p>
+
+<p>So statement <code>&lt;(echo 'Saluton!')</code> is treated like a file which contains line <code>Saluton!</code>.
+Underhood bash(zsh) creates a named pipeline where output of <code>echo 'Saluton!'</code> is written.
+Then the named pipeline is passed to <code>cat</code> command.</p>
+
+<p>You can see it:</p>
+
+<p>```bash
+echo  &lt;(echo 'Saluton!')</p>
+
+<h1>=> /dev/fd/63</h1>
+
+<p>```</p>
+
+<p>So I wanted to use it in ruby:
+<code>ruby
+cmd = "cat &lt;(echo 'Saluton!') &lt;(echo 'Kiel vi fartas?')"
+system(cmd)
+</code></p>
+
+<p>But unfortunately it doesn't work:
+<code>
+sh: 1: Syntax error: "(" unexpected
+</code></p>
+
+<p>The problem is that ruby's <code>system</code> method and back quotes use<code>sh</code>
+not your current shell (which in my case is <code>bash</code>).</p>
+
+<p>```ruby
+system "echo $0"</p>
+
+<h1>=> sh</h1>
+
+<p>```</p>
+
+<p>In shells <code>$0</code>points to the current script or to interpreter if you're running it interactively.</p>
+
+<p>Fortunately there is a way to create a workaround to run bash:</p>
+
+<p>```ruby
+require 'shellwords'</p>
+
+<p>def bash(command)
+  escaped_command = Shellwords.escape(command)
+  system "bash -c #{escaped_command}"
+end
+```</p>
+
+<p>Bash has option <code>-c</code> which takes bash script to execute.
+<a href="http://www.ruby-doc.org/stdlib-2.0/libdoc/shellwords/rdoc/Shellwords.html">Shellwords</a>
+is a standard ruby library which provides a method to escape shell commands.</p>
+
+<p>So now it works as we want it to be:</p>
+
+<p><code>ruby
+bash("echo $0")  # =&gt; bash
+cmd = "cat &lt;(echo 'Saluton!') &lt;(echo 'Kiel vi fartas?')"
+bash(cmd)        # =&gt; Saluton! Kiel vi fartas?
+</code></p>
+
+<p>Thanks for reading!</p>
+]]></content>
+  </entry>
+  
+</feed>

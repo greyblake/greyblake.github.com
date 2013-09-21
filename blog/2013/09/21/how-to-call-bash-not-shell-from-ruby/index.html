@@ -1,0 +1,398 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>How to call bash(not shell) from ruby - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Few days ago I was writing a ruby wrapper for SoX
+command line tool. To reduce disk IO I wanted to use process substitution.
+It&#8217;s a cool shell &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">How to Call Bash(not Shell) From Ruby</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-21T21:53:00+03:00" pubdate data-updated="true">Sep 21<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Few days ago I was writing a ruby wrapper for <a href="http://sox.sourceforge.net/">SoX</a>
+command line tool. To reduce disk IO I wanted to use <a href="http://en.wikipedia.org/wiki/Process_substitution">process substitution</a>.
+It&#8217;s a cool shell feature which allows to use command output as an input file for another command.
+It&#8217;s pretty useful if the second command doesn&#8217;t work with standard input or you need
+to pass more than 1 input.</p>
+
+<p>Let me show the classic example(works in bash and zsh):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>cat &lt;<span class="o">(</span><span class="nb">echo</span> <span class="s1">&#39;Saluton!&#39;</span><span class="o">)</span> &lt;<span class="o">(</span><span class="nb">echo</span> <span class="s1">&#39;Kiel vi fartas?&#39;</span><span class="o">)</span>
+</span><span class='line'><span class="c"># =&gt; Saluton! Kiel vi fartas?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So statement <code>&lt;(echo 'Saluton!')</code> is treated like a file which contains line <code>Saluton!</code>.
+Underhood bash(zsh) creates a named pipeline where output of <code>echo 'Saluton!'</code> is written.
+Then the named pipeline is passed to <code>cat</code> command.</p>
+
+<p>You can see it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">echo</span>  &lt;<span class="o">(</span><span class="nb">echo</span> <span class="s1">&#39;Saluton!&#39;</span><span class="o">)</span>
+</span><span class='line'><span class="c"># =&gt; /dev/fd/63</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So I wanted to use it in ruby:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;cat &lt;(echo &#39;Saluton!&#39;) &lt;(echo &#39;Kiel vi fartas?&#39;)&quot;</span>
+</span><span class='line'><span class="nb">system</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But unfortunately it doesn&#8217;t work:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">sh</span><span class="p">:</span> <span class="mi">1</span><span class="p">:</span> <span class="no">Syntax</span> <span class="ss">error</span><span class="p">:</span> <span class="s2">&quot;(&quot;</span> <span class="n">unexpected</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The problem is that ruby&#8217;s <code>system</code> method and back quotes use<code>sh</code>
+not your current shell (which in my case is <code>bash</code>).</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">system</span> <span class="s2">&quot;echo $0&quot;</span>
+</span><span class='line'><span class="c1"># =&gt; sh</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In shells <code>$0</code>points to the current script or to interpreter if you&#8217;re running it interactively.</p>
+
+<p>Fortunately there is a way to create a workaround to run bash:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;shellwords&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">bash</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">escaped_command</span> <span class="o">=</span> <span class="no">Shellwords</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">system</span> <span class="s2">&quot;bash -c </span><span class="si">#{</span><span class="n">escaped_command</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Bash has option <code>-c</code> which takes bash script to execute.
+<a href="http://www.ruby-doc.org/stdlib-2.0/libdoc/shellwords/rdoc/Shellwords.html">Shellwords</a>
+is a standard ruby library which provides a method to escape shell commands.</p>
+
+<p>So now it works as we want it to be:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">bash</span><span class="p">(</span><span class="s2">&quot;echo $0&quot;</span><span class="p">)</span>  <span class="c1"># =&gt; bash</span>
+</span><span class='line'><span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;cat &lt;(echo &#39;Saluton!&#39;) &lt;(echo &#39;Kiel vi fartas?&#39;)&quot;</span>
+</span><span class='line'><span class="n">bash</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>        <span class="c1"># =&gt; Saluton! Kiel vi fartas?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Thanks for reading!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-21T21:53:00+03:00" pubdate data-updated="true">Sep 21<span>st</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/bash/'>bash</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/shell/'>shell</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/08/19/validation-in-rails-with-themis/" title="Previous Post: Validation in rails with Themis">&laquo; Validation in rails with Themis</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/">How to call bash(not shell) from ruby</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in rails with Themis</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/02/02/install-more-screensavers-on-mate-desktop/">Install more screensavers on Mate desktop</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/">Failed to add new printer in Debian Wheezy</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/';
+        var disqus_url = 'http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

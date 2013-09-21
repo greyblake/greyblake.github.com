@@ -98,7 +98,7 @@
     </url>
     <url>
         <loc>http://greyblake.com/blog/2013/02/02/install-more-screensavers-on-mate-desktop/</loc>
-        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
+        <lastmod>2013-06-14T13:53:43+03:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/</loc>
@@ -109,20 +109,24 @@
         <lastmod>2013-08-21T01:50:19+03:00</lastmod>
     </url>
     <url>
+        <loc>http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/</loc>
+        <lastmod>2013-09-21T22:51:49+03:00</lastmod>
+    </url>
+    <url>
         <loc>http://greyblake.com/blog/archives/</loc>
-        <lastmod>2013-08-21T01:50:19+03:00</lastmod>
+        <lastmod>2013-09-21T22:51:49+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/about-me/</loc>
+        <lastmod>2013-09-21T22:54:50+03:00</lastmod>
+    </url>
+    <url>
+        <loc>http://greyblake.com/</loc>
+        <lastmod>2013-09-21T22:51:49+03:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/projects/</loc>
         <lastmod>2013-02-11T22:02:31+02:00</lastmod>
-    </url>
-    <url>
-        <loc>http://greyblake.com/about-me/</loc>
-        <lastmod>2013-02-11T22:02:31+02:00</lastmod>
-    </url>
-    <url>
-        <loc>http://greyblake.com/</loc>
-        <lastmod>2013-08-21T01:50:19+03:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/404.html</loc>
