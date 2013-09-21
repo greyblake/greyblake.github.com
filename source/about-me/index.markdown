@@ -18,7 +18,7 @@ Also I maintain my own [ones](/projects) as well.
 My craft is a web deveopment. Besides I love to investigate ruby and its subtle behaviour.
 I'm interesting in artificial intelligence algorithms and their application.
 
-In my spare time I play guitar, rink, learn foreign languages(English, Esperanto, German)
+In my spare time I play guitar, rink, learn foreign languages(Esperanto, English, Spanish)
 and try to make the world a better place:)
 
 Please follow me on [Twitter](http://twitter.com/#!/greyblake)
@@ -27,5 +27,5 @@ and [GitHub](https://github.com/greyblake).
 ## About the blog
 
 Sometime I feel like I want to share with the world some things I discover.
-You will find there a number of intersting articles about Ruby, Linux, Vim
+You will find there a number of interesting articles about Ruby, Linux, Vim
 and some other hackers' stuff =)
