@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: fonts | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/fonts/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2013-10-08T01:08:18+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Working with fonts in Debian and Ubuntu]]></title>
+    <link href="http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/"/>
+    <updated>2013-10-08T00:43:00+03:00</updated>
+    <id>http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu</id>
+    <content type="html"><![CDATA[<h2>Install fonts</h2>
+
+<p>There are a lot of fonts in standard Debian repository. Packages which contains
+fonts starts with <code>fonts-</code>, so lets install them all. Run the next command as
+root:</p>
+
+<p><code>bash
+apt-cache search ^fonts- | sed 's/^\(fonts-[^ ]*\).*$/\1/' | xargs apt-get install
+</code></p>
+
+<p>Short explanation of the command:</p>
+
+<ul>
+<li><code>apt-cache search ^fonts-</code> - find all packages which starts with <code>fonts-</code>;</li>
+<li><code>sed 's/^\(fonts-[^ ]*\).*$/\1/'</code> - filter output to get only package names;</li>
+<li><code>xargs apt-get install</code> - pass package names to <code>apt-get install</code> to install them.</li>
+</ul>
+
+
+<h2>Preview fonts</h2>
+
+<p>Now you have more than 1500 fonts, but it's hard to pick one that you need, because
+it's hard to look through all of them. For our luck there exist specials to preview
+fonts, and one of is called <code>fontmatrix</code>. Lets install it:</p>
+
+<p><code>bash
+apt-get install fontmatrix
+</code></p>
+
+<p>And run it:</p>
+
+<p><code>
+fontmatrix
+</code></p>
+
+<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/fontmatrix.png" alt="Fontmatrix" /></p>
+
+<p>Now it's much easier to select right font!:)</p>
+]]></content>
+  </entry>
+  
+</feed>

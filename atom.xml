@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-09-21T22:55:16+03:00</updated>
+  <updated>2013-10-08T01:08:18+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,55 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Working with fonts in Debian and Ubuntu]]></title>
+    <link href="http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/"/>
+    <updated>2013-10-08T00:43:00+03:00</updated>
+    <id>http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu</id>
+    <content type="html"><![CDATA[<h2>Install fonts</h2>
+
+<p>There are a lot of fonts in standard Debian repository. Packages which contains
+fonts starts with <code>fonts-</code>, so lets install them all. Run the next command as
+root:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>apt-cache search ^fonts- | sed <span class="s1">&#39;s/^\(fonts-[^ ]*\).*$/\1/&#39;</span> | xargs apt-get install
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Short explanation of the command:</p>
+
+<ul>
+<li><code>apt-cache search ^fonts-</code> - find all packages which starts with <code>fonts-</code>;</li>
+<li><code>sed 's/^\(fonts-[^ ]*\).*$/\1/'</code> - filter output to get only package names;</li>
+<li><code>xargs apt-get install</code> - pass package names to <code>apt-get install</code> to install them.</li>
+</ul>
+
+
+<h2>Preview fonts</h2>
+
+<p>Now you have more than 1500 fonts, but it&#8217;s hard to pick one that you need, because
+it&#8217;s hard to look through all of them. For our luck there exist specials to preview
+fonts, and one of is called <code>fontmatrix</code>. Lets install it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>apt-get install fontmatrix
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And run it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>fontmatrix
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/fontmatrix.png" alt="Fontmatrix" /></p>
+
+<p>Now it&#8217;s much easier to select right font!:)</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[How to call bash(not shell) from ruby]]></title>
@@ -3123,107 +3172,6 @@ aptitude install iceweasel -t squeeze-backports
 
 
 <p>Hope this was useful for you. Don&#8217;t be shy and leave you comments.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Using update-rc.d]]></title>
-    <link href="http://greyblake.com/blog/2011/09/18/using-update-rc-d/"/>
-    <updated>2011-09-18T21:00:00+03:00</updated>
-    <id>http://greyblake.com/blog/2011/09/18/using-update-rc-d</id>
-    <content type="html"><![CDATA[<p><code>update-rc.d</code> is tool for adding daemons to /etc/rc[1-6]d files.</p>
-
-<p>If you are using OS with System-V style init scripts you can find you <code>/etc</code> the next directories:</p>
-
-<ul>
-<li>rc0.d/</li>
-<li>rc1.d/</li>
-<li>rc2.d/</li>
-<li>rc3.d/</li>
-<li>rc4.d/</li>
-<li>rc5.d/</li>
-<li>rc6.d/</li>
-<li>rcS.d/</li>
-</ul>
-
-
-<p>So, what are they for?</p>
-
-<!--more-->
-
-
-<p>Every directory contains symbol links to daemons located in <code>/etc/init.d/</code>. And every directory represents run level. Usually your system uses third level which means multi user mode with networking. When the system is initializing it starts daemons which have appropriate symbol links in rc3.d.</p>
-
-<p>Here is a short description of every run level:</p>
-
-<ul>
-<li><strong>0 (Halt)</strong>  Shuts down the system.</li>
-<li><strong>1 (Single-User Mode)</strong>  Mode for administrative tasks.[2][3]</li>
-<li><strong>2 (Multi-User Mode)</strong>   Does not configure network interfaces and does not export networks services.[4]</li>
-<li><strong>3 (Multi-User Mode with Networking)</strong>   Starts the system normally.[5]</li>
-<li><strong>4 (Not used/User-definable)</strong>   For special purposes.</li>
-<li><strong>5 (Start the system normally with appropriate display manager.)</strong>   As runlevel 3 + display manager.</li>
-<li><strong>6 (Reboot)</strong>    Reboots the system.</li>
-</ul>
-
-
-<p>Usualy you don&#8217;t need to switch levels, but if you do you should use <code>init</code> command. Take care of what you doing.</p>
-
-<p>OK, take a look at a head of some daemon scripts. For example <code>/etc/init.d/postgresql</code>:</p>
-
-<figure class='code'><figcaption><span>/etc/init.d/postgresql</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
-</span><span class='line'><span class="nb">set</span> -e
-</span><span class='line'>
-</span><span class='line'><span class="c">### BEGIN INIT INFO</span>
-</span><span class='line'><span class="c"># Provides:             postgresql</span>
-</span><span class='line'><span class="c"># Required-Start:       $local_fs $remote_fs $network $time</span>
-</span><span class='line'><span class="c"># Required-Stop:        $local_fs $remote_fs $network $time</span>
-</span><span class='line'><span class="c"># Should-Start:         $syslog</span>
-</span><span class='line'><span class="c"># Should-Stop:          $syslog</span>
-</span><span class='line'><span class="c"># Default-Start:        2 3 4 5</span>
-</span><span class='line'><span class="c"># Default-Stop:         0 1 6</span>
-</span><span class='line'><span class="c"># Short-Description:    PostgreSQL RDBMS server</span>
-</span><span class='line'><span class="c">### END INIT INFO</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It has a self descriptive comment in an appropriate format. <code>Default-Start</code> section contains numbers of levels which runs postgres daemon. <code>Default-Stop</code> section contains number of levels which should not run PostgreSQL, so when you switch to them PostgreSQL daemon will be stopped.</p>
-
-<p>So, let&#8217;s assume you have created you own daemon which knows how to process <code>start</code> and <code>stop</code> arguments and want it to run on appropriate levels. You need to create symbol links like these:</p>
-
-<pre><code>/etc/rc1.d/K03postgresql -&gt; ../init.d/postgresql
-/etc/rc4.d/S02postgresql -&gt; ../init.d/postgresql
-/etc/rc0.d/K03postgresql -&gt; ../init.d/postgresql
-/etc/rc2.d/S02postgresql -&gt; ../init.d/postgresql
-/etc/rc3.d/S02postgresql -&gt; ../init.d/postgresql
-/etc/rc6.d/K03postgresql -&gt; ../init.d/postgresql
-/etc/rc5.d/S02postgresql -&gt; ../init.d/postgresql
-</code></pre>
-
-<p>By the way prefix <code>K</code> means kill(stop) process and <code>S</code> means start.
-It&#8217;s a little routine work, right? But in case if you have descriptive comment I metioned above you just can use <code>update-rc.d</code> tool. It creates all necessary symbol links based on the comment. So just run:</p>
-
-<pre><code>update-rc.d postgres defaults
-</code></pre>
-
-<p>Change <code>postgres</code> with name of your daemon.</p>
-
-<h2>Why?</h2>
-
-<p>Unfortunatly I often forget how this tool is called.</p>
 ]]></content>
   </entry>
   
