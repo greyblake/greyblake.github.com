@@ -4,7 +4,7 @@
   <title><![CDATA[Category: exception | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/exception/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-10-08T01:08:18+03:00</updated>
+  <updated>2013-11-20T10:16:39+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -56,8 +56,8 @@ N = 10_000_000</p>
 <p>puts RUBY_DESCRIPTION</p>
 
 <p>Benchmark.bm(15, "rescue/condition") do |x|
-  rescue_report     = x.report("rescue:")    { N.times { obj.with_rescue  } }
-  condition_report  = x.report("condition:") { N.times { obj.with_if      } }
+  rescue_report     = x.report("rescue:")    { N.times { obj.with_rescue    } }
+  condition_report  = x.report("condition:") { N.times { obj.with_condition } }
   [rescue_report / condition_report]
 end
 ```</p>
