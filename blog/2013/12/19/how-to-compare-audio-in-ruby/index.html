@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>How to compare audio in ruby - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Or how to implement sound_like RSpec matcher The problem I&#8217;m trying to solve in this article is comparison of two
+audio files. We&#8217;ll &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">How to Compare Audio in Ruby</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-19T19:51:00+02:00" pubdate data-updated="true">Dec 19<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2>Or how to implement sound_like RSpec matcher</h2>
+
+<p>The problem I&#8217;m trying to solve in this article is comparison of two
+audio files. We&#8217;ll figure out how to verify that they sound similar.</p>
+
+<p>I was developing an application that has a deal with audio processing and
+I had to write a test to verify outcome audio file matches a one
+from fixtures. Well, I&#8217;ve decided to compare audio binaries like these:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">expect</span><span class="p">(</span><span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;outcome.mp3&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;fixture.mp3&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And it worked!</p>
+
+<p>But soon my colleagues let me know I had broken the build. It turned out
+that <code>outcome.mp3</code>generated on their Mac books didn&#8217;t match <code>fixture.mp3</code>
+generated on my linux laptop, despite the fact that both sounded
+absolutely the same. Probably we had different codecs.
+So I had to come up with a better idea.</p>
+
+<h2>Audio fingerprints and Chromaprint</h2>
+
+<p>After some investigation I found a term &#8220;audio fingerprint&#8221; or &#8220;acoustic fingerprint&#8221;,
+it was exactly what I was looking for. From Wikipedia:</p>
+
+<blockquote><p>An acoustic fingerprint is a condensed digital summary, deterministically generated
+from an audio signal, that can be used to identify an audio sample or quickly locate
+similar items in an audio database</p></blockquote>
+
+<p>It&#8217;s used by services like Shazam to identify songs.</p>
+
+<p>So I started looking for open source implementations and found
+<a href="http://acoustid.org/chromaprint">Chromaprint</a> - a C library that calculates audio fingerprints
+from raw audio files. It seemed to be simple, with good source documentation
+and easy to get started.</p>
+
+<h2>Integrate Chromaprint with Ruby</h2>
+
+<p>I found no already existing bindings, so I&#8217;ve implemented
+<a href="https://github.com/TMXCredit/chromaprint">my own</a>. Instead of using C,
+I gave <a href="https://github.com/ffi/ffi">FFI</a> a shot and it worked perfect!
+As result I had stuff that worked the following way:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">context</span>     <span class="o">=</span> <span class="ss">Chromaprint</span><span class="p">:</span><span class="ss">:Context</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">44100</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'><span class="n">fingerprint</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_fingerprint</span><span class="p">(</span><span class="n">raw_audio_data</span><span class="p">)</span>
+</span><span class='line'><span class="n">fingerprint</span><span class="o">.</span><span class="n">raw</span> <span class="c1"># =&gt; [294890785, 328373552, 315802880, 303481088, ...]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>According to Chromaprint&#8217;s documentation a raw fingerprint is an array of 4 byte integers.
+But how to compare to 2 fingerprints to detect similarity?</p>
+
+<h2>Hamming distance</h2>
+
+<p>The answer was to calculate Hamming distance from binary representation of fingerprints.
+Again according to Wikipedia:</p>
+
+<blockquote><p>In information theory, the Hamming distance between two strings of equal length is
+the number of positions at which the corresponding symbols are different. In another
+way, it measures the minimum number of substitutions required to change one string
+into the other, or the minimum number of errors that could have transformed one
+string into the other.</p></blockquote>
+
+<p>To calculate Hamming distance for binary data we need to apply XOR operation and count
+number of 1 in the result.</p>
+
+<p>Here is a small example for 2 byte values:</p>
+
+<pre><code>dec     bin
+11737   00101101 11011001
+27129   01101001 11111001
+
+XOR     01000100 00100000
+
+Hamming distance is 3
+</code></pre>
+
+<p>Basing on this I implemented an additional method <code>Fingerprint#compare(fingerprint)</code>
+that calculates similarity in range from 0 to 1.</p>
+
+<h2>Create RSpec matcher</h2>
+
+<p>Now I could compare raw audio data, but in real world almost always we have to have a deal
+with compressed audio like mp3 or ogg. However wav files contain exactly raw audio data.
+So I could convert compressed audio to wav, then read it to get raw audio and
+calculate fingerprints for comparison. To convert audio I prefer using <code>sox</code>
+command line tool, it&#8217;s pretty powerful.</p>
+
+<p>I have to explain that I did it all to avoid having a deal with
+audio codecs within ruby, since it would make things be much more complicated.</p>
+
+<p>Finally I got <code>sound_like</code> RSpec matcher:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Compare sound of two audio files.</span>
+</span><span class='line'><span class="c1"># Based on the Chromaprint library and the +sox+ command like tool.</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1"># @example</span>
+</span><span class='line'><span class="c1">#   &quot;/Airborne.mp3&quot;.should sound_like &quot;/ACDC.mp3&quot;</span>
+</span><span class='line'><span class="c1">#   &quot;/Children_of_Bodom.mp3&quot;.should_not sound_like &quot;/Britney_Spears.mp3&quot;</span>
+</span><span class='line'><span class="ss">RSpec</span><span class="p">:</span><span class="ss">:Matchers</span><span class="o">.</span><span class="n">define</span> <span class="ss">:sound_like</span> <span class="k">do</span> <span class="o">|</span><span class="n">expected_file</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">match</span> <span class="k">do</span> <span class="o">|</span><span class="n">file</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">rate</span>      <span class="o">=</span> <span class="mi">96000</span>
+</span><span class='line'>    <span class="n">channels</span>  <span class="o">=</span> <span class="mi">1</span>
+</span><span class='line'>    <span class="n">threshold</span> <span class="o">=</span> <span class="mi">0</span><span class="o">.</span><span class="mi">95</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="no">File</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="n">expected_file</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="no">File</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+</span><span class='line'>      <span class="c1"># Convert input files into raw 16-bit signed audio (WAV) to</span>
+</span><span class='line'>      <span class="c1"># process with Chromaprint:</span>
+</span><span class='line'>      <span class="n">sox_command</span>    <span class="o">=</span> <span class="s2">&quot;sox %s -e signed -b 16 -t wav - &quot;</span> <span class="p">\</span>
+</span><span class='line'>                       <span class="s2">&quot;rate </span><span class="si">#{</span><span class="n">rate</span><span class="si">}</span><span class="s2"> channels </span><span class="si">#{</span><span class="n">channels</span><span class="si">}</span><span class="s2"> 2&gt; /dev/null&quot;</span>
+</span><span class='line'>      <span class="n">expected_audio</span> <span class="o">=</span> <span class="sx">%x&quot;</span><span class="si">#{</span><span class="n">sox_command</span> <span class="o">%</span> <span class="o">[</span><span class="n">expected_file</span><span class="o">]</span><span class="si">}</span><span class="sx">&quot;</span>
+</span><span class='line'>      <span class="n">audio</span>          <span class="o">=</span> <span class="sx">%x&quot;</span><span class="si">#{</span><span class="n">sox_command</span> <span class="o">%</span> <span class="o">[</span><span class="n">file</span><span class="o">]</span><span class="si">}</span><span class="sx">&quot;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># Get audio fingerprints:</span>
+</span><span class='line'>      <span class="n">chromaprint</span> <span class="o">=</span> <span class="ss">Chromaprint</span><span class="p">:</span><span class="ss">:Context</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">channels</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">expected_fp</span> <span class="o">=</span> <span class="n">chromaprint</span><span class="o">.</span><span class="n">get_fingerprint</span><span class="p">(</span><span class="n">expected_audio</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">fp</span>          <span class="o">=</span> <span class="n">chromaprint</span><span class="o">.</span><span class="n">get_fingerprint</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># Compare fingerprints and compare result against threshold:</span>
+</span><span class='line'>      <span class="n">expected_fp</span><span class="o">.</span><span class="n">compare</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="kp">false</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that I used threshold with value 0.95 because quite rare fingerprints
+have 100% match.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://github.com/TMXCredit/chromaprint">Chromaprint ruby port on github</a></li>
+<li><a href="http://acoustid.org/chromaprint">Chromaprint web page</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Acoustic_fingerprint">Acoustic fingerprint in Wikipedia</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Hamming_distance">Hamming distance in Wikipedia</a></li>
+<li><a href="http://stackoverflow.com/a/6397116/1013173">Most efficient way to calculate Hamming distance in ruby</a></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-19T19:51:00+02:00" pubdate data-updated="true">Dec 19<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/audio/'>audio</a>, <a class='category' href='/blog/categories/chromaprint/'>chromaprint</a>, <a class='category' href='/blog/categories/rspec/'>rspec</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/sound/'>sound</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/" title="Previous Post: Working with fonts in Debian and Ubuntu">&laquo; Working with fonts in Debian and Ubuntu</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to compare audio in ruby</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/">Working with fonts in Debian and Ubuntu</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/">How to call bash(not shell) from ruby</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in rails with Themis</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby/';
+        var disqus_url = 'http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

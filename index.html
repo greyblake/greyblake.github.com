@@ -9,8 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Install fonts There are a lot of fonts in standard Debian repository. Packages which contains
-fonts starts with fonts-, so lets install them all. Run &hellip;">
+  <meta name="description" content="Or how to implement sound_like RSpec matcher The problem I&#8217;m trying to solve in this article is comparison of two
+audio files. We&#8217;ll &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +87,221 @@ fonts starts with fonts-, so lets install them all. Run &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to Compare Audio in Ruby</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-19T19:51:00+02:00" pubdate data-updated="true">Dec 19<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Or how to implement sound_like RSpec matcher</h2>
+
+<p>The problem I&#8217;m trying to solve in this article is comparison of two
+audio files. We&#8217;ll figure out how to verify that they sound similar.</p>
+
+<p>I was developing an application that has a deal with audio processing and
+I had to write a test to verify outcome audio file matches a one
+from fixtures. Well, I&#8217;ve decided to compare audio binaries like these:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">expect</span><span class="p">(</span><span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;outcome.mp3&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;fixture.mp3&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And it worked!</p>
+
+<p>But soon my colleagues let me know I had broken the build. It turned out
+that <code>outcome.mp3</code>generated on their Mac books didn&#8217;t match <code>fixture.mp3</code>
+generated on my linux laptop, despite the fact that both sounded
+absolutely the same. Probably we had different codecs.
+So I had to come up with a better idea.</p>
+
+<h2>Audio fingerprints and Chromaprint</h2>
+
+<p>After some investigation I found a term &#8220;audio fingerprint&#8221; or &#8220;acoustic fingerprint&#8221;,
+it was exactly what I was looking for. From Wikipedia:</p>
+
+<blockquote><p>An acoustic fingerprint is a condensed digital summary, deterministically generated
+from an audio signal, that can be used to identify an audio sample or quickly locate
+similar items in an audio database</p></blockquote>
+
+<p>It&#8217;s used by services like Shazam to identify songs.</p>
+
+<p>So I started looking for open source implementations and found
+<a href="http://acoustid.org/chromaprint">Chromaprint</a> - a C library that calculates audio fingerprints
+from raw audio files. It seemed to be simple, with good source documentation
+and easy to get started.</p>
+
+<h2>Integrate Chromaprint with Ruby</h2>
+
+<p>I found no already existing bindings, so I&#8217;ve implemented
+<a href="https://github.com/TMXCredit/chromaprint">my own</a>. Instead of using C,
+I gave <a href="https://github.com/ffi/ffi">FFI</a> a shot and it worked perfect!
+As result I had stuff that worked the following way:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">context</span>     <span class="o">=</span> <span class="ss">Chromaprint</span><span class="p">:</span><span class="ss">:Context</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">44100</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'><span class="n">fingerprint</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_fingerprint</span><span class="p">(</span><span class="n">raw_audio_data</span><span class="p">)</span>
+</span><span class='line'><span class="n">fingerprint</span><span class="o">.</span><span class="n">raw</span> <span class="c1"># =&gt; [294890785, 328373552, 315802880, 303481088, ...]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>According to Chromaprint&#8217;s documentation a raw fingerprint is an array of 4 byte integers.
+But how to compare to 2 fingerprints to detect similarity?</p>
+
+<h2>Hamming distance</h2>
+
+<p>The answer was to calculate Hamming distance from binary representation of fingerprints.
+Again according to Wikipedia:</p>
+
+<blockquote><p>In information theory, the Hamming distance between two strings of equal length is
+the number of positions at which the corresponding symbols are different. In another
+way, it measures the minimum number of substitutions required to change one string
+into the other, or the minimum number of errors that could have transformed one
+string into the other.</p></blockquote>
+
+<p>To calculate Hamming distance for binary data we need to apply XOR operation and count
+number of 1 in the result.</p>
+
+<p>Here is a small example for 2 byte values:</p>
+
+<pre><code>dec     bin
+11737   00101101 11011001
+27129   01101001 11111001
+
+XOR     01000100 00100000
+
+Hamming distance is 3
+</code></pre>
+
+<p>Basing on this I implemented an additional method <code>Fingerprint#compare(fingerprint)</code>
+that calculates similarity in range from 0 to 1.</p>
+
+<h2>Create RSpec matcher</h2>
+
+<p>Now I could compare raw audio data, but in real world almost always we have to have a deal
+with compressed audio like mp3 or ogg. However wav files contain exactly raw audio data.
+So I could convert compressed audio to wav, then read it to get raw audio and
+calculate fingerprints for comparison. To convert audio I prefer using <code>sox</code>
+command line tool, it&#8217;s pretty powerful.</p>
+
+<p>I have to explain that I did it all to avoid having a deal with
+audio codecs within ruby, since it would make things be much more complicated.</p>
+
+<p>Finally I got <code>sound_like</code> RSpec matcher:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Compare sound of two audio files.</span>
+</span><span class='line'><span class="c1"># Based on the Chromaprint library and the +sox+ command like tool.</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1"># @example</span>
+</span><span class='line'><span class="c1">#   &quot;/Airborne.mp3&quot;.should sound_like &quot;/ACDC.mp3&quot;</span>
+</span><span class='line'><span class="c1">#   &quot;/Children_of_Bodom.mp3&quot;.should_not sound_like &quot;/Britney_Spears.mp3&quot;</span>
+</span><span class='line'><span class="ss">RSpec</span><span class="p">:</span><span class="ss">:Matchers</span><span class="o">.</span><span class="n">define</span> <span class="ss">:sound_like</span> <span class="k">do</span> <span class="o">|</span><span class="n">expected_file</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">match</span> <span class="k">do</span> <span class="o">|</span><span class="n">file</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">rate</span>      <span class="o">=</span> <span class="mi">96000</span>
+</span><span class='line'>    <span class="n">channels</span>  <span class="o">=</span> <span class="mi">1</span>
+</span><span class='line'>    <span class="n">threshold</span> <span class="o">=</span> <span class="mi">0</span><span class="o">.</span><span class="mi">95</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="no">File</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="n">expected_file</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="no">File</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+</span><span class='line'>      <span class="c1"># Convert input files into raw 16-bit signed audio (WAV) to</span>
+</span><span class='line'>      <span class="c1"># process with Chromaprint:</span>
+</span><span class='line'>      <span class="n">sox_command</span>    <span class="o">=</span> <span class="s2">&quot;sox %s -e signed -b 16 -t wav - &quot;</span> <span class="p">\</span>
+</span><span class='line'>                       <span class="s2">&quot;rate </span><span class="si">#{</span><span class="n">rate</span><span class="si">}</span><span class="s2"> channels </span><span class="si">#{</span><span class="n">channels</span><span class="si">}</span><span class="s2"> 2&gt; /dev/null&quot;</span>
+</span><span class='line'>      <span class="n">expected_audio</span> <span class="o">=</span> <span class="sx">%x&quot;</span><span class="si">#{</span><span class="n">sox_command</span> <span class="o">%</span> <span class="o">[</span><span class="n">expected_file</span><span class="o">]</span><span class="si">}</span><span class="sx">&quot;</span>
+</span><span class='line'>      <span class="n">audio</span>          <span class="o">=</span> <span class="sx">%x&quot;</span><span class="si">#{</span><span class="n">sox_command</span> <span class="o">%</span> <span class="o">[</span><span class="n">file</span><span class="o">]</span><span class="si">}</span><span class="sx">&quot;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># Get audio fingerprints:</span>
+</span><span class='line'>      <span class="n">chromaprint</span> <span class="o">=</span> <span class="ss">Chromaprint</span><span class="p">:</span><span class="ss">:Context</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">channels</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">expected_fp</span> <span class="o">=</span> <span class="n">chromaprint</span><span class="o">.</span><span class="n">get_fingerprint</span><span class="p">(</span><span class="n">expected_audio</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">fp</span>          <span class="o">=</span> <span class="n">chromaprint</span><span class="o">.</span><span class="n">get_fingerprint</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># Compare fingerprints and compare result against threshold:</span>
+</span><span class='line'>      <span class="n">expected_fp</span><span class="o">.</span><span class="n">compare</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="kp">false</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that I used threshold with value 0.95 because quite rare fingerprints
+have 100% match.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://github.com/TMXCredit/chromaprint">Chromaprint ruby port on github</a></li>
+<li><a href="http://acoustid.org/chromaprint">Chromaprint web page</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Acoustic_fingerprint">Acoustic fingerprint in Wikipedia</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Hamming_distance">Hamming distance in Wikipedia</a></li>
+<li><a href="http://stackoverflow.com/a/6397116/1013173">Most efficient way to calculate Hamming distance in ruby</a></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1000,124 +1215,6 @@ schema prefix in module and models will use it build table name automatically.</
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby Performance Tricks</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-02T23:34:00+03:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I did some benchmarks to find out which alternatives to write code work faster. I wanna
-share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.</p>
-
-<h2>Do not use exceptions for a control flow</h2>
-
-<p>The next example is pretty stupid but it shows how exceptions slow against
-conditional statements.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Obj</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">with_condition</span>
-</span><span class='line'>    <span class="nb">respond_to?</span><span class="p">(</span><span class="ss">:mythical_method</span><span class="p">)</span> <span class="p">?</span> <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span> <span class="p">:</span> <span class="kp">nil</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">with_rescue</span>
-</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span>
-</span><span class='line'>  <span class="k">rescue</span> <span class="no">NoMethodError</span>
-</span><span class='line'>    <span class="kp">nil</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">obj</span> <span class="o">=</span> <span class="no">Obj</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
-</span><span class='line'>
-</span><span class='line'><span class="nb">puts</span> <span class="no">RUBY_DESCRIPTION</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s2">&quot;rescue/condition&quot;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">rescue_report</span>     <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;rescue:&quot;</span><span class="p">)</span>    <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_rescue</span>    <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="n">condition_report</span>  <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;condition:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_condition</span> <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="o">[</span><span class="n">rescue_report</span> <span class="o">/</span> <span class="n">condition_report</span><span class="o">]</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>MRI 1.9.3:</p>
-
-<pre><code>ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
-                        user     system      total        real
-rescue:           111.530000   2.650000 114.180000 (115.837103)
-condition:          2.620000   0.010000   2.630000 (  2.633154)
-rescue/condition:  42.568702 265.000000        NaN ( 43.991767)
-</code></pre>
-
-<p>MRI 1.8.7 (REE has similar result):</p>
-
-<pre><code>ruby 1.8.7 (2011-12-28 patchlevel 357) [x86_64-linux]
-                        user     system      total        real
-rescue:            80.510000   0.940000  81.450000 ( 81.529022)
-if:                 3.320000   0.000000   3.320000 (  3.330166)
-rescue/condition:  24.250000        inf       -nan ( 24.481970)
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/09/02/ruby-perfomance-tricks/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1133,6 +1230,10 @@ rescue/condition:  24.250000        inf       -nan ( 24.481970)
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to compare audio in ruby</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/">Working with fonts in Debian and Ubuntu</a>
       </li>
     
@@ -1146,10 +1247,6 @@ rescue/condition:  24.250000        inf       -nan ( 24.481970)
     
       <li class="post">
         <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/02/02/install-more-screensavers-on-mate-desktop/">Install more screensavers on Mate desktop</a>
       </li>
     
   </ul>
