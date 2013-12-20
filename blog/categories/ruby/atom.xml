@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-12-20T20:22:04+02:00</updated>
+  <updated>2013-12-20T20:24:14+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -38,6 +38,9 @@ that <code>outcome.mp3</code>generated on their Mac books didn't match <code>fix
 generated on my linux laptop, despite the fact that both sounded
 absolutely the same. Probably we had different codecs.
 So I had to come up with a better idea.</p>
+
+<!--more-->
+
 
 <h2>Audio fingerprints and Chromaprint</h2>
 
