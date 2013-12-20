@@ -28,6 +28,9 @@ absolutely the same. Probably we had different codecs.
 So I had to come up with a better idea.
 
 
+<!--more-->
+
+
 ## Audio fingerprints and Chromaprint
 
 After some investigation I found a term "audio fingerprint" or "acoustic fingerprint",
