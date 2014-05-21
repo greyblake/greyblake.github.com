@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-12-20T20:24:14+02:00</updated>
+  <updated>2014-05-21T16:47:33+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,38 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ignore files with git locally]]></title>
+    <link href="http://greyblake.com/blog/2014/05/21/ignore-files-with-git-locally/"/>
+    <updated>2014-05-21T16:37:00+03:00</updated>
+    <id>http://greyblake.com/blog/2014/05/21/ignore-files-with-git-locally</id>
+    <content type="html"><![CDATA[<p>Sometimes it&#8217;s necessary to ignore some files in a repository only locally.
+For rails developers it&#8217;s often <code>./config/database.yml</code> file.
+Every developer has his own database configuration.</p>
+
+<p>With git it can be easily achieved, we may instruct git no to track changes in
+certain files:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>git update-index --assume-unchanged ./config/database.yml
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Next time we type <code>git status</code> the changes in <code>./config/database.yml</code> won&#8217;t be shown.</p>
+
+<p>If you think you need to track that file again, just do:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>git update-index --no-assume-unchanged ./config/database.yml
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(pay attention to <code>--no</code> prefix).</p>
+
+<p>Thanks!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[How to compare audio in ruby]]></title>
@@ -3257,33 +3289,6 @@ ExecJS:  3.940000   0.020000   3.960000 (  3.943733)
 <p>Looks like ExecJS needs some time for &#8220;initializing&#8221; and there is no reason to use it for small calculation. But it can be ten times faster in case of long time computing!</p>
 
 <p>I would not decide to use ExecJS for validation but however the benchmark results were amazing, and we&#8217;ve got to keep in mind that ExecJS can provide such perfomance benefits.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[How to Install Firefox (Iceweasel) 7 on Debian Squeeze]]></title>
-    <link href="http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/"/>
-    <updated>2011-10-03T18:12:54+03:00</updated>
-    <id>http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze</id>
-    <content type="html"><![CDATA[<p>First remove lagacy version of Iceweasel:</p>
-
-<pre><code>aptitude remove iceweasel
-</code></pre>
-
-<p>Create <code>/etc/apt/sources.list.d/squeeze-backports.list</code> file:</p>
-
-<pre><code># New Mozilla packages for Squeeze
-deb http://mozilla.debian.net/ squeeze-backports iceweasel-release
-deb http://backports.debian.org/debian-backports squeeze-backports main
-</code></pre>
-
-<p>Then run:</p>
-
-<pre><code>aptitude update
-aptitude install iceweasel -t squeeze-backports
-</code></pre>
-
-<p>Enjoy!</p>
 ]]></content>
   </entry>
   

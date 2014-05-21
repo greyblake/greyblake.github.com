@@ -9,8 +9,9 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="I did some benchmarks to find out which alternatives to write code work faster. I wanna
-share it with you. All benchmarks are made against ruby 1.9. &hellip;">
+  <meta name="description" content="I am happy to announce that TMXCredit released
+pg_power gem - an ActiveRecord extension which
+allows to use number of PostgreSQL features with Rails &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +88,203 @@ share it with you. All benchmarks are made against ruby 1.9. &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/">Pg_power - ActiveRecord Extension for PostgreSQL</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-06T23:24:00+03:00" pubdate data-updated="true">Sep 6<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I am happy to announce that  <a href="http://tmxcredit.com/">TMXCredit</a> released
+<a href="https://github.com/TMXCredit/pg_power">pg_power</a> gem - an ActiveRecord extension which
+allows to use number of PostgreSQL features with Rails.</p>
+
+<h2>What you can do with pg_power?</h2>
+
+<ul>
+<li>Use PostgresSQL schemas in your Rails project.</li>
+<li>Add comments to PostgreSQL database with Rails migrations.</li>
+<li>Use foreign keys (we imported foreigner functionality and made it schema aware).</li>
+<li>Use partial indexes.</li>
+<li>Add indexes concurrently.</li>
+</ul>
+
+
+<p>You&#8217;ll find enough documentation in <a href="https://github.com/TMXCredit/pg_power/blob/master/README.markdown">README</a>
+file.</p>
+
+<h2>Quick usage example</h2>
+
+<p>Assume you want to create tables <code>countries</code> and <code>languages</code> in <code>demography</code> schema.</p>
+
+<p>At first we need to create <code>demography</code> schema:</p>
+
+<figure class='code'><figcaption><span>db/migrate/create_demography_schema.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CreateDemographySchema</span> <span class="o">&lt;</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">change</span>
+</span><span class='line'>    <span class="n">create_schema</span> <span class="s1">&#39;demography&#39;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now let&#8217;s create tables:</p>
+
+<figure class='code'><figcaption><span>db/migrate/create_demography_languages.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CreateDemographyLanguages</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">change</span>
+</span><span class='line'>    <span class="c1"># Create table `languages` in schema `demography`</span>
+</span><span class='line'>    <span class="n">create_table</span> <span class="s2">&quot;languages&quot;</span><span class="p">,</span> <span class="ss">:schema</span> <span class="o">=&gt;</span> <span class="s2">&quot;demography&quot;</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">t</span><span class="o">.</span><span class="n">string</span> <span class="ss">:name</span>
+</span><span class='line'>      <span class="n">t</span><span class="o">.</span><span class="n">string</span> <span class="ss">:code</span><span class="p">,</span> <span class="ss">:limit</span> <span class="o">=&gt;</span> <span class="mi">2</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add PostgreSQL comments</span>
+</span><span class='line'>    <span class="n">set_table_comment</span> <span class="s2">&quot;demography.languages&quot;</span><span class="p">,</span> <span class="s2">&quot;List of languages&quot;</span>
+</span><span class='line'>    <span class="n">set_column_comments</span> <span class="s2">&quot;demography.languages&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;Full name of language in English&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">:code</span> <span class="o">=&gt;</span> <span class="s2">&quot;ISO 639-1 code&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>db/migrate/create_demography_countries.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CreateDemographyContries</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">change</span>
+</span><span class='line'>    <span class="c1"># Create table `countries` in schema `demography`</span>
+</span><span class='line'>    <span class="n">create_table</span> <span class="s2">&quot;countries&quot;</span><span class="p">,</span> <span class="ss">:schema</span> <span class="o">=&gt;</span> <span class="s2">&quot;demography&quot;</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+</span><span class='line'>      <span class="n">t</span><span class="o">.</span><span class="n">string</span> <span class="ss">:name</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1"># In real life you likely would have many-to-many associaton</span>
+</span><span class='line'>      <span class="n">t</span><span class="o">.</span><span class="n">integer</span> <span class="ss">:language_id</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add PostgreSQL comments</span>
+</span><span class='line'>    <span class="n">set_table_comment</span> <span class="s2">&quot;demography.countries&quot;</span><span class="p">,</span> <span class="s2">&quot;List of world countries&quot;</span>
+</span><span class='line'>    <span class="n">set_column_comments</span> <span class="s2">&quot;demography.languages&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">:name</span>        <span class="o">=&gt;</span> <span class="s2">&quot;Full name of country in English&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="ss">:language_id</span> <span class="o">=&gt;</span> <span class="s2">&quot;Most popular language in the country&quot;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add foreign key and create index on demography.countries.language_id</span>
+</span><span class='line'>    <span class="n">add_foreign_key</span><span class="p">(</span><span class="s2">&quot;demography.countries&quot;</span><span class="p">,</span> <span class="s2">&quot;demography.languages&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Great! Now we need to set table names in models to make ActiveRecord know that
+these tables are located in <code>demography</code> schema.</p>
+
+<figure class='code'><figcaption><span>app/models/language.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Language</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+</span><span class='line'>  <span class="n">set_table_name</span> <span class="s2">&quot;demography.languages&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It will work. But I would recommend you to create module <code>Demography</code> which would represent
+<code>demography</code> schema and move those models to it. One more benefit is that you can define
+schema prefix in module and models will use it build table name automatically.</p>
+
+<figure class='code'><figcaption><span>app/models/demography.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Demography</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">table_name_prefix</span>
+</span><span class='line'>    <span class="s1">&#39;demography.&#39;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>app/models/demography/language.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Demography::Language</span>
+</span><span class='line'>  <span class="c1"># No need to use set_table_name anymore</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I hope you will enjoy <a href="https://github.com/TMXCredit/pg_power">pg_power</a>. Let us know what you think!</p>
+
+<p>Thanks. Sergey Potapov.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -559,62 +757,6 @@ That will the next step in this direction, since I realy need it.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/">How to Install Firefox (Iceweasel) 7 on Debian Squeeze</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-10-03T18:12:54+03:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>First remove lagacy version of Iceweasel:</p>
-
-<pre><code>aptitude remove iceweasel
-</code></pre>
-
-<p>Create <code>/etc/apt/sources.list.d/squeeze-backports.list</code> file:</p>
-
-<pre><code># New Mozilla packages for Squeeze
-deb http://mozilla.debian.net/ squeeze-backports iceweasel-release
-deb http://backports.debian.org/debian-backports squeeze-backports main
-</code></pre>
-
-<p>Then run:</p>
-
-<pre><code>aptitude update
-aptitude install iceweasel -t squeeze-backports
-</code></pre>
-
-<p>Enjoy!</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -632,6 +774,10 @@ aptitude install iceweasel -t squeeze-backports
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/05/21/ignore-files-with-git-locally/">Ignore files with git locally</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to compare audio in ruby</a>
       </li>
     
@@ -645,10 +791,6 @@ aptitude install iceweasel -t squeeze-backports
     
       <li class="post">
         <a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in rails with Themis</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>
       </li>
     
   </ul>
@@ -710,7 +852,7 @@ aptitude install iceweasel -t squeeze-backports
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2013 - Sergey Potapov -
+  Copyright &copy; 2014 - Sergey Potapov -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rails | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2013-12-20T20:24:14+02:00</updated>
+  <updated>2014-05-21T16:47:33+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,36 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ignore files with git locally]]></title>
+    <link href="http://greyblake.com/blog/2014/05/21/ignore-files-with-git-locally/"/>
+    <updated>2014-05-21T16:37:00+03:00</updated>
+    <id>http://greyblake.com/blog/2014/05/21/ignore-files-with-git-locally</id>
+    <content type="html"><![CDATA[<p>Sometimes it's necessary to ignore some files in a repository only locally.
+For rails developers it's often <code>./config/database.yml</code> file.
+Every developer has his own database configuration.</p>
+
+<p>With git it can be easily achieved, we may instruct git no to track changes in
+certain files:</p>
+
+<p><code>bash
+git update-index --assume-unchanged ./config/database.yml
+</code></p>
+
+<p>Next time we type <code>git status</code> the changes in <code>./config/database.yml</code> won't be shown.</p>
+
+<p>If you think you need to track that file again, just do:</p>
+
+<p><code>bash
+git update-index --no-assume-unchanged ./config/database.yml
+</code></p>
+
+<p>(pay attention to <code>--no</code> prefix).</p>
+
+<p>Thanks!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[pg_power - ActiveRecord extension for PostgreSQL]]></title>

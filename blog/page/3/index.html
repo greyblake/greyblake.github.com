@@ -9,7 +9,7 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Since I am a command line guy I use less tool everywhere and everytime to quickly take a look at files. And quite often those files are different &hellip;">
+  <meta name="description" content="First remove lagacy version of Iceweasel: aptitude remove iceweasel Create /etc/apt/sources.list.d/squeeze-backports.list file: # New Mozilla &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -86,6 +86,62 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/">How to Install Firefox (Iceweasel) 7 on Debian Squeeze</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-10-03T18:12:54+03:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>First remove lagacy version of Iceweasel:</p>
+
+<pre><code>aptitude remove iceweasel
+</code></pre>
+
+<p>Create <code>/etc/apt/sources.list.d/squeeze-backports.list</code> file:</p>
+
+<pre><code># New Mozilla packages for Squeeze
+deb http://mozilla.debian.net/ squeeze-backports iceweasel-release
+deb http://backports.debian.org/debian-backports squeeze-backports main
+</code></pre>
+
+<p>Then run:</p>
+
+<pre><code>aptitude update
+aptitude install iceweasel -t squeeze-backports
+</code></pre>
+
+<p>Enjoy!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -497,6 +553,10 @@ Have you ever type something like this:</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/05/21/ignore-files-with-git-locally/">Ignore files with git locally</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to compare audio in ruby</a>
       </li>
     
@@ -510,10 +570,6 @@ Have you ever type something like this:</p>
     
       <li class="post">
         <a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in rails with Themis</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>
       </li>
     
   </ul>
@@ -575,7 +631,7 @@ Have you ever type something like this:</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2013 - Sergey Potapov -
+  Copyright &copy; 2014 - Sergey Potapov -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
