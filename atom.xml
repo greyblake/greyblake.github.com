@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-05-21T16:47:33+03:00</updated>
+  <updated>2014-10-05T22:52:44+03:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,135 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Lazy object pattern in ruby]]></title>
+    <link href="http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby/"/>
+    <updated>2014-10-05T21:27:00+03:00</updated>
+    <id>http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby</id>
+    <content type="html"><![CDATA[<p>I few days ago my colleague <a href="https://github.com/albertosaurus">Arthur Shagall</a> reviewing my
+code suggested me to use <strong>Lazy Object</strong> pattern to postpone some calculations during the load time.
+I hadn&#8217;t heard about the pattern before and even googling it didn&#8217;t give my much information.
+So I have decided to write this article to cover the topic.</p>
+
+<h2>Intention</h2>
+
+<p><strong>Lazy Object</strong> allows you to postpone some calculation until the moment when the actual
+result of the calculation is used. That may help you to speed up booting of the application.</p>
+
+<h2>Implementation</h2>
+
+<p>It is pretty simple. We create a proxy object that takes a calculation
+block as its property and execute it on first method call.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">LazyObject</span> <span class="o">&lt;</span> <span class="o">::</span><span class="no">BasicObject</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">callable</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@callable</span> <span class="o">=</span> <span class="n">callable</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">__target_object__</span>
+</span><span class='line'>    <span class="vi">@__target_object__</span> <span class="o">||=</span> <span class="vi">@callable</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">__target_object__</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Usage example 1</h2>
+
+<p>A constant assignment like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">SQUARES</span> <span class="o">=</span> <span class="nb">Array</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="n">i</span><span class="o">**</span> <span class="mi">2</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Could be converted to this one:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">SQUARES</span> <span class="o">=</span> <span class="no">LazyObject</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="nb">Array</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="n">i</span><span class="o">**</span> <span class="mi">2</span><span class="p">}</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So now if you want to use <code>SQUARES</code> it still behaves like an array:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">SQUARES</span><span class="o">.</span><span class="n">class</span>  <span class="c1"># =&gt; Array</span>
+</span><span class='line'><span class="no">SQUARES</span><span class="o">.</span><span class="n">size</span>   <span class="c1"># =&gt; 10</span>
+</span><span class='line'><span class="no">SQUARES</span>        <span class="c1"># =&gt; [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Usage example 2</h2>
+
+<p>Let&#8217;s say you have models <code>State</code> and <code>Address</code> in you Rails application.
+What you want do is to validate inclusion of <code>address.state</code> in states.</p>
+
+<p>You can just hardcore the list of states:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Address</span> <span class="o">&lt;</span> <span class="o">::</span><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="no">STATES</span> <span class="o">=</span> <span class="o">[</span><span class="s2">&quot;AL&quot;</span><span class="p">,</span> <span class="s2">&quot;AK&quot;</span><span class="p">,</span> <span class="s2">&quot;AZ&quot;</span><span class="p">,</span> <span class="s2">&quot;AR&quot;</span><span class="p">,</span> <span class="s2">&quot;CA&quot;</span><span class="p">,</span> <span class="s2">&quot;CO&quot;</span><span class="o">]</span>   <span class="c1"># and so on</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:state</span><span class="p">,</span> <span class="ss">inclusion</span><span class="p">:</span> <span class="p">{</span> <span class="k">in</span><span class="p">:</span> <span class="no">STATES</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But it does not reflect your changes in DB in any way.</p>
+
+<p>Then you can fetch the values from DB:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">STATES</span> <span class="o">=</span> <span class="no">State</span><span class="o">.</span><span class="n">all</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:code</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It seems to look better, but there are 2 possible pitfalls:</p>
+
+<ul>
+<li>It increases load time (1 more SQL query)</li>
+<li>It may cause real troubles if <code>STATES</code> is initialized before <code>State</code> model is seeded. In this case <code>STATES</code> will be empty.</li>
+</ul>
+
+
+<p>So that is the situation where <strong>Lazy Object</strong> is useful:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">STATES</span> <span class="o">=</span> <span class="no">LazyObject</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="no">State</span><span class="o">.</span><span class="n">all</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:code</span><span class="p">)</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Ruby gem</h2>
+
+<p>If your prefer to have it as a ruby gem,
+please take a look at <a href="http://rubygems.org/gems/lazy_object">rubygems.org/gems/lazy_object</a>.</p>
+
+<p>Thanks for reading!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Ignore files with git locally]]></title>
@@ -3187,108 +3316,6 @@ That will the next step in this direction, since I realy need it.</p>
     <content type="html"><![CDATA[<p>I started writing a diary using <a href="http://rednotebook.sourceforge.net">rednotebook</a> application. It&#8217;s realy cool, but I stuck with a problem: I want to use it everywhere on any device and keep all my notes synchonized. So I decided to create a simple tool called <strong>gync</strong> to help me.</p>
 
 <p>Please check it out on Github: <a href="https://github.com/greyblake/gync">https://github.com/greyblake/gync</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Perfomance benchmakrs ExecJS VS Ruby]]></title>
-    <link href="http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/"/>
-    <updated>2011-10-23T08:49:33+03:00</updated>
-    <id>http://greyblake.com/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby</id>
-    <content type="html"><![CDATA[<p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you&#8217;re are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google&#8217;s V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
-
-<!--more-->
-
-
-
-
-<figure class='code'><figcaption><span>benchmark.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;rubygems&#39;</span>
-</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;execjs&#39;</span>
-</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">js</span> <span class="o">=&lt;&lt;</span><span class="no">JAVASCRIPT</span>
-</span><span class='line'><span class="sh">function fib(a){</span>
-</span><span class='line'><span class="sh">  if(a &lt; 2)</span>
-</span><span class='line'><span class="sh">    return a;</span>
-</span><span class='line'><span class="sh">  return fib(a-1) + fib(a-2);</span>
-</span><span class='line'><span class="sh">}</span>
-</span><span class='line'><span class="no">JAVASCRIPT</span>
-</span><span class='line'><span class="n">context</span> <span class="o">=</span> <span class="no">ExecJS</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">js</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">fib</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">return</span> <span class="n">a</span> <span class="k">if</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">2</span>
-</span><span class='line'>  <span class="n">fib</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="o">].</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">n</span><span class="o">|</span>
-</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;N = </span><span class="si">#{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;Ruby:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;ExecJS:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">context</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;fib&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>  <span class="nb">puts</span> <span class="s1">&#39;-&#39;</span> <span class="o">*</span> <span class="mi">52</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Here is the output:</p>
-
-<pre><code>N = 1
-             user     system      total        real
-Ruby:    0.000000   0.000000   0.000000 (  0.000008)
-ExecJS:  0.000000   0.000000   0.000000 (  0.000318)
-----------------------------------------------------
-N = 10
-             user     system      total        real
-Ruby:    0.000000   0.000000   0.000000 (  0.000026)
-ExecJS:  0.000000   0.000000   0.000000 (  0.000156)
-----------------------------------------------------
-N = 20
-             user     system      total        real
-Ruby:    0.000000   0.000000   0.000000 (  0.002585)
-ExecJS:  0.000000   0.000000   0.000000 (  0.000550)
-----------------------------------------------------
-N = 30
-             user     system      total        real
-Ruby:    0.310000   0.000000   0.310000 (  0.312819)
-ExecJS:  0.040000   0.000000   0.040000 (  0.043603)
-----------------------------------------------------
-N = 40
-             user     system      total        real
-Ruby:   39.780000   0.050000  39.830000 ( 39.955098)
-ExecJS:  3.940000   0.020000   3.960000 (  3.943733)
-----------------------------------------------------
-</code></pre>
-
-<p>Looks like ExecJS needs some time for &#8220;initializing&#8221; and there is no reason to use it for small calculation. But it can be ten times faster in case of long time computing!</p>
-
-<p>I would not decide to use ExecJS for validation but however the benchmark results were amazing, and we&#8217;ve got to keep in mind that ExecJS can provide such perfomance benefits.</p>
 ]]></content>
   </entry>
   

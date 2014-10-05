@@ -9,8 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Sometimes it&#8217;s necessary to ignore some files in a repository only locally.
-For rails developers it&#8217;s often ./config/database.yml file. &hellip;">
+  <meta name="description" content="I few days ago my colleague Arthur Shagall reviewing my
+code suggested me to use Lazy Object pattern to postpone some calculations during the load &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +87,164 @@ For rails developers it&#8217;s often ./config/database.yml file. &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy Object Pattern in Ruby</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-10-05T21:27:00+03:00" pubdate data-updated="true">Oct 5<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I few days ago my colleague <a href="https://github.com/albertosaurus">Arthur Shagall</a> reviewing my
+code suggested me to use <strong>Lazy Object</strong> pattern to postpone some calculations during the load time.
+I hadn&#8217;t heard about the pattern before and even googling it didn&#8217;t give my much information.
+So I have decided to write this article to cover the topic.</p>
+
+<h2>Intention</h2>
+
+<p><strong>Lazy Object</strong> allows you to postpone some calculation until the moment when the actual
+result of the calculation is used. That may help you to speed up booting of the application.</p>
+
+<h2>Implementation</h2>
+
+<p>It is pretty simple. We create a proxy object that takes a calculation
+block as its property and execute it on first method call.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">LazyObject</span> <span class="o">&lt;</span> <span class="o">::</span><span class="no">BasicObject</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">&amp;</span><span class="n">callable</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@callable</span> <span class="o">=</span> <span class="n">callable</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">__target_object__</span>
+</span><span class='line'>    <span class="vi">@__target_object__</span> <span class="o">||=</span> <span class="vi">@callable</span><span class="o">.</span><span class="n">call</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">__target_object__</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Usage example 1</h2>
+
+<p>A constant assignment like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">SQUARES</span> <span class="o">=</span> <span class="nb">Array</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="n">i</span><span class="o">**</span> <span class="mi">2</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Could be converted to this one:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">SQUARES</span> <span class="o">=</span> <span class="no">LazyObject</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="nb">Array</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="n">i</span><span class="o">**</span> <span class="mi">2</span><span class="p">}</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So now if you want to use <code>SQUARES</code> it still behaves like an array:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">SQUARES</span><span class="o">.</span><span class="n">class</span>  <span class="c1"># =&gt; Array</span>
+</span><span class='line'><span class="no">SQUARES</span><span class="o">.</span><span class="n">size</span>   <span class="c1"># =&gt; 10</span>
+</span><span class='line'><span class="no">SQUARES</span>        <span class="c1"># =&gt; [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Usage example 2</h2>
+
+<p>Let&#8217;s say you have models <code>State</code> and <code>Address</code> in you Rails application.
+What you want do is to validate inclusion of <code>address.state</code> in states.</p>
+
+<p>You can just hardcore the list of states:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Address</span> <span class="o">&lt;</span> <span class="o">::</span><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="no">STATES</span> <span class="o">=</span> <span class="o">[</span><span class="s2">&quot;AL&quot;</span><span class="p">,</span> <span class="s2">&quot;AK&quot;</span><span class="p">,</span> <span class="s2">&quot;AZ&quot;</span><span class="p">,</span> <span class="s2">&quot;AR&quot;</span><span class="p">,</span> <span class="s2">&quot;CA&quot;</span><span class="p">,</span> <span class="s2">&quot;CO&quot;</span><span class="o">]</span>   <span class="c1"># and so on</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">validates</span> <span class="ss">:state</span><span class="p">,</span> <span class="ss">inclusion</span><span class="p">:</span> <span class="p">{</span> <span class="k">in</span><span class="p">:</span> <span class="no">STATES</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But it does not reflect your changes in DB in any way.</p>
+
+<p>Then you can fetch the values from DB:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">STATES</span> <span class="o">=</span> <span class="no">State</span><span class="o">.</span><span class="n">all</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:code</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It seems to look better, but there are 2 possible pitfalls:</p>
+
+<ul>
+<li>It increases load time (1 more SQL query)</li>
+<li>It may cause real troubles if <code>STATES</code> is initialized before <code>State</code> model is seeded. In this case <code>STATES</code> will be empty.</li>
+</ul>
+
+
+<p>So that is the situation where <strong>Lazy Object</strong> is useful:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">STATES</span> <span class="o">=</span> <span class="no">LazyObject</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="no">State</span><span class="o">.</span><span class="n">all</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:code</span><span class="p">)</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Ruby gem</h2>
+
+<p>If your prefer to have it as a ruby gem,
+please take a look at <a href="http://rubygems.org/gems/lazy_object">rubygems.org/gems/lazy_object</a>.</p>
+
+<p>Thanks for reading!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -851,82 +1009,6 @@ I found no bugs reported this issue on
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/12/14/custom-expectations-with-rspec/">Custom Expectations With RSpec</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-12-14T00:34:00+02:00" pubdate data-updated="true">Dec 14<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I know you love RSpec&#8217;s <code>expect</code> DSL like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="k">raise</span><span class="p">(</span><span class="s2">&quot;Boom!&quot;</span><span class="p">)</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">raise_error</span><span class="p">(</span><span class="no">RuntimeError</span><span class="p">,</span> <span class="s2">&quot;Boom!&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>We often write our own custom matchers and I wanna show how is easy to write
-custom expectation.</p>
-
-<h2>Desired DSL</h2>
-
-<p>Usually when I do things like this I start with DSL. I think it&#8217;s important since
-it must be convenient to use and easy to read.
-So turn on your imagination and spend some time on it.</p>
-
-<p>In my example I&#8217;m gonna create an expectation to test text written to standard output
-and standard error.
-There are samples how I wanna use it(desired DSL):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Test text written to standard output</span>
-</span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hello!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Hello!&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1"># Test text written to standard error</span>
-</span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">warn</span> <span class="s2">&quot;Stop it!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Stop it!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="ss">:error</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/12/14/custom-expectations-with-rspec/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -942,6 +1024,10 @@ There are samples how I wanna use it(desired DSL):</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy object pattern in ruby</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/05/21/ignore-files-with-git-locally/">Ignore files with git locally</a>
       </li>
     
@@ -955,10 +1041,6 @@ There are samples how I wanna use it(desired DSL):</p>
     
       <li class="post">
         <a href="/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/">How to call bash(not shell) from ruby</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in rails with Themis</a>
       </li>
     
   </ul>

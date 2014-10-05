@@ -9,9 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="I am happy to announce that TMXCredit released
-pg_power gem - an ActiveRecord extension which
-allows to use number of PostgreSQL features with Rails &hellip;">
+  <meta name="description" content="I know you love RSpec&#8217;s expect DSL like this: 1
+expect { raise(&quot;Boom!&quot;) }.to raise_error(RuntimeError, &quot;Boom!&quot;) We often &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -88,6 +87,82 @@ allows to use number of PostgreSQL features with Rails &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/12/14/custom-expectations-with-rspec/">Custom Expectations With RSpec</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-14T00:34:00+02:00" pubdate data-updated="true">Dec 14<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I know you love RSpec&#8217;s <code>expect</code> DSL like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="k">raise</span><span class="p">(</span><span class="s2">&quot;Boom!&quot;</span><span class="p">)</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">raise_error</span><span class="p">(</span><span class="no">RuntimeError</span><span class="p">,</span> <span class="s2">&quot;Boom!&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We often write our own custom matchers and I wanna show how is easy to write
+custom expectation.</p>
+
+<h2>Desired DSL</h2>
+
+<p>Usually when I do things like this I start with DSL. I think it&#8217;s important since
+it must be convenient to use and easy to read.
+So turn on your imagination and spend some time on it.</p>
+
+<p>In my example I&#8217;m gonna create an expectation to test text written to standard output
+and standard error.
+There are samples how I wanna use it(desired DSL):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Test text written to standard output</span>
+</span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hello!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Hello!&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Test text written to standard error</span>
+</span><span class='line'><span class="n">expect</span> <span class="p">{</span> <span class="nb">warn</span> <span class="s2">&quot;Stop it!&quot;</span> <span class="p">}</span><span class="o">.</span><span class="n">to</span> <span class="n">write</span><span class="p">(</span><span class="s2">&quot;Stop it!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="ss">:error</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/12/14/custom-expectations-with-rspec/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -714,49 +789,6 @@ That will the next step in this direction, since I realy need it.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/">Perfomance Benchmakrs ExecJS vs Ruby</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-10-23T08:49:33+03:00" pubdate data-updated="true">Oct 23<span>rd</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Yesterday on RubyShift <a href="http://www.xing.com/profile/Thorben_Schroeder">Thorben Schröder</a> talked about ExecJS and using it for validation following DRY principle: you implement only JavaScript validator and then use it in Ruby code as well.  Sounds great, right? He provided interesting benchmark results which really suprised me. ExecJS can be few times faster than Ruby 1.9.2 if you&#8217;re are using <a href="https://github.com/cowboyd/therubyracer">therubyracer</a>(wrapper for Google&#8217;s V8). I decided to make my own benchmarks  There is trivial example - function which caclucates fibonacci numbers. I know the algorithm sucks, but my goal is to compare perfomance.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2011/10/23/perfomance-benchmakrs-execjs-vs-ruby/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -774,6 +806,10 @@ That will the next step in this direction, since I realy need it.</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy object pattern in ruby</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/05/21/ignore-files-with-git-locally/">Ignore files with git locally</a>
       </li>
     
@@ -787,10 +823,6 @@ That will the next step in this direction, since I realy need it.</p>
     
       <li class="post">
         <a href="/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/">How to call bash(not shell) from ruby</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in rails with Themis</a>
       </li>
     
   </ul>

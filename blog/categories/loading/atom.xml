@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: loading | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/loading/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2014-10-05T22:52:44+03:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Lazy object pattern in ruby]]></title>
+    <link href="http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby/"/>
+    <updated>2014-10-05T21:27:00+03:00</updated>
+    <id>http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby</id>
+    <content type="html"><![CDATA[<p>I few days ago my colleague <a href="https://github.com/albertosaurus">Arthur Shagall</a> reviewing my
+code suggested me to use <strong>Lazy Object</strong> pattern to postpone some calculations during the load time.
+I hadn't heard about the pattern before and even googling it didn't give my much information.
+So I have decided to write this article to cover the topic.</p>
+
+<h2>Intention</h2>
+
+<p><strong>Lazy Object</strong> allows you to postpone some calculation until the moment when the actual
+result of the calculation is used. That may help you to speed up booting of the application.</p>
+
+<h2>Implementation</h2>
+
+<p>It is pretty simple. We create a proxy object that takes a calculation
+block as its property and execute it on first method call.</p>
+
+<p>```ruby
+class LazyObject &lt; ::BasicObject
+  def initialize(&amp;callable)</p>
+
+<pre><code>@callable = callable
+</code></pre>
+
+<p>  end</p>
+
+<p>  def <strong>target_object</strong></p>
+
+<pre><code>@__target_object__ ||= @callable.call
+</code></pre>
+
+<p>  end</p>
+
+<p>  def method_missing(method_name, *args, &amp;block)</p>
+
+<pre><code>__target_object__.send(method_name, *args, &amp;block)
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<h2>Usage example 1</h2>
+
+<p>A constant assignment like this:
+<code>ruby
+SQUARES = Array.new(10) { |i| i** 2}
+</code></p>
+
+<p>Could be converted to this one:</p>
+
+<p><code>ruby
+SQUARES = LazyObject.new { Array.new(10) { |i| i** 2} }
+</code></p>
+
+<p>So now if you want to use <code>SQUARES</code> it still behaves like an array:</p>
+
+<p><code>ruby
+SQUARES.class  # =&gt; Array
+SQUARES.size   # =&gt; 10
+SQUARES        # =&gt; [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+</code></p>
+
+<h2>Usage example 2</h2>
+
+<p>Let's say you have models <code>State</code> and <code>Address</code> in you Rails application.
+What you want do is to validate inclusion of <code>address.state</code> in states.</p>
+
+<p>You can just hardcore the list of states:</p>
+
+<p>```ruby
+class Address &lt; ::ActiveRecord::Base
+  STATES = ["AL", "AK", "AZ", "AR", "CA", "CO"]   # and so on</p>
+
+<p>  validates :state, inclusion: { in: STATES }
+end
+```
+But it does not reflect your changes in DB in any way.</p>
+
+<p>Then you can fetch the values from DB:</p>
+
+<p><code>ruby
+STATES = State.all.map(&amp;:code)
+</code></p>
+
+<p>It seems to look better, but there are 2 possible pitfalls:</p>
+
+<ul>
+<li>It increases load time (1 more SQL query)</li>
+<li>It may cause real troubles if <code>STATES</code> is initialized before <code>State</code> model is seeded. In this case <code>STATES</code> will be empty.</li>
+</ul>
+
+
+<p>So that is the situation where <strong>Lazy Object</strong> is useful:</p>
+
+<p><code>ruby
+STATES = LazyObject.new { State.all.map(&amp;:code) }
+</code></p>
+
+<h2>Ruby gem</h2>
+
+<p>If your prefer to have it as a ruby gem,
+please take a look at <a href="http://rubygems.org/gems/lazy_object">rubygems.org/gems/lazy_object</a>.</p>
+
+<p>Thanks for reading!</p>
+]]></content>
+  </entry>
+  
+</feed>
