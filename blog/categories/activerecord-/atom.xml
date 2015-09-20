@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: ActiveRecord, | Sergey Potapov]]></title>
+  <title><![CDATA[Category: activerecord, | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/activerecord-/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -14,323 +14,151 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Validation in rails with Themis]]></title>
-    <link href="http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/"/>
-    <updated>2013-08-19T17:21:00+03:00</updated>
-    <id>http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis</id>
-    <content type="html"><![CDATA[<p>Sometimes ActiveRecord is not enough to meet complicated validation needs.
-At <a href="http://tmxcredit.com/">TMXCredit</a> we've created <a href="https://github.com/TMXCredit/themis">Themis</a> -
-ActiveRecord extension which helps to organize validations in a better way and adds
-some flexibility. Here I'm gonna describe some problems which Themis solves after that
-I'll take a brief look at possible alternative solutions.</p>
-
-<h2>Modular validation</h2>
-
-<p>Themis allows you to extract duplicated validations into module for reuse.
-Usually rails applications are small enough so you don't need it. But sometimes
-you do.</p>
-
-<p>The next example is pretty flat(in real life you probably would use STI or composition to
-represent <code>Doctor</code> and <code>Patient</code> models) but it illustrates where Themis could be useful.</p>
-
-<p>Let's say you have 2 models:</p>
-
-<p>```ruby
-class Doctor &lt; ActiveRecord::Base
-  validates :first_name, :last_name, :email, :diploma,</p>
-
-<pre><code>        :presence =&gt; true
-</code></pre>
-
-<p>end</p>
-
-<p>class Patient &lt; ActiveRecord::Base
-  validates :first_name, :last_name, :email, :age,</p>
-
-<pre><code>        :presence =&gt; true
-</code></pre>
-
-<p>end
-```</p>
-
-<p>You see that both models have the same validation for <code>first_name</code>, <code>last_name</code> and <code>email</code>.</p>
-
-<p>Themis allows you to fix the duplication problem by extracting common validations into
-a module:</p>
-
-<p>```ruby</p>
-
-<h1>Module with common validations.</h1>
-
-<p>module PersonValidation
-  extend Themis::Validation</p>
-
-<p>  validates :first_name, :last_name, :email, :presence => true
-end</p>
-
-<p>class Doctor &lt; ActiveRecord::Base
-  # import validation of first_name, last_name, email
-  include PersonValidation</p>
-
-<p>  validates :diploma, :presence => true
-end</p>
-
-<p>class Patient &lt; ActiveRecord::Base
-  include PersonValidation</p>
-
-<p>  validates :age, :presence => true
-end
-```</p>
+    <title type="html"><![CDATA[Тестируем вложенные ActiveRecord-модели с RSpec]]></title>
+    <link href="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/"/>
+    <updated>2012-07-06T22:19:00+02:00</updated>
+    <id>http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec</id>
+    <content type="html"><![CDATA[<p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
+и конечно же протестировать, что ваш "builder" работает так, как нужно. На самом деле
+задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
 
 <!--more-->
 
 
-<p>So now we keep the common validation in one place.
-If you want, you can include validation modules into each other to combine
-necessary validation.</p>
+<p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
+(На практике обычно моделей намного больше с большим количеством свойств).</p>
 
-<h2>Validation scenarios</h2>
-
-<p>Here is another problem which Themis solves.</p>
-
-<p>We have the following models:</p>
-
-<p>```ruby
+<p>```ruby user.rb
 class User &lt; ActiveRecord::Base
-  has_one :person
-  has_many :user_accounts
-end</p>
+  attr_accessible :last_name, :first_name</p>
 
-<p>class Person &lt; ActiveRecord::Base
-  attr_accessible :first_name, :last_name, :birhday</p>
+<p>  has_one :account
+end
+```</p>
+
+<p>```ruby account.rb
+class Account &lt; ActiveRecord::Base
+  attr_accessible :email, :last_visit_date</p>
 
 <p>  belongs_to :user
-end</p>
+  has_one :preference
+end
+```</p>
 
-<p>class UserAccount &lt; ActiveRecord::Base
-  attr_accessible :email, :login</p>
+<p>```ruby preference.rb
+class Preference &lt; ActiveRecord::Base
+  attr_accessible :language, :weapon</p>
 
 <p>  belongs_to :user
 end
 ```</p>
 
-<p>So we have a model graph like this with <code>User</code> model on the top:</p>
+<p>Предположим у нас есть некий builder, который строит объект User и все завимимые
+модели(Account и Preference). Всё что мы хотим сделать - это протестировать,
+что граф объектов построен правильно.</p>
 
-<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/themis_model_graph.png" alt="Themis - model graph" /></p>
+<p>Вот пример реализации стандартного rspec-теста, который первым приходит на ум:</p>
 
-<p>It's pretty small, but in real life the graph can be much deeper.</p>
+<p>```ruby user_builder_spec.rb
+describe UserBuilder do
+  describe '#build' do</p>
 
-<p>What would you do if you needed to apply different validations depending on context?
-For example according to your business requirements users must be allowed to use
-your application only in case if they've filled in all of the fields.
-So you need to validate presense of <code>first_name</code>, <code>last_name</code> and <code>birhday</code>
-on <code>Person</code> model and <code>email</code>, <code>login</code> and <code>password</code> on <code>UserAccount</code>.</p>
+<pre><code>describe 'user' do
+  let(:user) { described_class.new(some_attrs).build }
+  subject { user }
 
-<p>It's not a problem, just add the validations to appropriate models:</p>
+  its(:first_name) { should == "Rodion"      }
+  its(:last_name)  { should == "Raskolnikov" }
 
-<p>```ruby
-class Person &lt; ActiveRecord::Base
-  validates :first_name, :layout, :birhday, :presence => true
-end</p>
+  describe 'account' do
+    subject { user.account }
 
-<p>class UserAccount &lt; ActiveRecord::Base
-  validates :email, :login, :presence => true
+    its(:email)           { should == "rodion@mail.ru"       }
+    its(:last_visit_date) { should == Date.new(1866, 11, 27) }
+
+    describe 'preference' do
+      subject { user.account.preference }
+
+      its(:language) { should == "Russian" }
+      its(:weapon)   { should == "ax"      }
+    end
+  end
 end
-```</p>
-
-<p>There is some percent of users who don't finish registration process.
-But your marketing department wants to have an ability to contact them
-if they have entered an email address.</p>
-
-<p>So that's where the issue is: you can't save records using validation rules written above.</p>
-
-<p>With Themis you can declare number of validation strategies,
-and depending on context, chose which one you need.</p>
-
-<p>Here is how a complete solution looks:</p>
-
-<p>```ruby
-class User &lt; ActiveRecord::Base
-  has_one :person
-  has_many :user_accounts</p>
-
-<p>  accepts_nested_attributes_for :person, :user_accounts</p>
-
-<p>  # Declare validations. Use :full as default.
-  has_validation :full, :default => true
-  has_validation :partial
-end</p>
-
-<p>class Person &lt; ActiveRecord::Base
-  attr_accessible :first_name, :last_name, :birhday</p>
-
-<p>  belongs_to :user</p>
-
-<p>  # Declare full validation
-  has_validation :full do |model|</p>
-
-<pre><code>model.validates :first_name, :last_name, :birhday, :presence =&gt; true
-</code></pre>
-
-<p>  end</p>
-
-<p>  # Delcare partial validation. Nothing to validate.
-  has_validation :partial
-end</p>
-
-<p>class UserAccount &lt; ActiveRecord::Base
-  attr_accessible :email, :login</p>
-
-<p>  has_validation :full do |model|</p>
-
-<pre><code>model.validates :login, :email, :presence =&gt; true
-</code></pre>
-
-<p>  end</p>
-
-<p>  has_validation :partial do |model|</p>
-
-<pre><code>model.validates :email, :presence =&gt; true
 </code></pre>
 
 <p>  end
 end
 ```</p>
 
-<p>And here is how you would use it somewhere in a controller:</p>
+<p>Всё читаемо, красиво и просто. Но проблема в том, что получилось шесть тестов(по тесту на
+каждый атрибут), которые тестируют лишь одно действие - постороение объекта. Когда операция построения
+занимает немало времени, а количество атрибутов на порядок больше, такой подход
+становится далеко не самым лучшим, поскольку возрастает время выполнения.
+Если объект не сохраняется в базе то вполне разумным будет использовать <code>before :all</code>. Но если
+вам приходится сохранять объект и вы используете опцию <code>config.use_transactional_fixtures = true</code>,
+потому что не хотите "гадить" в базу, то этот вариант не подойдёт.</p>
 
-<p>```ruby</p>
+<p>Можно пойти по пути классического unit-тестирования и сделать тест подобным этому:</p>
 
-<h1>Create model initialized with params</h1>
+<p>```ruby user_builder_spec.rb
+describe UserBuilder do
+  describe '#build' do</p>
 
-<p>user = User.new(
-  :person => {</p>
+<pre><code>let(:user) { described_class.new(some_attrs).build }
 
-<pre><code>:first_name =&gt; "Alex",
-:last_name  =&gt; "DeLarge",
-:birhday    =&gt; "1962"
-</code></pre>
-
-<p>  },
-  :user_accounts => [{</p>
-
-<pre><code>:email =&gt; "clockwork@orange.com"
-</code></pre>
-
-<p>  }]
-)</p>
-
-<p>user.valid? # => false, because login is missing</p>
-
-<h1>Try to apply partial validation</h1>
-
-<p>user.use_validation(:partial)
-user.valid? # => true</p>
-
-<h1>We can save it</h1>
-
-<p>user.save!
-```</p>
-
-<h2>Alternative solutions</h2>
-
-<p>If you think Themis is overkill for your project, you still have some options.</p>
-
-<h3>Using ActiveSupport::Concern for modularity</h3>
-
-<p><code>ActiveSupport::Concern</code> is another way which allows to extract common validations
-into module. Here how would <code>PersonValidation</code> module described above could look:</p>
-
-<p>```ruby
-module PersonValidation
-  extend ActiveSupport::Concern</p>
-
-<p>  included do</p>
-
-<pre><code>validates :first_name, :last_name, :email, :presence =&gt; true
-</code></pre>
-
-<p>  end
-end</p>
-
-<p>```</p>
-
-<h3>Using conditional validation</h3>
-
-<p>If your requirements aren't so fancy, you can be satisfied with a simple
-conditional validation, e. g.</p>
-
-<p>```ruby
-class Person &lt; ActiveRecord::Base
-  validates :first_name, :last_name, :birhday, :presence => true,</p>
-
-<pre><code>        :if =&gt; :use_full_validation?
-</code></pre>
-
-<p>  # Lets add one more validation statement(for the next example)
-  validates :first_name, :last_name, :length => { :maximum => 255 },</p>
-
-<pre><code>        :if =&gt; :use_full_validation?
-</code></pre>
-
-<p>  def use_full_validation?</p>
-
-<pre><code># Some logic goes here
+it 'should correctly build a user' do
+  user.first_name.should == "Rodion"
+  user.last_name.should  == "Raskolnikov"
+  user.account.email.should           == "rodion@mail.ru"
+  user.account.last_visit_date.should == Date.new(1866, 11, 27)
+  user.account.preference.language.should == "Russian"
+  user.account.preference.weapon.should   == "ax"
+end
 </code></pre>
 
 <p>  end
 end
 ```</p>
 
-<p>To DRY up <code>:if</code> options it's good to use <code>with_options</code> method:</p>
+<p>Получилось даже лаконичнее, но менее читаемо(уж когда будет больше вложенность объектов,
+будет точно менее читаемо). Так же раздрожает длинные цепочки одинаковых методов.</p>
 
-<p>```ruby
-class Person &lt; ActiveRecord::Base
-  with_options :if => :use_full_validation? do |person|</p>
+<p>Помедитировав над проблемой, я нашёл компроммиссное решение на основе метода <code>instance_eval</code>.</p>
 
-<pre><code>person.validates :first_name, :last_name, :birhday, :presence =&gt; true
-person.validates :first_name, :last_name, :length =&gt; { :maximum =&gt; 255 }
+<p>```ruby user_builder_spec.rb
+describe UserBuilder do
+  describe '#build' do</p>
+
+<pre><code>let(:user) { described_class.new(some_attrs).build }
+
+it 'should correctly build a user' do
+  user.instance_eval do
+    first_name.should == "Rodion"
+    last_name.should  == "Raskolnikov"
+
+    account.instance_eval do
+      email.should           == "rodion@mail.ru"
+      last_visit_date.should == Date.new(1866, 11, 27)
+
+      preference.instance_eval do
+        language.should == "Russian"
+        weapon.should   == "ax"
+      end
+    end
+  end
+end
 </code></pre>
 
 <p>  end
 end
 ```</p>
 
-<p>Now <code>:if =&gt; :use_full_validation</code> will be additonaly passed to every method call
-on <code>person</code> inside the block.</p>
+<p>Это по-прежнему один тест, но мы избавились от длинных цепочек методов.
+Нужно заметить, что у такого подхода есть тоже свои недостатки: используя <code>instance_eval</code>
+мы покидаем контекст теста, и переходим прямо в контекст объекта, в котором не существует методов подобных
+<code>be_valid</code>, <code>be_instance_of</code>, etc.</p>
 
-<h3>Vanguard</h3>
-
-<p>The guys from <a href="http://rom-rb.org/">the ROM project</a> have their own validator called
-<a href="https://github.com/mbj/vanguard">Vanguard</a>(previous name is Aqeuitas).
-The sweet thing about it is that it allows to seperate validations and
-models according to DataMapper approach. The downside is if you use ActiveRecord
-you'll have a zoo of validation tools. Also it may be still raw and I'm not sure
-is it possible to apply it to solve the described problem, but I'd encourage
-you to take a look at it.</p>
-
-<h2>Conclusion</h2>
-
-<p>ActiveRecord is good for plain and straightforward projects.
-In big enterprise applications usually we need more flexibility to meet different
-exotic requiments.
-We've created <a href="https://github.com/TMXCredit/themis">Themis</a> to extend ActiveRecord
-and solve some of the problems.
-Actually I hope that <a href="http://rom-rb.org/">ROM</a> will be ready soon and we'll
-have an ability to select right ORM before diving into development.</p>
-
-<p>Thanks for reading. Hope the article was useful for you and I'm wating for
-your feedback!</p>
-
-<h2>Links</h2>
-
-<ul>
-<li><a href="https://github.com/TMXCredit/themis">Themis on Github</a> - you'll find here comprehensive documentation in README;</li>
-<li><a href="http://guides.rubyonrails.org/active_record_validations.html#conditional-validation">Conditional validation</a> - extraction from Rails Guide;</li>
-<li><a href="https://github.com/mbj/vanguard">Vanguard on Github</a> - validator for ROM project;</li>
-<li><a href="http://railscasts.com/episodes/42-with-options">Railscast: #42</a> - Ryan Bates describes how <code>with_options</code> works.</li>
-</ul>
-
+<p>Надеюсь, эта идея будет вам полезной. Буду рад узнать чужое мнение.</p>
 ]]></content>
   </entry>
   

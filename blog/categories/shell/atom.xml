@@ -4,7 +4,7 @@
   <title><![CDATA[Category: shell | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/shell/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[How to call bash(not shell) from ruby]]></title>
     <link href="http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/"/>
-    <updated>2013-09-21T21:53:00+03:00</updated>
+    <updated>2013-09-21T21:53:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby</id>
     <content type="html"><![CDATA[<p>Few days ago I was writing a ruby wrapper for <a href="http://sox.sourceforge.net/">SoX</a>
 command line tool. To reduce disk IO I wanted to use <a href="http://en.wikipedia.org/wiki/Process_substitution">process substitution</a>.

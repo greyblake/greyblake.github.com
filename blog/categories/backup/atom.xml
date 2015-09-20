@@ -4,7 +4,7 @@
   <title><![CDATA[Category: backup | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/backup/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Backuping and restoring PostgreSQL databases]]></title>
     <link href="http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases/"/>
-    <updated>2011-02-04T23:48:55+02:00</updated>
+    <updated>2011-02-04T23:48:55+01:00</updated>
     <id>http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases</id>
     <content type="html"><![CDATA[<p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
 

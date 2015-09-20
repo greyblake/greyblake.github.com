@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -14,9 +14,210 @@
 
   
   <entry>
+    <title type="html"><![CDATA[NLP, Toki Pona and Ruby: part 1]]></title>
+    <link href="http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/"/>
+    <updated>2015-09-20T20:36:00+02:00</updated>
+    <id>http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>During last few years, I spent a lot of time learning foreign languages like Esperanto, Spanish and German.
+After a while, I came up with an idea that I can apply this knowledge in computer science.</p>
+
+<p>When I decided this I was completely new to Computational Linguistics(CL) and Natural Language Processing(NLP).
+However after reading a number of articles I got some basic ideas.</p>
+
+<h2>What I am gonna do</h2>
+
+<p>To dive into CL/NLP I&#8217;ve decided implement Toki Pona -> English translator from scratch.
+It&#8217;s interesting to see which issues I will face and how I will solve them.
+It will make me go through number of stages of language processing:</p>
+
+<ul>
+<li>Lexical analysis</li>
+<li>Language detection (I want to distinguish Toki Pona from other languages)</li>
+<li>Morphological analysis (actually will be skipped because of simplicity of Toki Pona)</li>
+<li>Syntax analysis</li>
+<li>Word translation</li>
+<li>Syntax tree conversion</li>
+<li>Generation of final translation with respect to English grammar.</li>
+</ul>
+
+
+<p>Anyway, this list is not strict, and probably it will be modified in the future.</p>
+
+<h2>What I am not gonna do</h2>
+
+<p>There are many tools and libraries that already exist in Ruby for NLP.
+I am not gonna use any of them here neither cover them in the articles.
+If you need something like that, please take a look at <a href="https://github.com/diasks2/ruby-nlp">ruby-nlp</a>.
+It&#8217;s a document that gathers a variety of NLP tools implemented in ruby.</p>
+
+<h2>What is Toki Pona?</h2>
+
+<p><a href="https://en.wikipedia.org/wiki/Toki_Pona">Toki Pona</a> is a constructed language created by Sonja Lang in 2001.
+What is so special about it? Its vocabulary is limited and contains only <strong>125 words</strong>.
+The grammar is regular (anyway there will be some pitfalls). The language itself simple and can be learned in 1-2 nights,
+and I believe it allows to express 80-90% of daily human communication. Also, it has some philosophical background:
+speaking the language you realize what things really are.</p>
+
+<p>Example: there is no word like &#8220;friend&#8221;, one would say &#8220;jan pona&#8221;, what literally  means &#8220;good person/human&#8221;.
+In similar way &#8220;an ocean&#8221; is &#8220;telo suli&#8221; (big water), &#8220;juice&#8221; is &#8220;telo kili&#8221; (water of fruit or vegetable), etc.</p>
+
+<p>So, even Toki Pona is not real <em>natural</em> language, it&#8217;s good to experiment with, and it gives me some hope that my
+goal can be achieved :)</p>
+
+<p>And the end of this article you&#8217;ll find number of useful links if you want to get into the language.</p>
+
+<h2>First step: lexical analysis</h2>
+
+<p>The first step in processing natural or programming language is <strong>lexical analysis</strong>. It means splitting sequence of
+characters into some meaningful units: <strong>tokens</strong>. Sometimes the process is called <strong>tokenization</strong> and
+the tools that do it are <strong>tokenizers</strong> or <strong>lexical analyzers</strong>.</p>
+
+<p>Let&#8217;s see an example. Given a sentence:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>jan suli li pona.</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Translation: &#8220;Big man is good&#8221;
+(<em>jan</em> - human/man, <em>suli</em> - big, <em>li</em> - is/are, <em>pona</em> - good).</p>
+
+<p>Note: in Toki Pona the main word goes first, so noun(<em>jan</em>) is on the first position,
+and on the second position is adjective(<em>suli</em>) that modifies the noun.</p>
+
+<p>Expected list of tokens is</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="s2">&quot;jan&quot;</span><span class="p">,</span> <span class="s2">&quot;suli&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s implement class <code>Tokipona::Tokenizer</code> with a class method <code>.tokenize</code> that returns an array of
+tokens for a given text. We start with tests first.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="ss">Tokipona</span><span class="p">:</span><span class="ss">:Tokenizer</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">describe</span> <span class="s2">&quot;.tokenize&quot;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;only words&quot;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words&quot;</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki mi li toki pona&quot;</span>
+</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;mi&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;words with multiple spaces in between&quot;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words&quot;</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki   mi   li   toki   pona&quot;</span>
+</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;mi&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;words with special characters&quot;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words and characters&quot;</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;sina wile lape anu seme, jan lane?&quot;</span>
+</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;sina&quot;</span><span class="p">,</span> <span class="s2">&quot;wile&quot;</span><span class="p">,</span> <span class="s2">&quot;lape&quot;</span><span class="p">,</span> <span class="s2">&quot;anu&quot;</span><span class="p">,</span> <span class="s2">&quot;seme&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;jan&quot;</span><span class="p">,</span> <span class="s2">&quot;lane&quot;</span><span class="p">,</span> <span class="s2">&quot;?&quot;</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">it</span> <span class="s2">&quot;does not change input text&quot;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki mi li pona&quot;</span>
+</span><span class='line'>      <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">expect</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="s2">&quot;toki mi li pona&quot;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Usually lexical analysis for programming languages is based on <a href="http://web.cse.ohio-state.edu/~gurari/course/cse756/html/cse756se2.html">finite-state automata</a>.
+But in our simple case we can easily handle it with one regular expression:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Tokipona</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Tokenizer</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@text</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="sr">/\w+|[^\s]/</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This implementation looks very naive, but specs pass, so we live it as it is.
+Probably in the future we will modify.</p>
+
+<h2>Conclusion</h2>
+
+<p>It is the first article and the beginning of the journey. The next step will be an implementation
+of Toki Pona language detector. It&#8217;s not necessary to know Toki Pona to follow me,
+but in case you are interested, here below I provide some useful links, so you can learn yourself
+and start communicating.</p>
+
+<p>I&#8217;ve created a github repository where you can access the code: <a href="https://github.com/greyblake/tokipona">greyblake/tokipona</a>.</p>
+
+<p>P.S.</p>
+
+<p>Thanks for reading. The subject is new for me, so your comments, suggestions and feedback can be very helpful.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Toki_Pona">Toki Pona at Wikipedia</a></li>
+<li><a href="http://tokipona.org/">Official Toki Pona site</a></li>
+<li><a href="http://rowa.giso.de/languages/toki-pona/english/lessons.php">Toki Pona lessons</a> - here you can start learning the language</li>
+<li><a href="http://x-raizor.github.io/visual-tokipona/index.html">Toki Pona visual vocabulary</a></li>
+<li>#tokipona - IRC channel where you can communicate with other people</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Lazy object pattern in ruby]]></title>
     <link href="http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby/"/>
-    <updated>2014-10-05T21:27:00+03:00</updated>
+    <updated>2014-10-05T21:27:00+02:00</updated>
     <id>http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby</id>
     <content type="html"><![CDATA[<p>I few days ago my colleague <a href="https://github.com/albertosaurus">Arthur Shagall</a> reviewing my
 code suggested me to use <strong>Lazy Object</strong> pattern to postpone some calculations during the load time.
@@ -145,7 +346,7 @@ please take a look at <a href="http://rubygems.org/gems/lazy_object">rubygems.or
   <entry>
     <title type="html"><![CDATA[Ignore files with git locally]]></title>
     <link href="http://greyblake.com/blog/2014/05/21/ignore-files-with-git-locally/"/>
-    <updated>2014-05-21T16:37:00+03:00</updated>
+    <updated>2014-05-21T16:37:00+02:00</updated>
     <id>http://greyblake.com/blog/2014/05/21/ignore-files-with-git-locally</id>
     <content type="html"><![CDATA[<p>Sometimes it&#8217;s necessary to ignore some files in a repository only locally.
 For rails developers it&#8217;s often <code>./config/database.yml</code> file.
@@ -177,7 +378,7 @@ certain files:</p>
   <entry>
     <title type="html"><![CDATA[How to compare audio in ruby]]></title>
     <link href="http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby/"/>
-    <updated>2013-12-19T19:51:00+02:00</updated>
+    <updated>2013-12-19T19:51:00+01:00</updated>
     <id>http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby</id>
     <content type="html"><![CDATA[<h2>Or how to implement sound_like RSpec matcher</h2>
 
@@ -366,7 +567,7 @@ have 100% match.</p>
   <entry>
     <title type="html"><![CDATA[Working with fonts in Debian and Ubuntu]]></title>
     <link href="http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/"/>
-    <updated>2013-10-08T00:43:00+03:00</updated>
+    <updated>2013-10-08T00:43:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu</id>
     <content type="html"><![CDATA[<h2>Install fonts</h2>
 
@@ -415,7 +616,7 @@ fonts, and one of is called <code>fontmatrix</code>. Lets install it:</p>
   <entry>
     <title type="html"><![CDATA[How to call bash(not shell) from ruby]]></title>
     <link href="http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/"/>
-    <updated>2013-09-21T21:53:00+03:00</updated>
+    <updated>2013-09-21T21:53:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby</id>
     <content type="html"><![CDATA[<p>Few days ago I was writing a ruby wrapper for <a href="http://sox.sourceforge.net/">SoX</a>
 command line tool. To reduce disk IO I wanted to use <a href="http://en.wikipedia.org/wiki/Process_substitution">process substitution</a>.
@@ -512,7 +713,7 @@ is a standard ruby library which provides a method to escape shell commands.</p>
   <entry>
     <title type="html"><![CDATA[Validation in rails with Themis]]></title>
     <link href="http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/"/>
-    <updated>2013-08-19T17:21:00+03:00</updated>
+    <updated>2013-08-19T17:21:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis</id>
     <content type="html"><![CDATA[<p>Sometimes ActiveRecord is not enough to meet complicated validation needs.
 At <a href="http://tmxcredit.com/">TMXCredit</a> we&#8217;ve created <a href="https://github.com/TMXCredit/themis">Themis</a> -
@@ -924,7 +1125,7 @@ your feedback!</p>
   <entry>
     <title type="html"><![CDATA[Почему я изучаю Эсперанто]]></title>
     <link href="http://greyblake.com/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/"/>
-    <updated>2013-03-30T01:54:00+02:00</updated>
+    <updated>2013-03-30T01:54:00+01:00</updated>
     <id>http://greyblake.com/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto</id>
     <content type="html"><![CDATA[<p>Как вы знаете, я начал изучать Эсперанто, некоторым даже успел &#8220;съесть&#8221; мозг, но всё же большинство по-прежнему задают вопросы почему и для чего я это делаю. Из этого можно прийти к выводу, что либо я безумен, либо я понимаю что-то, что другие не могут понять.
 Поэтому я решил написать небольшую статью и постараться объясниться.</p>
@@ -994,7 +1195,7 @@ your feedback!</p>
   <entry>
     <title type="html"><![CDATA[Install more screensavers on Mate desktop]]></title>
     <link href="http://greyblake.com/blog/2013/02/02/install-more-screensavers-on-mate-desktop/"/>
-    <updated>2013-02-02T22:24:00+02:00</updated>
+    <updated>2013-02-02T22:24:00+01:00</updated>
     <id>http://greyblake.com/blog/2013/02/02/install-more-screensavers-on-mate-desktop</id>
     <content type="html"><![CDATA[<p>I switched from Gnome3 to <a href="http://mate-desktop.org/">Mate desktop</a>
 and noticed that I&#8217;m able to use only few sreensavers.
@@ -1043,7 +1244,7 @@ to do with Gnome.</p>
   <entry>
     <title type="html"><![CDATA[Failed to add new printer in Debian Wheezy]]></title>
     <link href="http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/"/>
-    <updated>2013-01-27T21:44:00+02:00</updated>
+    <updated>2013-01-27T21:44:00+01:00</updated>
     <id>http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy</id>
     <content type="html"><![CDATA[<p>After migrating to Debian Wheezy (current test Debian repository) I faced a problem
 with installing a local USB printer: on attempt to add new USB printer
@@ -1074,7 +1275,7 @@ Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=6951
   <entry>
     <title type="html"><![CDATA[Rational can't be coerced into BigDecimal in ruby 1.9.3]]></title>
     <link href="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/"/>
-    <updated>2012-12-20T16:34:00+02:00</updated>
+    <updated>2012-12-20T16:34:00+01:00</updated>
     <id>http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3</id>
     <content type="html"><![CDATA[<p>Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
 issue of <code>Rational</code> class.</p>
@@ -1173,7 +1374,7 @@ I found no bugs reported this issue on
   <entry>
     <title type="html"><![CDATA[Custom expectations with RSpec]]></title>
     <link href="http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec/"/>
-    <updated>2012-12-14T00:34:00+02:00</updated>
+    <updated>2012-12-14T00:34:00+01:00</updated>
     <id>http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec</id>
     <content type="html"><![CDATA[<p>I know you love RSpec&#8217;s <code>expect</code> DSL like this:</p>
 
@@ -1350,7 +1551,7 @@ custom matchers usually are located in <code>spec/support/custom_matchers/</code
   <entry>
     <title type="html"><![CDATA[pg_power - ActiveRecord extension for PostgreSQL]]></title>
     <link href="http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/"/>
-    <updated>2012-09-06T23:24:00+03:00</updated>
+    <updated>2012-09-06T23:24:00+02:00</updated>
     <id>http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql</id>
     <content type="html"><![CDATA[<p>I am happy to announce that  <a href="http://tmxcredit.com/">TMXCredit</a> released
 <a href="https://github.com/TMXCredit/pg_power">pg_power</a> gem - an ActiveRecord extension which
@@ -1518,7 +1719,7 @@ schema prefix in module and models will use it build table name automatically.</
   <entry>
     <title type="html"><![CDATA[Ruby performance tricks]]></title>
     <link href="http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/"/>
-    <updated>2012-09-02T23:34:00+03:00</updated>
+    <updated>2012-09-02T23:34:00+02:00</updated>
     <id>http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks</id>
     <content type="html"><![CDATA[<p>I did some benchmarks to find out which alternatives to write code work faster. I wanna
 share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.</p>
@@ -2105,7 +2306,7 @@ dynamic method           0.150000   0.000000   0.150000 (  0.156537)
   <entry>
     <title type="html"><![CDATA[Unexpected Ruby behaviour]]></title>
     <link href="http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour/"/>
-    <updated>2012-08-10T23:28:00+03:00</updated>
+    <updated>2012-08-10T23:28:00+02:00</updated>
     <id>http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour</id>
     <content type="html"><![CDATA[<p>Ruby is a cool language with intuitive grammar. However there are a number of things which don&#8217;t seem to be expected.
 It might take long hours to debug some weird issues for unenlightened newbies.</p>
@@ -2592,7 +2793,7 @@ If you know some fancy Ruby things I haven&#8217;t mentioned please let me know.
   <entry>
     <title type="html"><![CDATA[How to build Vim against specific Ruby version]]></title>
     <link href="http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/"/>
-    <updated>2012-07-15T23:00:00+03:00</updated>
+    <updated>2012-07-15T23:00:00+02:00</updated>
     <id>http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version</id>
     <content type="html"><![CDATA[<p>Let&#8217;s say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
 But what if you need Vim compiled with Ruby 1.9.x?
@@ -2748,7 +2949,7 @@ But it&#8217;s easy to patch vim sources to force it to use <code>1.9</code> ins
   <entry>
     <title type="html"><![CDATA[Тестируем вложенные ActiveRecord-модели с RSpec]]></title>
     <link href="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/"/>
-    <updated>2012-07-06T22:19:00+03:00</updated>
+    <updated>2012-07-06T22:19:00+02:00</updated>
     <id>http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec</id>
     <content type="html"><![CDATA[<p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
 и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, как нужно. На самом деле
@@ -2971,7 +3172,7 @@ But it&#8217;s easy to patch vim sources to force it to use <code>1.9</code> ins
   <entry>
     <title type="html"><![CDATA[I released Smartdict version 0.1.0]]></title>
     <link href="http://greyblake.com/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0/"/>
-    <updated>2012-06-11T03:20:00+03:00</updated>
+    <updated>2012-06-11T03:20:00+02:00</updated>
     <id>http://greyblake.com/blog/2012/06/11/i-released-smartdict-version-0-dot-1-0</id>
     <content type="html"><![CDATA[<p>Today I released <a href="http://smartdict.net/blog/2012/06/11/smartdict-0-dot-1-0-is-released/">Smartdict version 0.1.0</a>.
 Please give me a favour and check it out.</p>
@@ -2984,7 +3185,7 @@ That will the next step in this direction, since I realy need it.</p>
   <entry>
     <title type="html"><![CDATA[Получаем Premium на busuu.com бесплатно]]></title>
     <link href="http://greyblake.com/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/"/>
-    <updated>2012-05-21T17:42:20+03:00</updated>
+    <updated>2012-05-21T17:42:20+02:00</updated>
     <id>http://greyblake.com/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno</id>
     <content type="html"><![CDATA[<p>Пожалуйста, прочтитайте так же мою статью <a href="http://greyblake.com/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>.</p>
 
@@ -3286,7 +3487,7 @@ That will the next step in this direction, since I realy need it.</p>
   <entry>
     <title type="html"><![CDATA[Разгоняем мозг]]></title>
     <link href="http://greyblake.com/blog/2012/01/30/razgonyaem-mozg/"/>
-    <updated>2012-01-30T00:33:36+02:00</updated>
+    <updated>2012-01-30T00:33:36+01:00</updated>
     <id>http://greyblake.com/blog/2012/01/30/razgonyaem-mozg</id>
     <content type="html"><![CDATA[<p>Несколько месяцев назад я был очень сильно озабочен своей продуктивностью. Здесь собраны некоторые рецепты повышения эффективности мозговой деятельности, которые мне удалось отыскать, большинство из них взяты из книги Вина Венгера &#8220;Фактор Эйнштейна&#8221;.</p>
 
@@ -3305,17 +3506,6 @@ That will the next step in this direction, since I realy need it.</p>
 
 
 <p>Кроме всего перечисленного выше, не стоит забывать, что восьмичасовой сон никто не отменял ;)</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Synchonize application data using git ]]></title>
-    <link href="http://greyblake.com/blog/2011/11/27/synchonize-application-data-using-git/"/>
-    <updated>2011-11-27T00:43:11+02:00</updated>
-    <id>http://greyblake.com/blog/2011/11/27/synchonize-application-data-using-git</id>
-    <content type="html"><![CDATA[<p>I started writing a diary using <a href="http://rednotebook.sourceforge.net">rednotebook</a> application. It&#8217;s realy cool, but I stuck with a problem: I want to use it everywhere on any device and keep all my notes synchonized. So I decided to create a simple tool called <strong>gync</strong> to help me.</p>
-
-<p>Please check it out on Github: <a href="https://github.com/greyblake/gync">https://github.com/greyblake/gync</a></p>
 ]]></content>
   </entry>
   

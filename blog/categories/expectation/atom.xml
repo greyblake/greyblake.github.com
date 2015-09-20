@@ -4,7 +4,7 @@
   <title><![CDATA[Category: expectation | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/expectation/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Custom expectations with RSpec]]></title>
     <link href="http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec/"/>
-    <updated>2012-12-14T00:34:00+02:00</updated>
+    <updated>2012-12-14T00:34:00+01:00</updated>
     <id>http://greyblake.com/blog/2012/12/14/custom-expectations-with-rspec</id>
     <content type="html"><![CDATA[<p>I know you love RSpec's <code>expect</code> DSL like this:</p>
 

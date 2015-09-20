@@ -4,7 +4,7 @@
   <title><![CDATA[Category: object | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/object/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Lazy object pattern in ruby]]></title>
     <link href="http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby/"/>
-    <updated>2014-10-05T21:27:00+03:00</updated>
+    <updated>2014-10-05T21:27:00+02:00</updated>
     <id>http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby</id>
     <content type="html"><![CDATA[<p>I few days ago my colleague <a href="https://github.com/albertosaurus">Arthur Shagall</a> reviewing my
 code suggested me to use <strong>Lazy Object</strong> pattern to postpone some calculations during the load time.

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: printer | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/printer/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Failed to add new printer in Debian Wheezy]]></title>
     <link href="http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/"/>
-    <updated>2013-01-27T21:44:00+02:00</updated>
+    <updated>2013-01-27T21:44:00+01:00</updated>
     <id>http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy</id>
     <content type="html"><![CDATA[<p>After migrating to Debian Wheezy (current test Debian repository) I faced a problem
 with installing a local USB printer: on attempt to add new USB printer

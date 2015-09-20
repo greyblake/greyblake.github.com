@@ -4,7 +4,7 @@
   <title><![CDATA[Category: unix | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/unix/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[pg_power - ActiveRecord extension for PostgreSQL]]></title>
     <link href="http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/"/>
-    <updated>2012-09-06T23:24:00+03:00</updated>
+    <updated>2012-09-06T23:24:00+02:00</updated>
     <id>http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql</id>
     <content type="html"><![CDATA[<p>I am happy to announce that  <a href="http://tmxcredit.com/">TMXCredit</a> released
 <a href="https://github.com/TMXCredit/pg_power">pg_power</a> gem - an ActiveRecord extension which
@@ -141,7 +141,7 @@ end
   <entry>
     <title type="html"><![CDATA[Powering less to highlight syntax and display line numbers]]></title>
     <link href="http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/"/>
-    <updated>2011-09-23T17:38:35+03:00</updated>
+    <updated>2011-09-23T17:38:35+02:00</updated>
     <id>http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers</id>
     <content type="html"><![CDATA[<p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
 
@@ -215,7 +215,7 @@ export LESS=' -R -N'</p>
   <entry>
     <title type="html"><![CDATA[Using update-rc.d]]></title>
     <link href="http://greyblake.com/blog/2011/09/18/using-update-rc-d/"/>
-    <updated>2011-09-18T21:00:00+03:00</updated>
+    <updated>2011-09-18T21:00:00+02:00</updated>
     <id>http://greyblake.com/blog/2011/09/18/using-update-rc-d</id>
     <content type="html"><![CDATA[<p><code>update-rc.d</code> is tool for adding daemons to /etc/rc[1-6]d files.</p>
 
@@ -315,7 +315,7 @@ It's a little routine work, right? But in case if you have descriptive comment I
   <entry>
     <title type="html"><![CDATA[Backuping and restoring PostgreSQL databases]]></title>
     <link href="http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases/"/>
-    <updated>2011-02-04T23:48:55+02:00</updated>
+    <updated>2011-02-04T23:48:55+01:00</updated>
     <id>http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases</id>
     <content type="html"><![CDATA[<p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
 

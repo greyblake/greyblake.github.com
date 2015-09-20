@@ -4,7 +4,7 @@
   <title><![CDATA[Category: linux | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Working with fonts in Debian and Ubuntu]]></title>
     <link href="http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/"/>
-    <updated>2013-10-08T00:43:00+03:00</updated>
+    <updated>2013-10-08T00:43:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu</id>
     <content type="html"><![CDATA[<h2>Install fonts</h2>
 
@@ -62,7 +62,7 @@ fontmatrix
   <entry>
     <title type="html"><![CDATA[Install more screensavers on Mate desktop]]></title>
     <link href="http://greyblake.com/blog/2013/02/02/install-more-screensavers-on-mate-desktop/"/>
-    <updated>2013-02-02T22:24:00+02:00</updated>
+    <updated>2013-02-02T22:24:00+01:00</updated>
     <id>http://greyblake.com/blog/2013/02/02/install-more-screensavers-on-mate-desktop</id>
     <content type="html"><![CDATA[<p>I switched from Gnome3 to <a href="http://mate-desktop.org/">Mate desktop</a>
 and noticed that I'm able to use only few sreensavers.
@@ -108,7 +108,7 @@ find . -name '*.desktop' | xargs sed -i 's/OnlyShowIn=GNOME;/OnlyShowIn=GNOME;MA
   <entry>
     <title type="html"><![CDATA[Failed to add new printer in Debian Wheezy]]></title>
     <link href="http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/"/>
-    <updated>2013-01-27T21:44:00+02:00</updated>
+    <updated>2013-01-27T21:44:00+01:00</updated>
     <id>http://greyblake.com/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy</id>
     <content type="html"><![CDATA[<p>After migrating to Debian Wheezy (current test Debian repository) I faced a problem
 with installing a local USB printer: on attempt to add new USB printer
@@ -139,7 +139,7 @@ Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=6951
   <entry>
     <title type="html"><![CDATA[pg_power - ActiveRecord extension for PostgreSQL]]></title>
     <link href="http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql/"/>
-    <updated>2012-09-06T23:24:00+03:00</updated>
+    <updated>2012-09-06T23:24:00+02:00</updated>
     <id>http://greyblake.com/blog/2012/09/06/pg-power-activerecord-extension-for-postgresql</id>
     <content type="html"><![CDATA[<p>I am happy to announce that  <a href="http://tmxcredit.com/">TMXCredit</a> released
 <a href="https://github.com/TMXCredit/pg_power">pg_power</a> gem - an ActiveRecord extension which
@@ -264,7 +264,7 @@ end
   <entry>
     <title type="html"><![CDATA[How to Install Firefox (Iceweasel) 7 on Debian Squeeze]]></title>
     <link href="http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/"/>
-    <updated>2011-10-03T18:12:54+03:00</updated>
+    <updated>2011-10-03T18:12:54+02:00</updated>
     <id>http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze</id>
     <content type="html"><![CDATA[<p>First remove lagacy version of Iceweasel:</p>
 

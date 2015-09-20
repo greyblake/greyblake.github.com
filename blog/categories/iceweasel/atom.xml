@@ -4,7 +4,7 @@
   <title><![CDATA[Category: iceweasel | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/iceweasel/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[How to Install Firefox (Iceweasel) 7 on Debian Squeeze]]></title>
     <link href="http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze/"/>
-    <updated>2011-10-03T18:12:54+03:00</updated>
+    <updated>2011-10-03T18:12:54+02:00</updated>
     <id>http://greyblake.com/blog/2011/10/03/how-to-install-firefox-iceweasel-7-on-debian-squeeze</id>
     <content type="html"><![CDATA[<p>First remove lagacy version of Iceweasel:</p>
 

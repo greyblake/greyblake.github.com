@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ubuntu | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/ubuntu/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Working with fonts in Debian and Ubuntu]]></title>
     <link href="http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/"/>
-    <updated>2013-10-08T00:43:00+03:00</updated>
+    <updated>2013-10-08T00:43:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu</id>
     <content type="html"><![CDATA[<h2>Install fonts</h2>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -14,9 +14,172 @@
 
   
   <entry>
+    <title type="html"><![CDATA[NLP, Toki Pona and Ruby: part 1]]></title>
+    <link href="http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/"/>
+    <updated>2015-09-20T20:36:00+02:00</updated>
+    <id>http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1</id>
+    <content type="html"><![CDATA[<h2>Intro</h2>
+
+<p>During last few years, I spent a lot of time learning foreign languages like Esperanto, Spanish and German.
+After a while, I came up with an idea that I can apply this knowledge in computer science.</p>
+
+<p>When I decided this I was completely new to Computational Linguistics(CL) and Natural Language Processing(NLP).
+However after reading a number of articles I got some basic ideas.</p>
+
+<h2>What I am gonna do</h2>
+
+<p>To dive into CL/NLP I've decided implement Toki Pona -> English translator from scratch.
+It's interesting to see which issues I will face and how I will solve them.
+It will make me go through number of stages of language processing:</p>
+
+<ul>
+<li>Lexical analysis</li>
+<li>Language detection (I want to distinguish Toki Pona from other languages)</li>
+<li>Morphological analysis (actually will be skipped because of simplicity of Toki Pona)</li>
+<li>Syntax analysis</li>
+<li>Word translation</li>
+<li>Syntax tree conversion</li>
+<li>Generation of final translation with respect to English grammar.</li>
+</ul>
+
+
+<p>Anyway, this list is not strict, and probably it will be modified in the future.</p>
+
+<h2>What I am not gonna do</h2>
+
+<p>There are many tools and libraries that already exist in Ruby for NLP.
+I am not gonna use any of them here neither cover them in the articles.
+If you need something like that, please take a look at <a href="https://github.com/diasks2/ruby-nlp">ruby-nlp</a>.
+It's a document that gathers a variety of NLP tools implemented in ruby.</p>
+
+<h2>What is Toki Pona?</h2>
+
+<p><a href="https://en.wikipedia.org/wiki/Toki_Pona">Toki Pona</a> is a constructed language created by Sonja Lang in 2001.
+What is so special about it? Its vocabulary is limited and contains only <strong>125 words</strong>.
+The grammar is regular (anyway there will be some pitfalls). The language itself simple and can be learned in 1-2 nights,
+and I believe it allows to express 80-90% of daily human communication. Also, it has some philosophical background:
+speaking the language you realize what things really are.</p>
+
+<p>Example: there is no word like "friend", one would say "jan pona", what literally  means "good person/human".
+In similar way "an ocean" is "telo suli" (big water), "juice" is "telo kili" (water of fruit or vegetable), etc.</p>
+
+<p>So, even Toki Pona is not real <em>natural</em> language, it's good to experiment with, and it gives me some hope that my
+goal can be achieved :)</p>
+
+<p>And the end of this article you'll find number of useful links if you want to get into the language.</p>
+
+<h2>First step: lexical analysis</h2>
+
+<p>The first step in processing natural or programming language is <strong>lexical analysis</strong>. It means splitting sequence of
+characters into some meaningful units: <strong>tokens</strong>. Sometimes the process is called <strong>tokenization</strong> and
+the tools that do it are <strong>tokenizers</strong> or <strong>lexical analyzers</strong>.</p>
+
+<p>Let's see an example. Given a sentence:
+<code>
+jan suli li pona.
+</code>
+Translation: "Big man is good"
+(<em>jan</em> - human/man, <em>suli</em> - big, <em>li</em> - is/are, <em>pona</em> - good).</p>
+
+<p>Note: in Toki Pona the main word goes first, so noun(<em>jan</em>) is on the first position,
+and on the second position is adjective(<em>suli</em>) that modifies the noun.</p>
+
+<p>Expected list of tokens is
+<code>ruby
+["jan", "suli", "li", "pona", "."]
+</code></p>
+
+<p>Let's implement class <code>Tokipona::Tokenizer</code> with a class method <code>.tokenize</code> that returns an array of
+tokens for a given text. We start with tests first.</p>
+
+<p>```ruby
+describe Tokipona::Tokenizer do
+  describe ".tokenize" do</p>
+
+<pre><code>context "only words" do
+  it "returns array of words" do
+    text = "toki mi li toki pona"
+    tokens = described_class.tokenize(text)
+    expect(tokens).to eq ["toki", "mi", "li", "toki", "pona"]
+  end
+end
+
+context "words with multiple spaces in between" do
+  it "returns array of words" do
+    text = "toki   mi   li   toki   pona"
+    tokens = described_class.tokenize(text)
+    expect(tokens).to eq ["toki", "mi", "li", "toki", "pona"]
+  end
+end
+
+context "words with special characters" do
+  it "returns array of words and characters" do
+    text = "sina wile lape anu seme, jan lane?"
+    tokens = described_class.tokenize(text)
+    expect(tokens).to eq ["sina", "wile", "lape", "anu", "seme", ",", "jan", "lane", "?"]
+  end
+end
+
+it "does not change input text" do
+  text = "toki mi li pona"
+  described_class.tokenize(text)
+  expect(text).to eq "toki mi li pona"
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Usually lexical analysis for programming languages is based on <a href="http://web.cse.ohio-state.edu/~gurari/course/cse756/html/cse756se2.html">finite-state automata</a>.
+But in our simple case we can easily handle it with one regular expression:</p>
+
+<p>```ruby
+module Tokipona
+  class Tokenizer</p>
+
+<pre><code>def self.tokenize(text)
+  @text.scan(/\w+|[^\s]/)
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>This implementation looks very naive, but specs pass, so we live it as it is.
+Probably in the future we will modify.</p>
+
+<h2>Conclusion</h2>
+
+<p>It is the first article and the beginning of the journey. The next step will be an implementation
+of Toki Pona language detector. It's not necessary to know Toki Pona to follow me,
+but in case you are interested, here below I provide some useful links, so you can learn yourself
+and start communicating.</p>
+
+<p>I've created a github repository where you can access the code: <a href="https://github.com/greyblake/tokipona">greyblake/tokipona</a>.</p>
+
+<p>P.S.</p>
+
+<p>Thanks for reading. The subject is new for me, so your comments, suggestions and feedback can be very helpful.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Toki_Pona">Toki Pona at Wikipedia</a></li>
+<li><a href="http://tokipona.org/">Official Toki Pona site</a></li>
+<li><a href="http://rowa.giso.de/languages/toki-pona/english/lessons.php">Toki Pona lessons</a> - here you can start learning the language</li>
+<li><a href="http://x-raizor.github.io/visual-tokipona/index.html">Toki Pona visual vocabulary</a></li>
+<li>#tokipona - IRC channel where you can communicate with other people</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Lazy object pattern in ruby]]></title>
     <link href="http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby/"/>
-    <updated>2014-10-05T21:27:00+03:00</updated>
+    <updated>2014-10-05T21:27:00+02:00</updated>
     <id>http://greyblake.com/blog/2014/10/05/lazy-object-pattern-in-ruby</id>
     <content type="html"><![CDATA[<p>I few days ago my colleague <a href="https://github.com/albertosaurus">Arthur Shagall</a> reviewing my
 code suggested me to use <strong>Lazy Object</strong> pattern to postpone some calculations during the load time.
@@ -127,7 +290,7 @@ please take a look at <a href="http://rubygems.org/gems/lazy_object">rubygems.or
   <entry>
     <title type="html"><![CDATA[How to compare audio in ruby]]></title>
     <link href="http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby/"/>
-    <updated>2013-12-19T19:51:00+02:00</updated>
+    <updated>2013-12-19T19:51:00+01:00</updated>
     <id>http://greyblake.com/blog/2013/12/19/how-to-compare-audio-in-ruby</id>
     <content type="html"><![CDATA[<h2>Or how to implement sound_like RSpec matcher</h2>
 
@@ -290,7 +453,7 @@ have 100% match.</p>
   <entry>
     <title type="html"><![CDATA[How to call bash(not shell) from ruby]]></title>
     <link href="http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/"/>
-    <updated>2013-09-21T21:53:00+03:00</updated>
+    <updated>2013-09-21T21:53:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby</id>
     <content type="html"><![CDATA[<p>Few days ago I was writing a ruby wrapper for <a href="http://sox.sourceforge.net/">SoX</a>
 command line tool. To reduce disk IO I wanted to use <a href="http://en.wikipedia.org/wiki/Process_substitution">process substitution</a>.
@@ -373,7 +536,7 @@ bash(cmd)        # =&gt; Saluton! Kiel vi fartas?
   <entry>
     <title type="html"><![CDATA[Validation in rails with Themis]]></title>
     <link href="http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/"/>
-    <updated>2013-08-19T17:21:00+03:00</updated>
+    <updated>2013-08-19T17:21:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis</id>
     <content type="html"><![CDATA[<p>Sometimes ActiveRecord is not enough to meet complicated validation needs.
 At <a href="http://tmxcredit.com/">TMXCredit</a> we've created <a href="https://github.com/TMXCredit/themis">Themis</a> -
@@ -688,84 +851,6 @@ your feedback!</p>
 <li><a href="http://railscasts.com/episodes/42-with-options">Railscast: #42</a> - Ryan Bates describes how <code>with_options</code> works.</li>
 </ul>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Rational can't be coerced into BigDecimal in ruby 1.9.3]]></title>
-    <link href="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/"/>
-    <updated>2012-12-20T16:34:00+02:00</updated>
-    <id>http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3</id>
-    <content type="html"><![CDATA[<p>Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
-issue of <code>Rational</code> class.</p>
-
-<p>Ruby 1.9.3:
-```ruby
-require 'bigdecimal'
-require 'rational'</p>
-
-<h1>You can multiply Rational against BigDecimal</h1>
-
-<p>Rational(1) * BigDecimal('1')  # => &lt;BigDecimal:a566d0,'0.1E1',9(36)></p>
-
-<h1>But you can't do the same when you change order</h1>
-
-<p>BigDecimal('1') * Rational(1)  # => TypeError: Rational can't be coerced into BigDecimal
-```</p>
-
-<p>On other hand in Ruby 1.8.7:</p>
-
-<p>```ruby
-require 'bigdecimal'
-require 'rational'</p>
-
-<h1>BigDecimal * Rational works OK</h1>
-
-<p>BigDecimal('1') * Rational(1)  # => 1.0 (Float)</p>
-
-<h1>But Rational * BigDecimal doesn't</h1>
-
-<p>Rational(1) * BigDecimal('1')  # => TypeError: Rational can't be coerced into BigDecimal
-```</p>
-
-<p>It's looks weird. So I can only say for sure that <code>Rational</code> -> <code>BigDecimal</code>
-coercion is not implemented in Ruby.</p>
-
-<p>I've tried to fix it with simple monkey patch:</p>
-
-<p>```ruby</p>
-
-<h1>Works only for Ruby1.9.3</h1>
-
-<p>class Rational
-  def coerce(value)</p>
-
-<pre><code>case value
-when BigDecimal
-  return self, value
-else
-  super
-end
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<p>And it works OK against simple examples:</p>
-
-<p><code>ruby
-Rational(1) * BigDecimal('1')  # =&gt; &lt;BigDecimal:a566d0,'0.1E1',9(36)&gt;
-BigDecimal('1') * Rational(1)  # =&gt; &lt;BigDecimal:a566d0,'0.1E1',9(36)&gt;
-</code></p>
-
-<p>But it causes intermittent segmentation faults when I run Rails application.</p>
-
-<p>Any ideas about the coercion? Is it expected behaviour of ruby1.9.3?
-I found no bugs reported this issue on
-<a href="bugs.ruby-lang.org">https://bugs.ruby-lang.org</a>.</p>
-
-<p>I'll appreciate any feedback. Thanks.</p>
 ]]></content>
   </entry>
   

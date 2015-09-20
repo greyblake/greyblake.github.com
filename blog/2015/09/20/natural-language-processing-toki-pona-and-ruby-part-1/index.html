@@ -1,0 +1,501 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>NLP, Toki Pona and Ruby: part 1 - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Intro During last few years, I spent a lot of time learning foreign languages like Esperanto, Spanish and German.
+After a while, I came up with an &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">NLP, Toki Pona and Ruby: Part 1</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-20T20:36:00+02:00" pubdate data-updated="true">Sep 20<span>th</span>, 2015</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2>Intro</h2>
+
+<p>During last few years, I spent a lot of time learning foreign languages like Esperanto, Spanish and German.
+After a while, I came up with an idea that I can apply this knowledge in computer science.</p>
+
+<p>When I decided this I was completely new to Computational Linguistics(CL) and Natural Language Processing(NLP).
+However after reading a number of articles I got some basic ideas.</p>
+
+<h2>What I am gonna do</h2>
+
+<p>To dive into CL/NLP I&#8217;ve decided implement Toki Pona -> English translator from scratch.
+It&#8217;s interesting to see which issues I will face and how I will solve them.
+It will make me go through number of stages of language processing:</p>
+
+<ul>
+<li>Lexical analysis</li>
+<li>Language detection (I want to distinguish Toki Pona from other languages)</li>
+<li>Morphological analysis (actually will be skipped because of simplicity of Toki Pona)</li>
+<li>Syntax analysis</li>
+<li>Word translation</li>
+<li>Syntax tree conversion</li>
+<li>Generation of final translation with respect to English grammar.</li>
+</ul>
+
+
+<p>Anyway, this list is not strict, and probably it will be modified in the future.</p>
+
+<h2>What I am not gonna do</h2>
+
+<p>There are many tools and libraries that already exist in Ruby for NLP.
+I am not gonna use any of them here neither cover them in the articles.
+If you need something like that, please take a look at <a href="https://github.com/diasks2/ruby-nlp">ruby-nlp</a>.
+It&#8217;s a document that gathers a variety of NLP tools implemented in ruby.</p>
+
+<h2>What is Toki Pona?</h2>
+
+<p><a href="https://en.wikipedia.org/wiki/Toki_Pona">Toki Pona</a> is a constructed language created by Sonja Lang in 2001.
+What is so special about it? Its vocabulary is limited and contains only <strong>125 words</strong>.
+The grammar is regular (anyway there will be some pitfalls). The language itself simple and can be learned in 1-2 nights,
+and I believe it allows to express 80-90% of daily human communication. Also, it has some philosophical background:
+speaking the language you realize what things really are.</p>
+
+<p>Example: there is no word like &#8220;friend&#8221;, one would say &#8220;jan pona&#8221;, what literally  means &#8220;good person/human&#8221;.
+In similar way &#8220;an ocean&#8221; is &#8220;telo suli&#8221; (big water), &#8220;juice&#8221; is &#8220;telo kili&#8221; (water of fruit or vegetable), etc.</p>
+
+<p>So, even Toki Pona is not real <em>natural</em> language, it&#8217;s good to experiment with, and it gives me some hope that my
+goal can be achieved :)</p>
+
+<p>And the end of this article you&#8217;ll find number of useful links if you want to get into the language.</p>
+
+<h2>First step: lexical analysis</h2>
+
+<p>The first step in processing natural or programming language is <strong>lexical analysis</strong>. It means splitting sequence of
+characters into some meaningful units: <strong>tokens</strong>. Sometimes the process is called <strong>tokenization</strong> and
+the tools that do it are <strong>tokenizers</strong> or <strong>lexical analyzers</strong>.</p>
+
+<p>Let&#8217;s see an example. Given a sentence:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>jan suli li pona.</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Translation: &#8220;Big man is good&#8221;
+(<em>jan</em> - human/man, <em>suli</em> - big, <em>li</em> - is/are, <em>pona</em> - good).</p>
+
+<p>Note: in Toki Pona the main word goes first, so noun(<em>jan</em>) is on the first position,
+and on the second position is adjective(<em>suli</em>) that modifies the noun.</p>
+
+<p>Expected list of tokens is</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="s2">&quot;jan&quot;</span><span class="p">,</span> <span class="s2">&quot;suli&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s implement class <code>Tokipona::Tokenizer</code> with a class method <code>.tokenize</code> that returns an array of
+tokens for a given text. We start with tests first.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="ss">Tokipona</span><span class="p">:</span><span class="ss">:Tokenizer</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">describe</span> <span class="s2">&quot;.tokenize&quot;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;only words&quot;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words&quot;</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki mi li toki pona&quot;</span>
+</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;mi&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;words with multiple spaces in between&quot;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words&quot;</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki   mi   li   toki   pona&quot;</span>
+</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;mi&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;words with special characters&quot;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words and characters&quot;</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;sina wile lape anu seme, jan lane?&quot;</span>
+</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;sina&quot;</span><span class="p">,</span> <span class="s2">&quot;wile&quot;</span><span class="p">,</span> <span class="s2">&quot;lape&quot;</span><span class="p">,</span> <span class="s2">&quot;anu&quot;</span><span class="p">,</span> <span class="s2">&quot;seme&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;jan&quot;</span><span class="p">,</span> <span class="s2">&quot;lane&quot;</span><span class="p">,</span> <span class="s2">&quot;?&quot;</span><span class="o">]</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">it</span> <span class="s2">&quot;does not change input text&quot;</span> <span class="k">do</span>
+</span><span class='line'>      <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki mi li pona&quot;</span>
+</span><span class='line'>      <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">expect</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="s2">&quot;toki mi li pona&quot;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Usually lexical analysis for programming languages is based on <a href="http://web.cse.ohio-state.edu/~gurari/course/cse756/html/cse756se2.html">finite-state automata</a>.
+But in our simple case we can easily handle it with one regular expression:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Tokipona</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Tokenizer</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>      <span class="vi">@text</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="sr">/\w+|[^\s]/</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This implementation looks very naive, but specs pass, so we live it as it is.
+Probably in the future we will modify.</p>
+
+<h2>Conclusion</h2>
+
+<p>It is the first article and the beginning of the journey. The next step will be an implementation
+of Toki Pona language detector. It&#8217;s not necessary to know Toki Pona to follow me,
+but in case you are interested, here below I provide some useful links, so you can learn yourself
+and start communicating.</p>
+
+<p>I&#8217;ve created a github repository where you can access the code: <a href="https://github.com/greyblake/tokipona">greyblake/tokipona</a>.</p>
+
+<p>P.S.</p>
+
+<p>Thanks for reading. The subject is new for me, so your comments, suggestions and feedback can be very helpful.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Toki_Pona">Toki Pona at Wikipedia</a></li>
+<li><a href="http://tokipona.org/">Official Toki Pona site</a></li>
+<li><a href="http://rowa.giso.de/languages/toki-pona/english/lessons.php">Toki Pona lessons</a> - here you can start learning the language</li>
+<li><a href="http://x-raizor.github.io/visual-tokipona/index.html">Toki Pona visual vocabulary</a></li>
+<li>#tokipona - IRC channel where you can communicate with other people</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-20T20:36:00+02:00" pubdate data-updated="true">Sep 20<span>th</span>, 2015</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/nlp/'>nlp</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/tokipona/'>tokipona</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2014/10/05/lazy-object-pattern-in-ruby/" title="Previous Post: Lazy object pattern in ruby">&laquo; Lazy object pattern in ruby</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/">NLP, Toki Pona and Ruby: part 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy object pattern in ruby</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/21/ignore-files-with-git-locally/">Ignore files with git locally</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to compare audio in ruby</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/">Working with fonts in Debian and Ubuntu</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/';
+        var disqus_url = 'http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

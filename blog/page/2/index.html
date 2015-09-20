@@ -9,8 +9,16 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="I know you love RSpec&#8217;s expect DSL like this: 1
-expect { raise(&quot;Boom!&quot;) }.to raise_error(RuntimeError, &quot;Boom!&quot;) We often &hellip;">
+  <meta name="description" content="Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
+issue of Rational class. Ruby 1.9.3: 1
+2
+3
+4
+5
+6
+7
+8
+require &#39; &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -94,6 +102,134 @@ expect { raise(&quot;Boom!&quot;) }.to raise_error(RuntimeError, &quot;Boom!&quo
   <header>
     
       <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/">Rational Can&#8217;t Be Coerced Into BigDecimal in Ruby 1.9.3</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-20T16:34:00+01:00" pubdate data-updated="true">Dec 20<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
+issue of <code>Rational</code> class.</p>
+
+<p>Ruby 1.9.3:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;bigdecimal&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;rational&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># You can multiply Rational against BigDecimal</span>
+</span><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># But you can&#39;t do the same when you change order</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; TypeError: Rational can&#39;t be coerced into BigDecimal</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On other hand in Ruby 1.8.7:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;bigdecimal&#39;</span>
+</span><span class='line'><span class="nb">require</span> <span class="s1">&#39;rational&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># BigDecimal * Rational works OK</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; 1.0 (Float)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># But Rational * BigDecimal doesn&#39;t</span>
+</span><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; TypeError: Rational can&#39;t be coerced into BigDecimal</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s looks weird. So I can only say for sure that <code>Rational</code> -> <code>BigDecimal</code>
+coercion is not implemented in Ruby.</p>
+
+<p>I&#8217;ve tried to fix it with simple monkey patch:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Works only for Ruby1.9.3</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">Rational</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">coerce</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">case</span> <span class="n">value</span>
+</span><span class='line'>    <span class="k">when</span> <span class="no">BigDecimal</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nb">self</span><span class="p">,</span> <span class="n">value</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="k">super</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And it works OK against simple examples:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span><span class='line'><span class="no">BigDecimal</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="no">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># =&gt; &lt;BigDecimal:a566d0,&#39;0.1E1&#39;,9(36)&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But it causes intermittent segmentation faults when I run Rails application.</p>
+
+<p>Any ideas about the coercion? Is it expected behaviour of ruby1.9.3?
+I found no bugs reported this issue on
+<a href="bugs.ruby-lang.org">https://bugs.ruby-lang.org</a>.</p>
+
+<p>I&#8217;ll appreciate any feedback. Thanks.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
         <h1 class="entry-title"><a href="/blog/2012/12/14/custom-expectations-with-rspec/">Custom Expectations With RSpec</a></h1>
       
     
@@ -111,7 +247,7 @@ expect { raise(&quot;Boom!&quot;) }.to raise_error(RuntimeError, &quot;Boom!&quo
   
 
 
-<time datetime="2012-12-14T00:34:00+02:00" pubdate data-updated="true">Dec 14<span>th</span>, 2012</time>
+<time datetime="2012-12-14T00:34:00+01:00" pubdate data-updated="true">Dec 14<span>th</span>, 2012</time>
         
       </p>
     
@@ -187,7 +323,7 @@ There are samples how I wanna use it(desired DSL):</p>
   
 
 
-<time datetime="2012-09-06T23:24:00+03:00" pubdate data-updated="true">Sep 6<span>th</span>, 2012</time>
+<time datetime="2012-09-06T23:24:00+02:00" pubdate data-updated="true">Sep 6<span>th</span>, 2012</time>
         
       </p>
     
@@ -384,7 +520,7 @@ schema prefix in module and models will use it build table name automatically.</
   
 
 
-<time datetime="2012-09-02T23:34:00+03:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time>
+<time datetime="2012-09-02T23:34:00+02:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time>
         
       </p>
     
@@ -502,7 +638,7 @@ rescue/condition:  24.250000        inf       -nan ( 24.481970)
   
 
 
-<time datetime="2012-08-10T23:28:00+03:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time>
+<time datetime="2012-08-10T23:28:00+02:00" pubdate data-updated="true">Aug 10<span>th</span>, 2012</time>
         
       </p>
     
@@ -546,7 +682,7 @@ It might take long hours to debug some weird issues for unenlightened newbies.</
   
 
 
-<time datetime="2012-07-15T23:00:00+03:00" pubdate data-updated="true">Jul 15<span>th</span>, 2012</time>
+<time datetime="2012-07-15T23:00:00+02:00" pubdate data-updated="true">Jul 15<span>th</span>, 2012</time>
         
       </p>
     
@@ -591,7 +727,7 @@ I&#8217;m gonna tell you how to do it.</p>
   
 
 
-<time datetime="2012-07-06T22:19:00+03:00" pubdate data-updated="true">Jul 6<span>th</span>, 2012</time>
+<time datetime="2012-07-06T22:19:00+02:00" pubdate data-updated="true">Jul 6<span>th</span>, 2012</time>
         
       </p>
     
@@ -636,7 +772,7 @@ I&#8217;m gonna tell you how to do it.</p>
   
 
 
-<time datetime="2012-06-11T03:20:00+03:00" pubdate data-updated="true">Jun 11<span>th</span>, 2012</time>
+<time datetime="2012-06-11T03:20:00+02:00" pubdate data-updated="true">Jun 11<span>th</span>, 2012</time>
         
       </p>
     
@@ -678,7 +814,7 @@ That will the next step in this direction, since I realy need it.</p>
   
 
 
-<time datetime="2012-05-21T17:42:20+03:00" pubdate data-updated="true">May 21<span>st</span>, 2012</time>
+<time datetime="2012-05-21T17:42:20+02:00" pubdate data-updated="true">May 21<span>st</span>, 2012</time>
         
       </p>
     
@@ -729,7 +865,7 @@ That will the next step in this direction, since I realy need it.</p>
   
 
 
-<time datetime="2012-01-30T00:33:36+02:00" pubdate data-updated="true">Jan 30<span>th</span>, 2012</time>
+<time datetime="2012-01-30T00:33:36+01:00" pubdate data-updated="true">Jan 30<span>th</span>, 2012</time>
         
       </p>
     
@@ -744,46 +880,6 @@ That will the next step in this direction, since I realy need it.</p>
     <footer>
       <a rel="full-article" href="/blog/2012/01/30/razgonyaem-mozg/">Read on &rarr;</a>
     </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2011/11/27/synchonize-application-data-using-git/">Synchonize Application Data Using Git</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-11-27T00:43:11+02:00" pubdate data-updated="true">Nov 27<span>th</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I started writing a diary using <a href="http://rednotebook.sourceforge.net">rednotebook</a> application. It&#8217;s realy cool, but I stuck with a problem: I want to use it everywhere on any device and keep all my notes synchonized. So I decided to create a simple tool called <strong>gync</strong> to help me.</p>
-
-<p>Please check it out on Github: <a href="https://github.com/greyblake/gync">https://github.com/greyblake/gync</a></p>
-</div>
-  
   
 
 
@@ -806,6 +902,10 @@ That will the next step in this direction, since I realy need it.</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/">NLP, Toki Pona and Ruby: part 1</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy object pattern in ruby</a>
       </li>
     
@@ -819,10 +919,6 @@ That will the next step in this direction, since I realy need it.</p>
     
       <li class="post">
         <a href="/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/">Working with fonts in Debian and Ubuntu</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/">How to call bash(not shell) from ruby</a>
       </li>
     
   </ul>
@@ -884,7 +980,7 @@ That will the next step in this direction, since I realy need it.</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2014 - Sergey Potapov -
+  Copyright &copy; 2015 - Sergey Potapov -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

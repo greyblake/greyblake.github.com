@@ -4,7 +4,7 @@
   <title><![CDATA[Category: bash | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/bash/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[How to call bash(not shell) from ruby]]></title>
     <link href="http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/"/>
-    <updated>2013-09-21T21:53:00+03:00</updated>
+    <updated>2013-09-21T21:53:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby</id>
     <content type="html"><![CDATA[<p>Few days ago I was writing a ruby wrapper for <a href="http://sox.sourceforge.net/">SoX</a>
 command line tool. To reduce disk IO I wanted to use <a href="http://en.wikipedia.org/wiki/Process_substitution">process substitution</a>.
@@ -99,7 +99,7 @@ bash(cmd)        # =&gt; Saluton! Kiel vi fartas?
   <entry>
     <title type="html"><![CDATA[Powering less to highlight syntax and display line numbers]]></title>
     <link href="http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers/"/>
-    <updated>2011-09-23T17:38:35+03:00</updated>
+    <updated>2011-09-23T17:38:35+02:00</updated>
     <id>http://greyblake.com/blog/2011/09/23/powering-less-to-highlight-syntax-and-display-line-numbers</id>
     <content type="html"><![CDATA[<p>Since I am a command line guy I use <strong>less</strong> tool everywhere and everytime to quickly take a look at files. And quite often those files are different scripts and source code. So, it would be great if syntax was highlighted automatically when I open a file with less. And probably it would be great as well if I saw line numbers.</p>
 
@@ -173,7 +173,7 @@ export LESS=' -R -N'</p>
   <entry>
     <title type="html"><![CDATA[Backuping and restoring PostgreSQL databases]]></title>
     <link href="http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases/"/>
-    <updated>2011-02-04T23:48:55+02:00</updated>
+    <updated>2011-02-04T23:48:55+01:00</updated>
     <id>http://greyblake.com/blog/2011/02/04/backuping-and-restoring-postgresql-databases</id>
     <content type="html"><![CDATA[<p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
 
@@ -244,7 +244,7 @@ sudo -u postgres sh -c "xz -cd ${db_xz} | psql"
   <entry>
     <title type="html"><![CDATA[Beep alarm]]></title>
     <link href="http://greyblake.com/blog/2011/01/23/beep-alarm/"/>
-    <updated>2011-01-23T23:24:39+02:00</updated>
+    <updated>2011-01-23T23:24:39+01:00</updated>
     <id>http://greyblake.com/blog/2011/01/23/beep-alarm</id>
     <content type="html"><![CDATA[<h2>Intro</h2>
 

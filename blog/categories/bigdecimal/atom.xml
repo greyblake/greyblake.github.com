@@ -4,7 +4,7 @@
   <title><![CDATA[Category: BigDecimal | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/bigdecimal/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Rational can't be coerced into BigDecimal in ruby 1.9.3]]></title>
     <link href="http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3/"/>
-    <updated>2012-12-20T16:34:00+02:00</updated>
+    <updated>2012-12-20T16:34:00+01:00</updated>
     <id>http://greyblake.com/blog/2012/12/20/rational-cant-be-coerced-into-bigdecimal-in-ruby-1-dot-9-3</id>
     <content type="html"><![CDATA[<p>Trying to move a rails application from ruby 1.8.7 to 1.9.3 I ran into coercion
 issue of <code>Rational</code> class.</p>

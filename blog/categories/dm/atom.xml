@@ -4,7 +4,7 @@
   <title><![CDATA[Category: dm | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/dm/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[RSpec matchers for DataMapper (dm-rspec)]]></title>
     <link href="http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec/"/>
-    <updated>2011-09-12T22:25:15+03:00</updated>
+    <updated>2011-09-12T22:25:15+02:00</updated>
     <id>http://greyblake.com/blog/2011/09/12/rspec-matchers-for-datamapper-dm-rspec</id>
     <content type="html"><![CDATA[<p>I am currently developing a number of RSpec matchers for DataMapper models testing. You can try it. Just add the next in your Gemfile under <code>test</code> group:</p>
 

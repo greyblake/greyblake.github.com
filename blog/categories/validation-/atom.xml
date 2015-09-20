@@ -4,7 +4,7 @@
   <title><![CDATA[Category: validation, | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/validation-/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2014-10-05T22:52:44+03:00</updated>
+  <updated>2015-09-21T00:18:49+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Validation in rails with Themis]]></title>
     <link href="http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/"/>
-    <updated>2013-08-19T17:21:00+03:00</updated>
+    <updated>2013-08-19T17:21:00+02:00</updated>
     <id>http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis</id>
     <content type="html"><![CDATA[<p>Sometimes ActiveRecord is not enough to meet complicated validation needs.
 At <a href="http://tmxcredit.com/">TMXCredit</a> we've created <a href="https://github.com/TMXCredit/themis">Themis</a> -
