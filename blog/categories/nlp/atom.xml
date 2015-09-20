@@ -4,7 +4,7 @@
   <title><![CDATA[Category: nlp | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/nlp/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2015-09-21T00:18:49+02:00</updated>
+  <updated>2015-09-21T00:21:31+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[NLP, Toki Pona and Ruby: part 1]]></title>
-    <link href="http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1/"/>
+    <link href="http://greyblake.com/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/"/>
     <updated>2015-09-20T20:36:00+02:00</updated>
-    <id>http://greyblake.com/blog/2015/09/20/natural-language-processing-toki-pona-and-ruby-part-1</id>
+    <id>http://greyblake.com/blog/2015/09/20/nlp-toki-pona-and-ruby-part1</id>
     <content type="html"><![CDATA[<h2>Intro</h2>
 
 <p>During last few years, I spent a lot of time learning foreign languages like Esperanto, Spanish and German.
