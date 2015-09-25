@@ -124,7 +124,7 @@ module Tokipona
 end
 ```
 
-This implementation looks very naive, but specs pass, so we live it as it is.
+This implementation looks very naive, but specs pass, so we leave it as it is.
 Probably in the future we will modify.
 
 ## Conclusion
