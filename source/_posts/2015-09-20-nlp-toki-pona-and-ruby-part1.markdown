@@ -33,6 +33,8 @@ I am not gonna use any of them here neither cover them in the articles.
 If you need something like that, please take a look at [ruby-nlp](https://github.com/diasks2/ruby-nlp).
 It's a document that gathers a variety of NLP tools implemented in ruby.
 
+<!--more-->
+
 ## What is Toki Pona?
 
 [Toki Pona](https://en.wikipedia.org/wiki/Toki_Pona) is a constructed language created by Sonja Lang in 2001.
