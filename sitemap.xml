@@ -130,7 +130,13 @@
     </url>
     <url>
         <loc>http://greyblake.com/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/</loc>
-        <lastmod>2015-09-21T00:17:59+02:00</lastmod>
+        <lastmod>2015-09-26T00:01:15+02:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/
+        </loc>
+        <lastmod>2016-02-15T02:18:23+01:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/404.html</loc>
@@ -138,7 +144,7 @@
     </url>
     <url>
         <loc>http://greyblake.com/</loc>
-        <lastmod>2015-09-21T00:17:59+02:00</lastmod>
+        <lastmod>2016-02-15T02:18:23+01:00</lastmod>
     </url>
     <url>
         <loc>http://greyblake.com/projects/</loc>
@@ -150,6 +156,6 @@
     </url>
     <url>
         <loc>http://greyblake.com/blog/archives/</loc>
-        <lastmod>2015-09-21T00:17:59+02:00</lastmod>
+        <lastmod>2016-02-15T02:18:23+01:00</lastmod>
     </url>
 </urlset>

@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2015-09-21T00:21:31+02:00</updated>
+  <updated>2016-02-15T02:19:11+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,284 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[NLP, Toki Pona and Ruby. Part 2: language detector]]></title>
+    <link href="http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/"/>
+    <updated>2015-09-25T23:55:00+02:00</updated>
+    <id>http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector</id>
+    <content type="html"><![CDATA[<p>Previous articles:</p>
+
+<ul>
+<li><a href="http://greyblake.com/blog/2015/09/20/nlp-toki-pona-and-ruby-part1">Part 1: Intro. Tokenizer</a></li>
+</ul>
+
+
+<p>In the first article we created a simple tokenizer, today we&#8217;re going to create a
+language detector to identify Toki Pona text among other texts.</p>
+
+<p>First I want to say that are at least few good libraries for detecting natural languages in ruby:</p>
+
+<ul>
+<li><a href="https://github.com/feedbackmine/language_detector">language_detector</a> - detector based on <a href="https://en.wikipedia.org/wiki/N-gram">N-grams</a></li>
+<li><a href="https://github.com/peterc/whatlanguage">whatlanguage</a> - detector based on <a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</a></li>
+</ul>
+
+
+<p>But those are for mainstream: French, English, German&#8230; We want Toki Pona!
+Also, since we are focused on Toki Pona only, we can get much more precise results.</p>
+
+<!--more-->
+
+
+<h2>The algorithm</h2>
+
+<p>My initial idea was dead simple: since there are only 125 Toki Pona words, we can
+simply check whether a token is a Toki Pona word or something else. Then it&#8217;s
+easy to calculate a density of Toki Pona words in a given phrase and compare it
+against some threshold, where 0 &lt; threshold &lt;= 1.</p>
+
+<p>Here is an example of how such algorithm would work with threshold=0.75 and given
+phrase <em>&#8220;mi moka e kala suli&#8221;</em>.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Phrase:   mi   moka   e    kala    suli
+</span><span class='line'>Weights:  1    0      1    1       1
+</span><span class='line'>
+</span><span class='line'>Sum weight: 1 + 0 + 1 + 1 + 1 = 4
+</span><span class='line'>Words count: 5
+</span><span class='line'>Density: 4 / 5 = 0.8
+</span><span class='line'>
+</span><span class='line'>0.8 &gt; threshold =&gt; true (it's Toki Pona)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The phrase has a typo: instead of word <code>moka</code> there should be word <code>moku</code>.
+<em>&#8220;mi moku e kala suli&#8221;</em> means &#8220;I am eating a big fish&#8221;.</p>
+
+<p>I decided to make the algorithm face real data: I picked ~100 random message
+from #tokipona IRC channels and split them into three groups:</p>
+
+<ol>
+<li>Messages in Toki Pona</li>
+<li>Messages in other languages (mostly English)</li>
+<li>Mixed messages (half Toki Pona and half English)</li>
+</ol>
+
+
+<p>I wrote a spec, I expected <code>LanguageDetector.toki_pona?(text)</code> to return <code>true</code> for the first group of messages
+and <code>false</code> for others. After playing with the value of the threshold, I made it
+work almost for all cases.</p>
+
+<p>One of messages looked like this:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Moku pona xD</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s obvious that it&#8217;s pure Toki Pona, then what&#8217;s wrong with it?
+The issue was in the <code>Tokenizer</code> that we had implemented in the <a href="http://greyblake.com/blog/2015/09/20/nlp-toki-pona-and-ruby-part1">previous article</a>.</p>
+
+<p>For this message it returns 4 tokens: <code>["Moku", "pona", "x", "D"]</code>. While
+<code>Moku</code> and <code>pona</code> belong to Toki Pona  vocabulary,  <code>x</code> and <code>D</code> don&#8217;t.</p>
+
+<h2>Updating Tokenizer</h2>
+
+<p>We, as humans, can see that <code>xD</code> actually must be one token, and it&#8217;s not a regular word, but a smile.
+So I had to update <code>Tokenizer</code> to distinguish words and smiles.</p>
+
+<p>That&#8217;s the point where I had to introduce the difference between <strong>tokens</strong> and <strong>lexemes</strong>.</p>
+
+<p>As the famous <a href="https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools">Dragon Book</a> says about lexemes:</p>
+
+<blockquote><p>A lexeme is a sequence of characters in the source program that matches the pattern<br/>for a token and is identified by the lexical analyzer as an instance of that token.</p></blockquote>
+
+
+<p>And about tokens:</p>
+
+<blockquote><p>A token is a pair consisting of a token name and an optional attribute value.<br/>The token name is an abstract symbol representing a kind of lexical unit, e.g.,<br/>a particular keyword, or sequence of input characters denoting an identifier.<br/>The token names are the input symbols that the parser processes.</p></blockquote>
+
+
+<p>So I&#8217;ve updated <code>Tokenizer</code> to return array of hashes with <code>:lexeme</code> and <code>:type</code> keys.
+By now I have 3 types of tokens: <em>word</em>, <em>smile</em> and <em>punctuation</em>.</p>
+
+<p>Example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Tokenizer</span><span class="o">.</span><span class="n">tokenize</span> <span class="s2">&quot;moku li ike :(&quot;</span>  <span class="c1"># Translation: food is bad</span>
+</span><span class='line'><span class="c1"># =&gt; [ {:lexeme=&gt;&quot;moku&quot;, :type=&gt;:word}, {:lexeme=&gt;&quot;li&quot;, :type=&gt;:word},</span>
+</span><span class='line'><span class="c1">#      {:lexeme=&gt;&quot;ike&quot;, :type=&gt;:word}, {:lexeme=&gt;&quot;:/&quot;, :type=&gt;:smile}]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The implementation of <code>Tokenizer</code> now is the following:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Tokenizer</span>
+</span><span class='line'>  <span class="no">SMILE_REGEXP</span> <span class="o">=</span> <span class="sr">/</span>
+</span><span class='line'><span class="sr">    (?:</span>
+</span><span class='line'><span class="sr">      (?: : | ; | = )                            # eyes</span>
+</span><span class='line'><span class="sr">      -?                                         # nose</span>
+</span><span class='line'><span class="sr">      (?: \) | \| | \\ | \/ | D | P | p | \* )   # mouth</span>
+</span><span class='line'><span class="sr">    ) | (?:x|X)D                                 # other (e.g. XD)</span>
+</span><span class='line'><span class="sr">  /x</span>
+</span><span class='line'>  <span class="no">WORD_REGEXP</span> <span class="o">=</span> <span class="sr">/\w+/</span>
+</span><span class='line'>  <span class="no">PUNCTUATION_REGEX</span> <span class="o">=</span> <span class="sr">/[^\s]*/</span>
+</span><span class='line'>  <span class="no">LEXEME_REGEXP</span> <span class="o">=</span> <span class="sr">/</span><span class="si">#{</span><span class="no">SMILE_REGEXP</span><span class="si">}</span><span class="sr">|</span><span class="si">#{</span><span class="no">WORD_REGEXP</span><span class="si">}</span><span class="sr">|</span><span class="si">#{</span><span class="no">PUNCTUATION_REGEX</span><span class="si">}</span><span class="sr">/</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>    <span class="kp">new</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">tokenize</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@text</span> <span class="o">=</span> <span class="n">text</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">tokenize</span>
+</span><span class='line'>    <span class="n">lexemes</span> <span class="o">=</span> <span class="vi">@text</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="no">LEXEME_REGEXP</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">lexemes</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">lex</span><span class="o">|</span> <span class="n">lexeme_to_token</span><span class="p">(</span><span class="n">lex</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span> <span class="k">def</span> <span class="nf">lexeme_to_token</span><span class="p">(</span><span class="n">lexeme</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span> <span class="ss">lexeme</span><span class="p">:</span> <span class="n">lexeme</span><span class="p">,</span> <span class="ss">type</span><span class="p">:</span> <span class="n">token_type</span><span class="p">(</span><span class="n">lexeme</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span> <span class="k">def</span> <span class="nf">token_type</span><span class="p">(</span><span class="n">lexeme</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">case</span> <span class="n">lexeme</span>
+</span><span class='line'>    <span class="k">when</span> <span class="no">SMILE_REGEXP</span> <span class="k">then</span> <span class="ss">:smile</span>
+</span><span class='line'>    <span class="k">when</span> <span class="no">WORD_REGEXP</span>  <span class="k">then</span> <span class="ss">:word</span>
+</span><span class='line'>    <span class="k">else</span> <span class="ss">:punctuation</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now tokenization process contains two stage: detecting lexemes and defining tokens
+for those lexemes. Note, that the order of regular expressions in <code>token_type(lexeme)</code>
+method is important. Since <code>SMILE_REGEXP</code> and <code>WORD_REGEXP</code> can overlap (e.g. &#8220;XD&#8221;),
+we want <code>SMILE_REGEXP</code> to have higher priority. The same with punctuation: everything
+what is not a smile or a word we consider as punctuation.</p>
+
+<h2>Levenshtein distance</h2>
+
+<p>So I&#8217;ve I updated the language detection algorithm to count only words. Still
+there are number of things to improve.</p>
+
+<p>What if some words are meant to be Toki Pona words but they contain a typo?
+Actually we can detect them and adjust the algorithm to count them as well.</p>
+
+<p>So to detect a word with a typo we need somehow to calculate word similarity.
+And actually what we need is called <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance</a>.</p>
+
+<blockquote><p>Levenshtein distance between two words is the minimum number of single-character<br/>edits (i.e. insertions, deletions or substitutions) required to change one word into the other.</p></blockquote>
+
+
+<p>Levenshtein distance is used in computer science (e.g. for spell checkers), genetics (comparison of gens)
+and likely in some other areas. The algorithm isn&#8217;t the simplest one, but is not hard to understand, so
+I encourage you to take a look at <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">wikipedia</a> to
+uderstand it better.</p>
+
+<p>Now back to our case: how do we measure the difference between words <code>moka</code> and <code>moku</code>?
+The levenshtein distance for them is 1, because only one edit needs to be performed to make <code>moka</code> become
+<code>moku</code>: replace <code>a</code> with <code>u</code>.</p>
+
+<p>We can implement it based on the algorithm ourself (actually I did it for fun, but then replaced it
+with <a href="https://github.com/threedaymonk/text/blob/master/lib/text/levenshtein.rb">this implementation</a>) or google
+for existing solutions.
+One of suprises was to find it in
+<a href="https://github.com/rubygems/rubygems/blob/45966be372d85520630143090b82b455d287cec6/lib/rubygems/text.rb#L42-L72">rubygems</a> gem.
+I guess it&#8217;s used when one mistypes name of gem in order to have &#8220;Did you mean &#8230;?&#8221; feature.</p>
+
+<h2>Updating the detection algorithm</h2>
+
+<p>Now, we can adjust the LanguageDetector to be not so strict with typos, and give a word score <code>0.5</code> if it has
+levenshtein distance 1 with one of Toki Pona words. Considering the previous example with phrase <em>&#8220;mi moka e kala suli&#8221;</em>,
+the density will be 0.9:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">Phrase</span><span class="p">:</span>   <span class="n">mi</span>   <span class="n">moka</span>   <span class="n">e</span>    <span class="n">kala</span>    <span class="n">suli</span>
+</span><span class='line'><span class="ss">Weights</span><span class="p">:</span>  <span class="mi">1</span>    <span class="mi">0</span><span class="o">.</span><span class="mi">5</span>    <span class="mi">1</span>    <span class="mi">1</span>       <span class="mi">1</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Sum</span> <span class="ss">weight</span><span class="p">:</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">0</span><span class="o">.</span><span class="mi">5</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">=</span> <span class="mi">4</span><span class="o">.</span><span class="mi">5</span>
+</span><span class='line'><span class="no">Words</span> <span class="ss">count</span><span class="p">:</span> <span class="mi">5</span>
+</span><span class='line'><span class="ss">Density</span><span class="p">:</span> <span class="mi">4</span><span class="o">.</span><span class="mi">5</span> <span class="o">/</span> <span class="mi">5</span> <span class="o">=</span> <span class="mi">0</span><span class="o">.</span><span class="mi">9</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">0</span><span class="o">.</span><span class="mi">9</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">=&gt;</span> <span class="kp">true</span> <span class="p">(</span><span class="n">it</span><span class="err">&#39;</span><span class="n">s</span> <span class="no">Toki</span> <span class="no">Pona</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In reality, apart from the mentioned 125 words, the Toki Pona vocablurary includes names of languages, countries and cities.
+So the real detector is slightly more complected. You can check it
+<a href="https://github.com/greyblake/tokipona/blob/60d8ec72f2da6af26440239e8cb1f0fed5bea8a5/lib/tokipona/language_detector.rb">here</a>.</p>
+
+<p>Btw, the entire implementation of what is being described can be found as the project at
+github <a href="https://github.com/greyblake/tokipona">greyblake/tokipona</a>.</p>
+
+<p>That&#8217;s it for now! In the next part we will try to implement grammar and parser for Toki Pona!</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="blog/2015/09/20/nlp-toki-pona-and-ruby-part1">Part 1: implementing Tokenizer</a></li>
+<li><a href="http://tokipona.org/">Official Toki Pona site</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance at Wikipedia</a></li>
+<li><a href="https://github.com/greyblake/tokipona">My tokipona project at Github</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[NLP, Toki Pona and Ruby: part 1]]></title>
@@ -51,6 +329,9 @@ It will make me go through number of stages of language processing:</p>
 I am not gonna use any of them here neither cover them in the articles.
 If you need something like that, please take a look at <a href="https://github.com/diasks2/ruby-nlp">ruby-nlp</a>.
 It&#8217;s a document that gathers a variety of NLP tools implemented in ruby.</p>
+
+<!--more-->
+
 
 <h2>What is Toki Pona?</h2>
 
@@ -185,7 +466,7 @@ But in our simple case we can easily handle it with one regular expression:</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>This implementation looks very naive, but specs pass, so we live it as it is.
+<p>This implementation looks very naive, but specs pass, so we leave it as it is.
 Probably in the future we will modify.</p>
 
 <h2>Conclusion</h2>
@@ -3481,31 +3762,6 @@ That will the next step in this direction, since I realy need it.</p>
 </span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Разгоняем мозг]]></title>
-    <link href="http://greyblake.com/blog/2012/01/30/razgonyaem-mozg/"/>
-    <updated>2012-01-30T00:33:36+01:00</updated>
-    <id>http://greyblake.com/blog/2012/01/30/razgonyaem-mozg</id>
-    <content type="html"><![CDATA[<p>Несколько месяцев назад я был очень сильно озабочен своей продуктивностью. Здесь собраны некоторые рецепты повышения эффективности мозговой деятельности, которые мне удалось отыскать, большинство из них взяты из книги Вина Венгера &#8220;Фактор Эйнштейна&#8221;.</p>
-
-<!--more-->
-
-
-<ul>
-<li><a href="http://www.youtube.com/watch?v=-Q3cW5pBd6Q">Соната Моцарта для 2х фортепиано в Ре мажоре K.448</a>. 10 минут прослушивания поднимают IQ на 8-9 пунктов на 15 минут.</li>
-<li>Задержка дыхания. Возможно, даже стоит заняться подводным плаванием. Улучшается кровоснабжение мозга.</li>
-<li>Упражнение &#8220;Поток образов&#8221; (читай книгу &#8220;Фактор Эйнштейна&#8221;).</li>
-<li>Голод. Стимулирует творческую деятельность.</li>
-<li>Воздержание от секса, если верить Фрейду, ибо либидо направляется в нужное русло. Но я ему не верю ;)</li>
-<li>Запах лимона <a href="http://persona.rin.ru/news/147136/f/zapah-limona-stimuliruet-rabotu-golovnogo-mozga">улучшает мозговую деятельность</a></li>
-<li>Метроном 60 ударов в минуту или музыка эпохи Барокко - вводит человека в лучшее состояние для обучения и запоминание информации.  <a href="http://www.yugzone.ru/psy/iq.htm">http://www.yugzone.ru/psy/iq.htm</a></li>
-</ul>
-
-
-<p>Кроме всего перечисленного выше, не стоит забывать, что восьмичасовой сон никто не отменял ;)</p>
 ]]></content>
   </entry>
   

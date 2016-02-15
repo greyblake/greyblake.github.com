@@ -1,0 +1,578 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>NLP, Toki Pona and Ruby. Part 2: language detector - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="Previous articles: Part 1: Intro. Tokenizer In the first article we created a simple tokenizer, today we&#8217;re going to create a
+language detector &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">NLP, Toki Pona and Ruby. Part 2: Language Detector</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-25T23:55:00+02:00" pubdate data-updated="true">Sep 25<span>th</span>, 2015</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Previous articles:</p>
+
+<ul>
+<li><a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1">Part 1: Intro. Tokenizer</a></li>
+</ul>
+
+
+<p>In the first article we created a simple tokenizer, today we&#8217;re going to create a
+language detector to identify Toki Pona text among other texts.</p>
+
+<p>First I want to say that are at least few good libraries for detecting natural languages in ruby:</p>
+
+<ul>
+<li><a href="https://github.com/feedbackmine/language_detector">language_detector</a> - detector based on <a href="https://en.wikipedia.org/wiki/N-gram">N-grams</a></li>
+<li><a href="https://github.com/peterc/whatlanguage">whatlanguage</a> - detector based on <a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</a></li>
+</ul>
+
+
+<p>But those are for mainstream: French, English, German&#8230; We want Toki Pona!
+Also, since we are focused on Toki Pona only, we can get much more precise results.</p>
+
+<!--more-->
+
+
+<h2>The algorithm</h2>
+
+<p>My initial idea was dead simple: since there are only 125 Toki Pona words, we can
+simply check whether a token is a Toki Pona word or something else. Then it&#8217;s
+easy to calculate a density of Toki Pona words in a given phrase and compare it
+against some threshold, where 0 &lt; threshold &lt;= 1.</p>
+
+<p>Here is an example of how such algorithm would work with threshold=0.75 and given
+phrase <em>&#8220;mi moka e kala suli&#8221;</em>.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Phrase:   mi   moka   e    kala    suli
+</span><span class='line'>Weights:  1    0      1    1       1
+</span><span class='line'>
+</span><span class='line'>Sum weight: 1 + 0 + 1 + 1 + 1 = 4
+</span><span class='line'>Words count: 5
+</span><span class='line'>Density: 4 / 5 = 0.8
+</span><span class='line'>
+</span><span class='line'>0.8 &gt; threshold =&gt; true (it's Toki Pona)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The phrase has a typo: instead of word <code>moka</code> there should be word <code>moku</code>.
+<em>&#8220;mi moku e kala suli&#8221;</em> means &#8220;I am eating a big fish&#8221;.</p>
+
+<p>I decided to make the algorithm face real data: I picked ~100 random message
+from #tokipona IRC channels and split them into three groups:</p>
+
+<ol>
+<li>Messages in Toki Pona</li>
+<li>Messages in other languages (mostly English)</li>
+<li>Mixed messages (half Toki Pona and half English)</li>
+</ol>
+
+
+<p>I wrote a spec, I expected <code>LanguageDetector.toki_pona?(text)</code> to return <code>true</code> for the first group of messages
+and <code>false</code> for others. After playing with the value of the threshold, I made it
+work almost for all cases.</p>
+
+<p>One of messages looked like this:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Moku pona xD</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s obvious that it&#8217;s pure Toki Pona, then what&#8217;s wrong with it?
+The issue was in the <code>Tokenizer</code> that we had implemented in the <a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1">previous article</a>.</p>
+
+<p>For this message it returns 4 tokens: <code>["Moku", "pona", "x", "D"]</code>. While
+<code>Moku</code> and <code>pona</code> belong to Toki Pona  vocabulary,  <code>x</code> and <code>D</code> don&#8217;t.</p>
+
+<h2>Updating Tokenizer</h2>
+
+<p>We, as humans, can see that <code>xD</code> actually must be one token, and it&#8217;s not a regular word, but a smile.
+So I had to update <code>Tokenizer</code> to distinguish words and smiles.</p>
+
+<p>That&#8217;s the point where I had to introduce the difference between <strong>tokens</strong> and <strong>lexemes</strong>.</p>
+
+<p>As the famous <a href="https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools">Dragon Book</a> says about lexemes:</p>
+
+<blockquote><p>A lexeme is a sequence of characters in the source program that matches the pattern<br/>for a token and is identified by the lexical analyzer as an instance of that token.</p></blockquote>
+
+
+<p>And about tokens:</p>
+
+<blockquote><p>A token is a pair consisting of a token name and an optional attribute value.<br/>The token name is an abstract symbol representing a kind of lexical unit, e.g.,<br/>a particular keyword, or sequence of input characters denoting an identifier.<br/>The token names are the input symbols that the parser processes.</p></blockquote>
+
+
+<p>So I&#8217;ve updated <code>Tokenizer</code> to return array of hashes with <code>:lexeme</code> and <code>:type</code> keys.
+By now I have 3 types of tokens: <em>word</em>, <em>smile</em> and <em>punctuation</em>.</p>
+
+<p>Example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Tokenizer</span><span class="o">.</span><span class="n">tokenize</span> <span class="s2">&quot;moku li ike :(&quot;</span>  <span class="c1"># Translation: food is bad</span>
+</span><span class='line'><span class="c1"># =&gt; [ {:lexeme=&gt;&quot;moku&quot;, :type=&gt;:word}, {:lexeme=&gt;&quot;li&quot;, :type=&gt;:word},</span>
+</span><span class='line'><span class="c1">#      {:lexeme=&gt;&quot;ike&quot;, :type=&gt;:word}, {:lexeme=&gt;&quot;:/&quot;, :type=&gt;:smile}]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The implementation of <code>Tokenizer</code> now is the following:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Tokenizer</span>
+</span><span class='line'>  <span class="no">SMILE_REGEXP</span> <span class="o">=</span> <span class="sr">/</span>
+</span><span class='line'><span class="sr">    (?:</span>
+</span><span class='line'><span class="sr">      (?: : | ; | = )                            # eyes</span>
+</span><span class='line'><span class="sr">      -?                                         # nose</span>
+</span><span class='line'><span class="sr">      (?: \) | \| | \\ | \/ | D | P | p | \* )   # mouth</span>
+</span><span class='line'><span class="sr">    ) | (?:x|X)D                                 # other (e.g. XD)</span>
+</span><span class='line'><span class="sr">  /x</span>
+</span><span class='line'>  <span class="no">WORD_REGEXP</span> <span class="o">=</span> <span class="sr">/\w+/</span>
+</span><span class='line'>  <span class="no">PUNCTUATION_REGEX</span> <span class="o">=</span> <span class="sr">/[^\s]*/</span>
+</span><span class='line'>  <span class="no">LEXEME_REGEXP</span> <span class="o">=</span> <span class="sr">/</span><span class="si">#{</span><span class="no">SMILE_REGEXP</span><span class="si">}</span><span class="sr">|</span><span class="si">#{</span><span class="no">WORD_REGEXP</span><span class="si">}</span><span class="sr">|</span><span class="si">#{</span><span class="no">PUNCTUATION_REGEX</span><span class="si">}</span><span class="sr">/</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>    <span class="kp">new</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">tokenize</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@text</span> <span class="o">=</span> <span class="n">text</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">tokenize</span>
+</span><span class='line'>    <span class="n">lexemes</span> <span class="o">=</span> <span class="vi">@text</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="no">LEXEME_REGEXP</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">lexemes</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">lex</span><span class="o">|</span> <span class="n">lexeme_to_token</span><span class="p">(</span><span class="n">lex</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span> <span class="k">def</span> <span class="nf">lexeme_to_token</span><span class="p">(</span><span class="n">lexeme</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span> <span class="ss">lexeme</span><span class="p">:</span> <span class="n">lexeme</span><span class="p">,</span> <span class="ss">type</span><span class="p">:</span> <span class="n">token_type</span><span class="p">(</span><span class="n">lexeme</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span> <span class="k">def</span> <span class="nf">token_type</span><span class="p">(</span><span class="n">lexeme</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">case</span> <span class="n">lexeme</span>
+</span><span class='line'>    <span class="k">when</span> <span class="no">SMILE_REGEXP</span> <span class="k">then</span> <span class="ss">:smile</span>
+</span><span class='line'>    <span class="k">when</span> <span class="no">WORD_REGEXP</span>  <span class="k">then</span> <span class="ss">:word</span>
+</span><span class='line'>    <span class="k">else</span> <span class="ss">:punctuation</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now tokenization process contains two stage: detecting lexemes and defining tokens
+for those lexemes. Note, that the order of regular expressions in <code>token_type(lexeme)</code>
+method is important. Since <code>SMILE_REGEXP</code> and <code>WORD_REGEXP</code> can overlap (e.g. &#8220;XD&#8221;),
+we want <code>SMILE_REGEXP</code> to have higher priority. The same with punctuation: everything
+what is not a smile or a word we consider as punctuation.</p>
+
+<h2>Levenshtein distance</h2>
+
+<p>So I&#8217;ve I updated the language detection algorithm to count only words. Still
+there are number of things to improve.</p>
+
+<p>What if some words are meant to be Toki Pona words but they contain a typo?
+Actually we can detect them and adjust the algorithm to count them as well.</p>
+
+<p>So to detect a word with a typo we need somehow to calculate word similarity.
+And actually what we need is called <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance</a>.</p>
+
+<blockquote><p>Levenshtein distance between two words is the minimum number of single-character<br/>edits (i.e. insertions, deletions or substitutions) required to change one word into the other.</p></blockquote>
+
+
+<p>Levenshtein distance is used in computer science (e.g. for spell checkers), genetics (comparison of gens)
+and likely in some other areas. The algorithm isn&#8217;t the simplest one, but is not hard to understand, so
+I encourage you to take a look at <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">wikipedia</a> to
+uderstand it better.</p>
+
+<p>Now back to our case: how do we measure the difference between words <code>moka</code> and <code>moku</code>?
+The levenshtein distance for them is 1, because only one edit needs to be performed to make <code>moka</code> become
+<code>moku</code>: replace <code>a</code> with <code>u</code>.</p>
+
+<p>We can implement it based on the algorithm ourself (actually I did it for fun, but then replaced it
+with <a href="https://github.com/threedaymonk/text/blob/master/lib/text/levenshtein.rb">this implementation</a>) or google
+for existing solutions.
+One of suprises was to find it in
+<a href="https://github.com/rubygems/rubygems/blob/45966be372d85520630143090b82b455d287cec6/lib/rubygems/text.rb#L42-L72">rubygems</a> gem.
+I guess it&#8217;s used when one mistypes name of gem in order to have &#8220;Did you mean &#8230;?&#8221; feature.</p>
+
+<h2>Updating the detection algorithm</h2>
+
+<p>Now, we can adjust the LanguageDetector to be not so strict with typos, and give a word score <code>0.5</code> if it has
+levenshtein distance 1 with one of Toki Pona words. Considering the previous example with phrase <em>&#8220;mi moka e kala suli&#8221;</em>,
+the density will be 0.9:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">Phrase</span><span class="p">:</span>   <span class="n">mi</span>   <span class="n">moka</span>   <span class="n">e</span>    <span class="n">kala</span>    <span class="n">suli</span>
+</span><span class='line'><span class="ss">Weights</span><span class="p">:</span>  <span class="mi">1</span>    <span class="mi">0</span><span class="o">.</span><span class="mi">5</span>    <span class="mi">1</span>    <span class="mi">1</span>       <span class="mi">1</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">Sum</span> <span class="ss">weight</span><span class="p">:</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">0</span><span class="o">.</span><span class="mi">5</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">=</span> <span class="mi">4</span><span class="o">.</span><span class="mi">5</span>
+</span><span class='line'><span class="no">Words</span> <span class="ss">count</span><span class="p">:</span> <span class="mi">5</span>
+</span><span class='line'><span class="ss">Density</span><span class="p">:</span> <span class="mi">4</span><span class="o">.</span><span class="mi">5</span> <span class="o">/</span> <span class="mi">5</span> <span class="o">=</span> <span class="mi">0</span><span class="o">.</span><span class="mi">9</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">0</span><span class="o">.</span><span class="mi">9</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">=&gt;</span> <span class="kp">true</span> <span class="p">(</span><span class="n">it</span><span class="err">&#39;</span><span class="n">s</span> <span class="no">Toki</span> <span class="no">Pona</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In reality, apart from the mentioned 125 words, the Toki Pona vocablurary includes names of languages, countries and cities.
+So the real detector is slightly more complected. You can check it
+<a href="https://github.com/greyblake/tokipona/blob/60d8ec72f2da6af26440239e8cb1f0fed5bea8a5/lib/tokipona/language_detector.rb">here</a>.</p>
+
+<p>Btw, the entire implementation of what is being described can be found as the project at
+github <a href="https://github.com/greyblake/tokipona">greyblake/tokipona</a>.</p>
+
+<p>That&#8217;s it for now! In the next part we will try to implement grammar and parser for Toki Pona!</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="blog/2015/09/20/nlp-toki-pona-and-ruby-part1">Part 1: implementing Tokenizer</a></li>
+<li><a href="http://tokipona.org/">Official Toki Pona site</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance at Wikipedia</a></li>
+<li><a href="https://github.com/greyblake/tokipona">My tokipona project at Github</a></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-25T23:55:00+02:00" pubdate data-updated="true">Sep 25<span>th</span>, 2015</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/nlp/'>nlp</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/tokipona/'>tokipona</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/" title="Previous Post: NLP, Toki Pona and Ruby: part 1">&laquo; NLP, Toki Pona and Ruby: part 1</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/">NLP, Toki Pona and Ruby. Part 2: language detector</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/">NLP, Toki Pona and Ruby: part 1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy object pattern in ruby</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/21/ignore-files-with-git-locally/">Ignore files with git locally</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to compare audio in ruby</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("greyblake", 3, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/';
+        var disqus_url = 'http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

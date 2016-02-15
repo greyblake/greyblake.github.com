@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ruby | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2015-09-21T00:21:31+02:00</updated>
+  <updated>2016-02-15T02:19:11+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,245 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[NLP, Toki Pona and Ruby. Part 2: language detector]]></title>
+    <link href="http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/"/>
+    <updated>2015-09-25T23:55:00+02:00</updated>
+    <id>http://greyblake.com/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector</id>
+    <content type="html"><![CDATA[<p>Previous articles:</p>
+
+<ul>
+<li><a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1">Part 1: Intro. Tokenizer</a></li>
+</ul>
+
+
+<p>In the first article we created a simple tokenizer, today we're going to create a
+language detector to identify Toki Pona text among other texts.</p>
+
+<p>First I want to say that are at least few good libraries for detecting natural languages in ruby:</p>
+
+<ul>
+<li><a href="https://github.com/feedbackmine/language_detector">language_detector</a> - detector based on <a href="https://en.wikipedia.org/wiki/N-gram">N-grams</a></li>
+<li><a href="https://github.com/peterc/whatlanguage">whatlanguage</a> - detector based on <a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</a></li>
+</ul>
+
+
+<p>But those are for mainstream: French, English, German... We want Toki Pona!
+Also, since we are focused on Toki Pona only, we can get much more precise results.</p>
+
+<!--more-->
+
+
+<h2>The algorithm</h2>
+
+<p>My initial idea was dead simple: since there are only 125 Toki Pona words, we can
+simply check whether a token is a Toki Pona word or something else. Then it's
+easy to calculate a density of Toki Pona words in a given phrase and compare it
+against some threshold, where 0 &lt; threshold &lt;= 1.</p>
+
+<p>Here is an example of how such algorithm would work with threshold=0.75 and given
+phrase <em>"mi moka e kala suli"</em>.</p>
+
+<p>```
+Phrase:   mi   moka   e    kala    suli
+Weights:  1    0      1    1       1</p>
+
+<p>Sum weight: 1 + 0 + 1 + 1 + 1 = 4
+Words count: 5
+Density: 4 / 5 = 0.8</p>
+
+<p>0.8 > threshold => true (it's Toki Pona)
+```</p>
+
+<p>The phrase has a typo: instead of word <code>moka</code> there should be word <code>moku</code>.
+<em>"mi moku e kala suli"</em> means "I am eating a big fish".</p>
+
+<p>I decided to make the algorithm face real data: I picked ~100 random message
+from #tokipona IRC channels and split them into three groups:</p>
+
+<ol>
+<li>Messages in Toki Pona</li>
+<li>Messages in other languages (mostly English)</li>
+<li>Mixed messages (half Toki Pona and half English)</li>
+</ol>
+
+
+<p>I wrote a spec, I expected <code>LanguageDetector.toki_pona?(text)</code> to return <code>true</code> for the first group of messages
+and <code>false</code> for others. After playing with the value of the threshold, I made it
+work almost for all cases.</p>
+
+<p>One of messages looked like this:
+<code>
+Moku pona xD
+</code></p>
+
+<p>It's obvious that it's pure Toki Pona, then what's wrong with it?
+The issue was in the <code>Tokenizer</code> that we had implemented in the <a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1">previous article</a>.</p>
+
+<p>For this message it returns 4 tokens: <code>["Moku", "pona", "x", "D"]</code>. While
+<code>Moku</code> and <code>pona</code> belong to Toki Pona  vocabulary,  <code>x</code> and <code>D</code> don't.</p>
+
+<h2>Updating Tokenizer</h2>
+
+<p>We, as humans, can see that <code>xD</code> actually must be one token, and it's not a regular word, but a smile.
+So I had to update <code>Tokenizer</code> to distinguish words and smiles.</p>
+
+<p>That's the point where I had to introduce the difference between <strong>tokens</strong> and <strong>lexemes</strong>.</p>
+
+<p>As the famous <a href="https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools">Dragon Book</a> says about lexemes:</p>
+
+<p><blockquote><p>A lexeme is a sequence of characters in the source program that matches the pattern<br/>for a token and is identified by the lexical analyzer as an instance of that token.</p></blockquote></p>
+
+<p>And about tokens:</p>
+
+<p><blockquote><p>A token is a pair consisting of a token name and an optional attribute value.<br/>The token name is an abstract symbol representing a kind of lexical unit, e.g.,<br/>a particular keyword, or sequence of input characters denoting an identifier.<br/>The token names are the input symbols that the parser processes.</p></blockquote></p>
+
+<p>So I've updated <code>Tokenizer</code> to return array of hashes with <code>:lexeme</code> and <code>:type</code> keys.
+By now I have 3 types of tokens: <em>word</em>, <em>smile</em> and <em>punctuation</em>.</p>
+
+<p>Example:
+```ruby
+Tokenizer.tokenize "moku li ike :("  # Translation: food is bad</p>
+
+<h1>=> [ {:lexeme=>"moku", :type=>:word}, {:lexeme=>"li", :type=>:word},</h1>
+
+<h1>{:lexeme=>"ike", :type=>:word}, {:lexeme=>":/", :type=>:smile}]</h1>
+
+<p>```</p>
+
+<p>The implementation of <code>Tokenizer</code> now is the following:</p>
+
+<p>```ruby
+class Tokenizer
+  SMILE_REGEXP = /</p>
+
+<pre><code>(?:
+  (?: : | ; | = )                            # eyes
+  -?                                         # nose
+  (?: \) | \| | \\ | \/ | D | P | p | \* )   # mouth
+) | (?:x|X)D                                 # other (e.g. XD)
+</code></pre>
+
+<p>  /x
+  WORD_REGEXP = /\w+/
+  PUNCTUATION_REGEX = /[<sup>\s]*/</sup>
+  LEXEME_REGEXP = /#{SMILE_REGEXP}|#{WORD_REGEXP}|#{PUNCTUATION_REGEX}/</p>
+
+<p>  def self.tokenize(text)</p>
+
+<pre><code>new(text).tokenize
+</code></pre>
+
+<p>  end</p>
+
+<p>  def initialize(text)</p>
+
+<pre><code>@text = text
+</code></pre>
+
+<p>  end</p>
+
+<p>  def tokenize</p>
+
+<pre><code>lexemes = @text.scan(LEXEME_REGEXP)
+lexemes.map { |lex| lexeme_to_token(lex) }
+</code></pre>
+
+<p>  end</p>
+
+<p>  private def lexeme_to_token(lexeme)</p>
+
+<pre><code>{ lexeme: lexeme, type: token_type(lexeme) }
+</code></pre>
+
+<p>  end</p>
+
+<p>  private def token_type(lexeme)</p>
+
+<pre><code>case lexeme
+when SMILE_REGEXP then :smile
+when WORD_REGEXP  then :word
+else :punctuation
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Now tokenization process contains two stage: detecting lexemes and defining tokens
+for those lexemes. Note, that the order of regular expressions in <code>token_type(lexeme)</code>
+method is important. Since <code>SMILE_REGEXP</code> and <code>WORD_REGEXP</code> can overlap (e.g. "XD"),
+we want <code>SMILE_REGEXP</code> to have higher priority. The same with punctuation: everything
+what is not a smile or a word we consider as punctuation.</p>
+
+<h2>Levenshtein distance</h2>
+
+<p>So I've I updated the language detection algorithm to count only words. Still
+there are number of things to improve.</p>
+
+<p>What if some words are meant to be Toki Pona words but they contain a typo?
+Actually we can detect them and adjust the algorithm to count them as well.</p>
+
+<p>So to detect a word with a typo we need somehow to calculate word similarity.
+And actually what we need is called <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance</a>.</p>
+
+<p><blockquote><p>Levenshtein distance between two words is the minimum number of single-character<br/>edits (i.e. insertions, deletions or substitutions) required to change one word into the other.</p></blockquote></p>
+
+<p>Levenshtein distance is used in computer science (e.g. for spell checkers), genetics (comparison of gens)
+and likely in some other areas. The algorithm isn't the simplest one, but is not hard to understand, so
+I encourage you to take a look at <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">wikipedia</a> to
+uderstand it better.</p>
+
+<p>Now back to our case: how do we measure the difference between words <code>moka</code> and <code>moku</code>?
+The levenshtein distance for them is 1, because only one edit needs to be performed to make <code>moka</code> become
+<code>moku</code>: replace <code>a</code> with <code>u</code>.</p>
+
+<p>We can implement it based on the algorithm ourself (actually I did it for fun, but then replaced it
+with <a href="https://github.com/threedaymonk/text/blob/master/lib/text/levenshtein.rb">this implementation</a>) or google
+for existing solutions.
+One of suprises was to find it in
+<a href="https://github.com/rubygems/rubygems/blob/45966be372d85520630143090b82b455d287cec6/lib/rubygems/text.rb#L42-L72">rubygems</a> gem.
+I guess it's used when one mistypes name of gem in order to have "Did you mean ...?" feature.</p>
+
+<h2>Updating the detection algorithm</h2>
+
+<p>Now, we can adjust the LanguageDetector to be not so strict with typos, and give a word score <code>0.5</code> if it has
+levenshtein distance 1 with one of Toki Pona words. Considering the previous example with phrase <em>"mi moka e kala suli"</em>,
+the density will be 0.9:</p>
+
+<p>```
+Phrase:   mi   moka   e    kala    suli
+Weights:  1    0.5    1    1       1</p>
+
+<p>Sum weight: 1 + 0.5 + 1 + 1 + 1 = 4.5
+Words count: 5
+Density: 4.5 / 5 = 0.9</p>
+
+<p>0.9 > threshold => true (it's Toki Pona)
+```</p>
+
+<p>In reality, apart from the mentioned 125 words, the Toki Pona vocablurary includes names of languages, countries and cities.
+So the real detector is slightly more complected. You can check it
+<a href="https://github.com/greyblake/tokipona/blob/60d8ec72f2da6af26440239e8cb1f0fed5bea8a5/lib/tokipona/language_detector.rb">here</a>.</p>
+
+<p>Btw, the entire implementation of what is being described can be found as the project at
+github <a href="https://github.com/greyblake/tokipona">greyblake/tokipona</a>.</p>
+
+<p>That's it for now! In the next part we will try to implement grammar and parser for Toki Pona!</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="blog/2015/09/20/nlp-toki-pona-and-ruby-part1">Part 1: implementing Tokenizer</a></li>
+<li><a href="http://tokipona.org/">Official Toki Pona site</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein distance at Wikipedia</a></li>
+<li><a href="https://github.com/greyblake/tokipona">My tokipona project at Github</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[NLP, Toki Pona and Ruby: part 1]]></title>
@@ -51,6 +290,9 @@ It will make me go through number of stages of language processing:</p>
 I am not gonna use any of them here neither cover them in the articles.
 If you need something like that, please take a look at <a href="https://github.com/diasks2/ruby-nlp">ruby-nlp</a>.
 It's a document that gathers a variety of NLP tools implemented in ruby.</p>
+
+<!--more-->
+
 
 <h2>What is Toki Pona?</h2>
 
@@ -147,7 +389,7 @@ end
 end
 ```</p>
 
-<p>This implementation looks very naive, but specs pass, so we live it as it is.
+<p>This implementation looks very naive, but specs pass, so we leave it as it is.
 Probably in the future we will modify.</p>
 
 <h2>Conclusion</h2>
@@ -530,327 +772,6 @@ bash(cmd)        # =&gt; Saluton! Kiel vi fartas?
 </code></p>
 
 <p>Thanks for reading!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Validation in rails with Themis]]></title>
-    <link href="http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis/"/>
-    <updated>2013-08-19T17:21:00+02:00</updated>
-    <id>http://greyblake.com/blog/2013/08/19/validation-in-rails-with-themis</id>
-    <content type="html"><![CDATA[<p>Sometimes ActiveRecord is not enough to meet complicated validation needs.
-At <a href="http://tmxcredit.com/">TMXCredit</a> we've created <a href="https://github.com/TMXCredit/themis">Themis</a> -
-ActiveRecord extension which helps to organize validations in a better way and adds
-some flexibility. Here I'm gonna describe some problems which Themis solves after that
-I'll take a brief look at possible alternative solutions.</p>
-
-<h2>Modular validation</h2>
-
-<p>Themis allows you to extract duplicated validations into module for reuse.
-Usually rails applications are small enough so you don't need it. But sometimes
-you do.</p>
-
-<p>The next example is pretty flat(in real life you probably would use STI or composition to
-represent <code>Doctor</code> and <code>Patient</code> models) but it illustrates where Themis could be useful.</p>
-
-<p>Let's say you have 2 models:</p>
-
-<p>```ruby
-class Doctor &lt; ActiveRecord::Base
-  validates :first_name, :last_name, :email, :diploma,</p>
-
-<pre><code>        :presence =&gt; true
-</code></pre>
-
-<p>end</p>
-
-<p>class Patient &lt; ActiveRecord::Base
-  validates :first_name, :last_name, :email, :age,</p>
-
-<pre><code>        :presence =&gt; true
-</code></pre>
-
-<p>end
-```</p>
-
-<p>You see that both models have the same validation for <code>first_name</code>, <code>last_name</code> and <code>email</code>.</p>
-
-<p>Themis allows you to fix the duplication problem by extracting common validations into
-a module:</p>
-
-<p>```ruby</p>
-
-<h1>Module with common validations.</h1>
-
-<p>module PersonValidation
-  extend Themis::Validation</p>
-
-<p>  validates :first_name, :last_name, :email, :presence => true
-end</p>
-
-<p>class Doctor &lt; ActiveRecord::Base
-  # import validation of first_name, last_name, email
-  include PersonValidation</p>
-
-<p>  validates :diploma, :presence => true
-end</p>
-
-<p>class Patient &lt; ActiveRecord::Base
-  include PersonValidation</p>
-
-<p>  validates :age, :presence => true
-end
-```</p>
-
-<!--more-->
-
-
-<p>So now we keep the common validation in one place.
-If you want, you can include validation modules into each other to combine
-necessary validation.</p>
-
-<h2>Validation scenarios</h2>
-
-<p>Here is another problem which Themis solves.</p>
-
-<p>We have the following models:</p>
-
-<p>```ruby
-class User &lt; ActiveRecord::Base
-  has_one :person
-  has_many :user_accounts
-end</p>
-
-<p>class Person &lt; ActiveRecord::Base
-  attr_accessible :first_name, :last_name, :birhday</p>
-
-<p>  belongs_to :user
-end</p>
-
-<p>class UserAccount &lt; ActiveRecord::Base
-  attr_accessible :email, :login</p>
-
-<p>  belongs_to :user
-end
-```</p>
-
-<p>So we have a model graph like this with <code>User</code> model on the top:</p>
-
-<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/themis_model_graph.png" alt="Themis - model graph" /></p>
-
-<p>It's pretty small, but in real life the graph can be much deeper.</p>
-
-<p>What would you do if you needed to apply different validations depending on context?
-For example according to your business requirements users must be allowed to use
-your application only in case if they've filled in all of the fields.
-So you need to validate presense of <code>first_name</code>, <code>last_name</code> and <code>birhday</code>
-on <code>Person</code> model and <code>email</code>, <code>login</code> and <code>password</code> on <code>UserAccount</code>.</p>
-
-<p>It's not a problem, just add the validations to appropriate models:</p>
-
-<p>```ruby
-class Person &lt; ActiveRecord::Base
-  validates :first_name, :layout, :birhday, :presence => true
-end</p>
-
-<p>class UserAccount &lt; ActiveRecord::Base
-  validates :email, :login, :presence => true
-end
-```</p>
-
-<p>There is some percent of users who don't finish registration process.
-But your marketing department wants to have an ability to contact them
-if they have entered an email address.</p>
-
-<p>So that's where the issue is: you can't save records using validation rules written above.</p>
-
-<p>With Themis you can declare number of validation strategies,
-and depending on context, chose which one you need.</p>
-
-<p>Here is how a complete solution looks:</p>
-
-<p>```ruby
-class User &lt; ActiveRecord::Base
-  has_one :person
-  has_many :user_accounts</p>
-
-<p>  accepts_nested_attributes_for :person, :user_accounts</p>
-
-<p>  # Declare validations. Use :full as default.
-  has_validation :full, :default => true
-  has_validation :partial
-end</p>
-
-<p>class Person &lt; ActiveRecord::Base
-  attr_accessible :first_name, :last_name, :birhday</p>
-
-<p>  belongs_to :user</p>
-
-<p>  # Declare full validation
-  has_validation :full do |model|</p>
-
-<pre><code>model.validates :first_name, :last_name, :birhday, :presence =&gt; true
-</code></pre>
-
-<p>  end</p>
-
-<p>  # Delcare partial validation. Nothing to validate.
-  has_validation :partial
-end</p>
-
-<p>class UserAccount &lt; ActiveRecord::Base
-  attr_accessible :email, :login</p>
-
-<p>  has_validation :full do |model|</p>
-
-<pre><code>model.validates :login, :email, :presence =&gt; true
-</code></pre>
-
-<p>  end</p>
-
-<p>  has_validation :partial do |model|</p>
-
-<pre><code>model.validates :email, :presence =&gt; true
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<p>And here is how you would use it somewhere in a controller:</p>
-
-<p>```ruby</p>
-
-<h1>Create model initialized with params</h1>
-
-<p>user = User.new(
-  :person => {</p>
-
-<pre><code>:first_name =&gt; "Alex",
-:last_name  =&gt; "DeLarge",
-:birhday    =&gt; "1962"
-</code></pre>
-
-<p>  },
-  :user_accounts => [{</p>
-
-<pre><code>:email =&gt; "clockwork@orange.com"
-</code></pre>
-
-<p>  }]
-)</p>
-
-<p>user.valid? # => false, because login is missing</p>
-
-<h1>Try to apply partial validation</h1>
-
-<p>user.use_validation(:partial)
-user.valid? # => true</p>
-
-<h1>We can save it</h1>
-
-<p>user.save!
-```</p>
-
-<h2>Alternative solutions</h2>
-
-<p>If you think Themis is overkill for your project, you still have some options.</p>
-
-<h3>Using ActiveSupport::Concern for modularity</h3>
-
-<p><code>ActiveSupport::Concern</code> is another way which allows to extract common validations
-into module. Here how would <code>PersonValidation</code> module described above could look:</p>
-
-<p>```ruby
-module PersonValidation
-  extend ActiveSupport::Concern</p>
-
-<p>  included do</p>
-
-<pre><code>validates :first_name, :last_name, :email, :presence =&gt; true
-</code></pre>
-
-<p>  end
-end</p>
-
-<p>```</p>
-
-<h3>Using conditional validation</h3>
-
-<p>If your requirements aren't so fancy, you can be satisfied with a simple
-conditional validation, e. g.</p>
-
-<p>```ruby
-class Person &lt; ActiveRecord::Base
-  validates :first_name, :last_name, :birhday, :presence => true,</p>
-
-<pre><code>        :if =&gt; :use_full_validation?
-</code></pre>
-
-<p>  # Lets add one more validation statement(for the next example)
-  validates :first_name, :last_name, :length => { :maximum => 255 },</p>
-
-<pre><code>        :if =&gt; :use_full_validation?
-</code></pre>
-
-<p>  def use_full_validation?</p>
-
-<pre><code># Some logic goes here
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<p>To DRY up <code>:if</code> options it's good to use <code>with_options</code> method:</p>
-
-<p>```ruby
-class Person &lt; ActiveRecord::Base
-  with_options :if => :use_full_validation? do |person|</p>
-
-<pre><code>person.validates :first_name, :last_name, :birhday, :presence =&gt; true
-person.validates :first_name, :last_name, :length =&gt; { :maximum =&gt; 255 }
-</code></pre>
-
-<p>  end
-end
-```</p>
-
-<p>Now <code>:if =&gt; :use_full_validation</code> will be additonaly passed to every method call
-on <code>person</code> inside the block.</p>
-
-<h3>Vanguard</h3>
-
-<p>The guys from <a href="http://rom-rb.org/">the ROM project</a> have their own validator called
-<a href="https://github.com/mbj/vanguard">Vanguard</a>(previous name is Aqeuitas).
-The sweet thing about it is that it allows to seperate validations and
-models according to DataMapper approach. The downside is if you use ActiveRecord
-you'll have a zoo of validation tools. Also it may be still raw and I'm not sure
-is it possible to apply it to solve the described problem, but I'd encourage
-you to take a look at it.</p>
-
-<h2>Conclusion</h2>
-
-<p>ActiveRecord is good for plain and straightforward projects.
-In big enterprise applications usually we need more flexibility to meet different
-exotic requiments.
-We've created <a href="https://github.com/TMXCredit/themis">Themis</a> to extend ActiveRecord
-and solve some of the problems.
-Actually I hope that <a href="http://rom-rb.org/">ROM</a> will be ready soon and we'll
-have an ability to select right ORM before diving into development.</p>
-
-<p>Thanks for reading. Hope the article was useful for you and I'm wating for
-your feedback!</p>
-
-<h2>Links</h2>
-
-<ul>
-<li><a href="https://github.com/TMXCredit/themis">Themis on Github</a> - you'll find here comprehensive documentation in README;</li>
-<li><a href="http://guides.rubyonrails.org/active_record_validations.html#conditional-validation">Conditional validation</a> - extraction from Rails Guide;</li>
-<li><a href="https://github.com/mbj/vanguard">Vanguard on Github</a> - validator for ROM project;</li>
-<li><a href="http://railscasts.com/episodes/42-with-options">Railscast: #42</a> - Ryan Bates describes how <code>with_options</code> works.</li>
-</ul>
-
 ]]></content>
   </entry>
   

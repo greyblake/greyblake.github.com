@@ -9,8 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Intro During last few years, I spent a lot of time learning foreign languages like Esperanto, Spanish and German.
-After a while, I came up with an &hellip;">
+  <meta name="description" content="Previous articles: Part 1: Intro. Tokenizer In the first article we created a simple tokenizer, today we&#8217;re going to create a
+language detector &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -94,6 +94,68 @@ After a while, I came up with an &hellip;">
   <header>
     
       <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/">NLP, Toki Pona and Ruby. Part 2: Language Detector</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-25T23:55:00+02:00" pubdate data-updated="true">Sep 25<span>th</span>, 2015</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Previous articles:</p>
+
+<ul>
+<li><a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1">Part 1: Intro. Tokenizer</a></li>
+</ul>
+
+
+<p>In the first article we created a simple tokenizer, today we&#8217;re going to create a
+language detector to identify Toki Pona text among other texts.</p>
+
+<p>First I want to say that are at least few good libraries for detecting natural languages in ruby:</p>
+
+<ul>
+<li><a href="https://github.com/feedbackmine/language_detector">language_detector</a> - detector based on <a href="https://en.wikipedia.org/wiki/N-gram">N-grams</a></li>
+<li><a href="https://github.com/peterc/whatlanguage">whatlanguage</a> - detector based on <a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filter</a></li>
+</ul>
+
+
+<p>But those are for mainstream: French, English, German&#8230; We want Toki Pona!
+Also, since we are focused on Toki Pona only, we can get much more precise results.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
         <h1 class="entry-title"><a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/">NLP, Toki Pona and Ruby: Part 1</a></h1>
       
     
@@ -152,167 +214,12 @@ I am not gonna use any of them here neither cover them in the articles.
 If you need something like that, please take a look at <a href="https://github.com/diasks2/ruby-nlp">ruby-nlp</a>.
 It&#8217;s a document that gathers a variety of NLP tools implemented in ruby.</p>
 
-<h2>What is Toki Pona?</h2>
-
-<p><a href="https://en.wikipedia.org/wiki/Toki_Pona">Toki Pona</a> is a constructed language created by Sonja Lang in 2001.
-What is so special about it? Its vocabulary is limited and contains only <strong>125 words</strong>.
-The grammar is regular (anyway there will be some pitfalls). The language itself simple and can be learned in 1-2 nights,
-and I believe it allows to express 80-90% of daily human communication. Also, it has some philosophical background:
-speaking the language you realize what things really are.</p>
-
-<p>Example: there is no word like &#8220;friend&#8221;, one would say &#8220;jan pona&#8221;, what literally  means &#8220;good person/human&#8221;.
-In similar way &#8220;an ocean&#8221; is &#8220;telo suli&#8221; (big water), &#8220;juice&#8221; is &#8220;telo kili&#8221; (water of fruit or vegetable), etc.</p>
-
-<p>So, even Toki Pona is not real <em>natural</em> language, it&#8217;s good to experiment with, and it gives me some hope that my
-goal can be achieved :)</p>
-
-<p>And the end of this article you&#8217;ll find number of useful links if you want to get into the language.</p>
-
-<h2>First step: lexical analysis</h2>
-
-<p>The first step in processing natural or programming language is <strong>lexical analysis</strong>. It means splitting sequence of
-characters into some meaningful units: <strong>tokens</strong>. Sometimes the process is called <strong>tokenization</strong> and
-the tools that do it are <strong>tokenizers</strong> or <strong>lexical analyzers</strong>.</p>
-
-<p>Let&#8217;s see an example. Given a sentence:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>jan suli li pona.</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Translation: &#8220;Big man is good&#8221;
-(<em>jan</em> - human/man, <em>suli</em> - big, <em>li</em> - is/are, <em>pona</em> - good).</p>
-
-<p>Note: in Toki Pona the main word goes first, so noun(<em>jan</em>) is on the first position,
-and on the second position is adjective(<em>suli</em>) that modifies the noun.</p>
-
-<p>Expected list of tokens is</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="s2">&quot;jan&quot;</span><span class="p">,</span> <span class="s2">&quot;suli&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="o">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Let&#8217;s implement class <code>Tokipona::Tokenizer</code> with a class method <code>.tokenize</code> that returns an array of
-tokens for a given text. We start with tests first.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="ss">Tokipona</span><span class="p">:</span><span class="ss">:Tokenizer</span> <span class="k">do</span>
-</span><span class='line'>  <span class="n">describe</span> <span class="s2">&quot;.tokenize&quot;</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;only words&quot;</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words&quot;</span> <span class="k">do</span>
-</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki mi li toki pona&quot;</span>
-</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;mi&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="o">]</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;words with multiple spaces in between&quot;</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words&quot;</span> <span class="k">do</span>
-</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki   mi   li   toki   pona&quot;</span>
-</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;mi&quot;</span><span class="p">,</span> <span class="s2">&quot;li&quot;</span><span class="p">,</span> <span class="s2">&quot;toki&quot;</span><span class="p">,</span> <span class="s2">&quot;pona&quot;</span><span class="o">]</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">context</span> <span class="s2">&quot;words with special characters&quot;</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">it</span> <span class="s2">&quot;returns array of words and characters&quot;</span> <span class="k">do</span>
-</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;sina wile lape anu seme, jan lane?&quot;</span>
-</span><span class='line'>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</span><span class='line'>        <span class="n">expect</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;sina&quot;</span><span class="p">,</span> <span class="s2">&quot;wile&quot;</span><span class="p">,</span> <span class="s2">&quot;lape&quot;</span><span class="p">,</span> <span class="s2">&quot;anu&quot;</span><span class="p">,</span> <span class="s2">&quot;seme&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;jan&quot;</span><span class="p">,</span> <span class="s2">&quot;lane&quot;</span><span class="p">,</span> <span class="s2">&quot;?&quot;</span><span class="o">]</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">it</span> <span class="s2">&quot;does not change input text&quot;</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;toki mi li pona&quot;</span>
-</span><span class='line'>      <span class="n">described_class</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</span><span class='line'>      <span class="n">expect</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="s2">&quot;toki mi li pona&quot;</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Usually lexical analysis for programming languages is based on <a href="http://web.cse.ohio-state.edu/~gurari/course/cse756/html/cse756se2.html">finite-state automata</a>.
-But in our simple case we can easily handle it with one regular expression:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Tokipona</span>
-</span><span class='line'>  <span class="k">class</span> <span class="nc">Tokenizer</span>
-</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</span><span class='line'>      <span class="vi">@text</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="sr">/\w+|[^\s]/</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This implementation looks very naive, but specs pass, so we live it as it is.
-Probably in the future we will modify.</p>
-
-<h2>Conclusion</h2>
-
-<p>It is the first article and the beginning of the journey. The next step will be an implementation
-of Toki Pona language detector. It&#8217;s not necessary to know Toki Pona to follow me,
-but in case you are interested, here below I provide some useful links, so you can learn yourself
-and start communicating.</p>
-
-<p>I&#8217;ve created a github repository where you can access the code: <a href="https://github.com/greyblake/tokipona">greyblake/tokipona</a>.</p>
-
-<p>P.S.</p>
-
-<p>Thanks for reading. The subject is new for me, so your comments, suggestions and feedback can be very helpful.</p>
-
-<h2>Links</h2>
-
-<ul>
-<li><a href="https://en.wikipedia.org/wiki/Toki_Pona">Toki Pona at Wikipedia</a></li>
-<li><a href="http://tokipona.org/">Official Toki Pona site</a></li>
-<li><a href="http://rowa.giso.de/languages/toki-pona/english/lessons.php">Toki Pona lessons</a> - here you can start learning the language</li>
-<li><a href="http://x-raizor.github.io/visual-tokipona/index.html">Toki Pona visual vocabulary</a></li>
-<li>#tokipona - IRC channel where you can communicate with other people</li>
-</ul>
-
 </div>
   
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/">Read on &rarr;</a>
+    </footer>
   
 
 
@@ -1051,66 +958,6 @@ to do with Gnome.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/01/27/failed-to-add-new-printer-in-debian-wheezy/">Failed to Add New Printer in Debian Wheezy</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-01-27T21:44:00+01:00" pubdate data-updated="true">Jan 27<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>After migrating to Debian Wheezy (current test Debian repository) I faced a problem
-with installing a local USB printer: on attempt to add new USB printer
-(HP LaserJet M1005) I got an error message: &#8220;Failed to add new printer in Debian Wheezy&#8221;
-(&#8220;Не удалось добавить новый принтер&#8221; if you have Russian localization).</p>
-
-<p>After googling for I a while I found a good workaround for it. All you need is
-to use <code>pk-helper</code> package from Sid (unstable Debian version), since it seems to
-be buggy in Wheezy.</p>
-
-<p>So add Sid repository to your <code>/etc/apt/source.list</code>:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>deb http://ftp.ua.debian.org/debian/ sid main non-free contrib</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And reinstall <code>cups-pk-helper</code> package using Sid repository:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>aptitude reinstall cups-pk-helper --target sid</span></code></pre></td></tr></table></div></figure>
-
-
-<p>That&#8217;s all. Now try to connect your USB printer.
-Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=695131">bug report</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1126,6 +973,10 @@ Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=6951
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/">NLP, Toki Pona and Ruby. Part 2: language detector</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/">NLP, Toki Pona and Ruby: part 1</a>
       </li>
     
@@ -1139,10 +990,6 @@ Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=6951
     
       <li class="post">
         <a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to compare audio in ruby</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/08/working-with-fonts-in-debian-and-ubuntu/">Working with fonts in Debian and Ubuntu</a>
       </li>
     
   </ul>
@@ -1204,7 +1051,7 @@ Btw, there is the <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=6951
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2015 - Sergey Potapov -
+  Copyright &copy; 2016 - Sergey Potapov -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
