@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: whatlang | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/whatlang/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2017-07-30T16:24:11+02:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Introduction to Rust whatlang library and natural language identification algorithms]]></title>
+    <link href="http://greyblake.com/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms/"/>
+    <updated>2017-07-30T14:03:00+02:00</updated>
+    <id>http://greyblake.com/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms</id>
+    <content type="html"><![CDATA[<p>I'd like to announce a new Rust library <a href="https://github.com/greyblake/whatlang-rs">whatlang</a>.
+Its purpose is to detect natural languages by a given text. Let me show you a quick example:</p>
+
+<p>```rust
+extern crate whatlang;</p>
+
+<p>use whatlang::detect;</p>
+
+<p>fn main() {</p>
+
+<pre><code>// A sentence in German
+let text = "Das ist einfach Deutsch.";
+
+// Detect langauge and unwrap the infromation
+let info = detect(&amp;text).unwrap();
+
+// Print an ISO 639-3 language code (e.g. "eng", "rus", "deu", etc)
+println!("Detected language: {:?}", info.lang().to_code());
+
+// Print a script (e.g. "Latin", "Cyrillic", "Arabic", etc)
+println!("Script: {:?}", info.script());
+
+// Can we rely on this information?
+println!("Is reliable: {}", info.is_reliable());
+</code></pre>
+
+<p>}
+```</p>
+
+<p>The output:</p>
+
+<pre><code>Detected language: deu
+Script: Latin
+Is reliable: true
+</code></pre>
+
+<!--more-->
+
+
+<p>So, we can see, that library successfully detect short German sentence and we can even trust this information.</p>
+
+<p>You probably noticed, that we had to unwrap info, it's because <code>detect</code> function returns <code>Option&lt;Info&gt;</code>.
+It may return <code>None</code>, if the text does not contain any valuable information for language detection
+(e.g. numbers or punctuations).</p>
+
+<h2>How does it work?</h2>
+
+<p>There are two steps:</p>
+
+<ul>
+<li>Identify a script (writing system)</li>
+<li>Identify a language based using trigram language profiles</li>
+</ul>
+
+
+<h3>Script identification</h3>
+
+<p>This  part is very simple. We just iterate over the string by characters, and a script that has the most characters in the text is the winner.
+Scripts are presented in UTF-8 as non-overlapping unicode blocks.
+You can find information about them in the Internet, here is for example Wikipedia article about <a href="https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)">Basic Latin block</a>.</p>
+
+<h3>Trigram based language detection</h3>
+
+<p>You probably know, that every written language has it's own statistic characteristics.
+For example in English text the most used letters are:</p>
+
+<ul>
+<li><code>e</code> - 12.7%</li>
+<li><code>t</code> - 9%</li>
+<li><code>a</code> - 8.2%</li>
+</ul>
+
+
+<p>And so on. So let's say, if we have a big text with frequency of occurrence of "e" equal 12.7%, "t" equal 9%, and "a" equal 8.2%, we may
+claim that this text is written en English.</p>
+
+<p>Here the idea is similar, but with trigrams.</p>
+
+<h3>What is a trigram?</h3>
+
+<p>A trigram is a particular case of <a href="https://en.wikipedia.org/wiki/N-gram">n-gram</a>, that consists of three items.
+Instead of long words, I better give you an example. Let's say we have the following text:</p>
+
+<pre><code>love it
+</code></pre>
+
+<p>Trigrams for this text would be: <code>_lo</code>, <code>lov</code>, <code>ove</code>, <code>ve_</code>, <code>e_i</code>, <code>_it</code>, <code>it_</code>.
+The underscore character <code>_</code> here just represents the word boundaries.</p>
+
+<h3>Still how does it work?</h3>
+
+<p>The library keeps a list of 300 the most frequent trigrams for every language, sorted by frequency. This is called a language profile.
+For an input text, we calculate trigrams and sort them by frequency, and after that we compare this with the known language profiles.
+The language, that has the most similar profile to the profile of the input text is the winner.
+This idea was presented in the whitepaper <a href="http://odur.let.rug.nl/~vannoord/TextCat/textcat.pdf">Cavnar and Trenkle '94: N-Gram-Based Text Categorization'</a> and I it's a must-read
+if one wants to understand some algorithmic details.</p>
+
+<h3>How <em>is_reliable</em> calculated?</h3>
+
+<p>It is based on the following factors:</p>
+
+<ul>
+<li>How many unique trigrams are in the given text</li>
+<li>How big is the difference between the first and the second(not returned) detected languages? This metric is called <code>rate</code> in the code base.</li>
+</ul>
+
+
+<p>Therefore, it can be presented as a 2D space with threshold functions, that splits it into "Reliable" and "Not reliable" areas.
+This function is a hyperbola and it looks similar to the following one:</p>
+
+<p><img src="https://raw.githubusercontent.com/greyblake/whatlang-rs/master/misc/images/whatlang_is_reliable.png" alt="Whatlang is reliable" /></p>
+
+<p>Meaning, the more unique N-grams are in the given text (which correlates with the text length), the more chances to get reliable result,
+which we can trust.</p>
+
+<h2>Advantages and disadvantages of the trigram approach</h2>
+
+<p>Advantages:</p>
+
+<ul>
+<li>Simple</li>
+<li>Fast</li>
+<li>Memory and CPU efficient</li>
+<li>Generic approach that works well for all languages regardless the their grammar</li>
+</ul>
+
+
+<p>Disadvantages:</p>
+
+<ul>
+<li>May provide falsy results for short texts (smaller than 200-300 letters). Whatlang tries to compensate this with <code>is_reliable</code> attribute.</li>
+</ul>
+
+
+<h2>Alternative approaches</h2>
+
+<p>One of other approaches I know is to split input text by words, and lookup the words in language dictionaries.
+This approach may provide better results for short texts, but it's much more complex in its implementation and slower.
+This would require storing all the words in a database or <a href="https://en.wikipedia.org/wiki/Bloom_filter">bloom filters</a>.</p>
+
+<p>For the best ultimate (and pretty complex) solution one may implement a hybrid appoach: use the trigram algorithm for long texts and use
+dictionary lookup for short texts.</p>
+
+<h2>Conclusion</h2>
+
+<p>It was a small introduction to <a href="https://github.com/greyblake/whatlang-rs">whatlang</a> library and language identification algorithms.
+For information how to use the library (e.g. set a blacklist) please check the <a href="https://docs.rs/whatlang">documentation</a>.</p>
+
+<p>The next step will be porting the library to C language.
+There is a <a href="https://github.com/greyblake/whatlang-rs/issues/8">ticket</a> for this.
+If I manage to do it, I'll write another article.</p>
+
+<p>Thanks for the reading.</p>
+
+<p>P.S. Your feedback is welcome.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://github.com/greyblake/whatlang-rs">whatlang (github repo)</a></li>
+<li><a href="https://docs.rs/whatlang">whatlang (docs)</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)">Basic Latin block</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Letter_frequency">Letter Frequency (wikipedia)</a></li>
+<li><a href="http://odur.let.rug.nl/~vannoord/TextCat/textcat.pdf">Cavnar and Trenkle '94: N-Gram-Based Text Categorization'</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filters (wikipedia)</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

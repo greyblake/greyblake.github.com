@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2016-02-15T02:19:11+01:00</updated>
+  <updated>2017-07-30T16:24:11+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,198 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Introduction to Rust whatlang library and natural language identification algorithms]]></title>
+    <link href="http://greyblake.com/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms/"/>
+    <updated>2017-07-30T14:03:00+02:00</updated>
+    <id>http://greyblake.com/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms</id>
+    <content type="html"><![CDATA[<p>I&#8217;d like to announce a new Rust library <a href="https://github.com/greyblake/whatlang-rs">whatlang</a>.
+Its purpose is to detect natural languages by a given text. Let me show you a quick example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">extern</span> <span class="n">crate</span> <span class="n">whatlang</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">use</span> <span class="n">whatlang</span><span class="o">::</span><span class="n">detect</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">fn</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// A sentence in German</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">text</span> <span class="o">=</span> <span class="s">&quot;Das ist einfach Deutsch.&quot;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Detect langauge and unwrap the infromation</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">info</span> <span class="o">=</span> <span class="n">detect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">text</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Print an ISO 639-3 language code (e.g. &quot;eng&quot;, &quot;rus&quot;, &quot;deu&quot;, etc)</span>
+</span><span class='line'>    <span class="n">println</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Detected language: {:?}&quot;</span><span class="p">,</span> <span class="n">info</span><span class="p">.</span><span class="n">lang</span><span class="p">().</span><span class="n">to_code</span><span class="p">());</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Print a script (e.g. &quot;Latin&quot;, &quot;Cyrillic&quot;, &quot;Arabic&quot;, etc)</span>
+</span><span class='line'>    <span class="n">println</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Script: {:?}&quot;</span><span class="p">,</span> <span class="n">info</span><span class="p">.</span><span class="n">script</span><span class="p">());</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Can we rely on this information?</span>
+</span><span class='line'>    <span class="n">println</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Is reliable: {}&quot;</span><span class="p">,</span> <span class="n">info</span><span class="p">.</span><span class="n">is_reliable</span><span class="p">());</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The output:</p>
+
+<pre><code>Detected language: deu
+Script: Latin
+Is reliable: true
+</code></pre>
+
+<!--more-->
+
+
+<p>So, we can see, that library successfully detect short German sentence and we can even trust this information.</p>
+
+<p>You probably noticed, that we had to unwrap info, it&#8217;s because <code>detect</code> function returns <code>Option&lt;Info&gt;</code>.
+It may return <code>None</code>, if the text does not contain any valuable information for language detection
+(e.g. numbers or punctuations).</p>
+
+<h2>How does it work?</h2>
+
+<p>There are two steps:</p>
+
+<ul>
+<li>Identify a script (writing system)</li>
+<li>Identify a language based using trigram language profiles</li>
+</ul>
+
+
+<h3>Script identification</h3>
+
+<p>This  part is very simple. We just iterate over the string by characters, and a script that has the most characters in the text is the winner.
+Scripts are presented in UTF-8 as non-overlapping unicode blocks.
+You can find information about them in the Internet, here is for example Wikipedia article about <a href="https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)">Basic Latin block</a>.</p>
+
+<h3>Trigram based language detection</h3>
+
+<p>You probably know, that every written language has it&#8217;s own statistic characteristics.
+For example in English text the most used letters are:</p>
+
+<ul>
+<li><code>e</code> - 12.7%</li>
+<li><code>t</code> - 9%</li>
+<li><code>a</code> - 8.2%</li>
+</ul>
+
+
+<p>And so on. So let&#8217;s say, if we have a big text with frequency of occurrence of &#8220;e&#8221; equal 12.7%, &#8220;t&#8221; equal 9%, and &#8220;a&#8221; equal 8.2%, we may
+claim that this text is written en English.</p>
+
+<p>Here the idea is similar, but with trigrams.</p>
+
+<h3>What is a trigram?</h3>
+
+<p>A trigram is a particular case of <a href="https://en.wikipedia.org/wiki/N-gram">n-gram</a>, that consists of three items.
+Instead of long words, I better give you an example. Let&#8217;s say we have the following text:</p>
+
+<pre><code>love it
+</code></pre>
+
+<p>Trigrams for this text would be: <code>_lo</code>, <code>lov</code>, <code>ove</code>, <code>ve_</code>, <code>e_i</code>, <code>_it</code>, <code>it_</code>.
+The underscore character <code>_</code> here just represents the word boundaries.</p>
+
+<h3>Still how does it work?</h3>
+
+<p>The library keeps a list of 300 the most frequent trigrams for every language, sorted by frequency. This is called a language profile.
+For an input text, we calculate trigrams and sort them by frequency, and after that we compare this with the known language profiles.
+The language, that has the most similar profile to the profile of the input text is the winner.
+This idea was presented in the whitepaper <a href="http://odur.let.rug.nl/~vannoord/TextCat/textcat.pdf">Cavnar and Trenkle &#8216;94: N-Gram-Based Text Categorization&#8217;</a> and I it&#8217;s a must-read
+if one wants to understand some algorithmic details.</p>
+
+<h3>How <em>is_reliable</em> calculated?</h3>
+
+<p>It is based on the following factors:</p>
+
+<ul>
+<li>How many unique trigrams are in the given text</li>
+<li>How big is the difference between the first and the second(not returned) detected languages? This metric is called <code>rate</code> in the code base.</li>
+</ul>
+
+
+<p>Therefore, it can be presented as a 2D space with threshold functions, that splits it into &#8220;Reliable&#8221; and &#8220;Not reliable&#8221; areas.
+This function is a hyperbola and it looks similar to the following one:</p>
+
+<p><img src="https://raw.githubusercontent.com/greyblake/whatlang-rs/master/misc/images/whatlang_is_reliable.png" alt="Whatlang is reliable" /></p>
+
+<p>Meaning, the more unique N-grams are in the given text (which correlates with the text length), the more chances to get reliable result,
+which we can trust.</p>
+
+<h2>Advantages and disadvantages of the trigram approach</h2>
+
+<p>Advantages:</p>
+
+<ul>
+<li>Simple</li>
+<li>Fast</li>
+<li>Memory and CPU efficient</li>
+<li>Generic approach that works well for all languages regardless the their grammar</li>
+</ul>
+
+
+<p>Disadvantages:</p>
+
+<ul>
+<li>May provide falsy results for short texts (smaller than 200-300 letters). Whatlang tries to compensate this with <code>is_reliable</code> attribute.</li>
+</ul>
+
+
+<h2>Alternative approaches</h2>
+
+<p>One of other approaches I know is to split input text by words, and lookup the words in language dictionaries.
+This approach may provide better results for short texts, but it&#8217;s much more complex in its implementation and slower.
+This would require storing all the words in a database or <a href="https://en.wikipedia.org/wiki/Bloom_filter">bloom filters</a>.</p>
+
+<p>For the best ultimate (and pretty complex) solution one may implement a hybrid appoach: use the trigram algorithm for long texts and use
+dictionary lookup for short texts.</p>
+
+<h2>Conclusion</h2>
+
+<p>It was a small introduction to <a href="https://github.com/greyblake/whatlang-rs">whatlang</a> library and language identification algorithms.
+For information how to use the library (e.g. set a blacklist) please check the <a href="https://docs.rs/whatlang">documentation</a>.</p>
+
+<p>The next step will be porting the library to C language.
+There is a <a href="https://github.com/greyblake/whatlang-rs/issues/8">ticket</a> for this.
+If I manage to do it, I&#8217;ll write another article.</p>
+
+<p>Thanks for the reading.</p>
+
+<p>P.S. Your feedback is welcome.</p>
+
+<h2>Links</h2>
+
+<ul>
+<li><a href="https://github.com/greyblake/whatlang-rs">whatlang (github repo)</a></li>
+<li><a href="https://docs.rs/whatlang">whatlang (docs)</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)">Basic Latin block</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Letter_frequency">Letter Frequency (wikipedia)</a></li>
+<li><a href="http://odur.let.rug.nl/~vannoord/TextCat/textcat.pdf">Cavnar and Trenkle &#8216;94: N-Gram-Based Text Categorization&#8217;</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom filters (wikipedia)</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[NLP, Toki Pona and Ruby. Part 2: language detector]]></title>
@@ -3460,308 +3652,6 @@ Please give me a favour and check it out.</p>
 
 <p>I&#8217;m gonna implement a vim plugin based on <a href="https://github.com/smartdict/smartdict-core">smartdict-core</a>.
 That will the next step in this direction, since I realy need it.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Получаем Premium на busuu.com бесплатно]]></title>
-    <link href="http://greyblake.com/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/"/>
-    <updated>2012-05-21T17:42:20+02:00</updated>
-    <id>http://greyblake.com/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno</id>
-    <content type="html"><![CDATA[<p>Пожалуйста, прочтитайте так же мою статью <a href="http://greyblake.com/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>.</p>
-
-<p>Недавно я начал пользоваться сервисом <a href="http://www.busuu.com">busuu.com</a>. Очень классная вещь, но вот беда: спустя неделю часть функционала перестала работать, предлагая купить Premium аккаунт за 69,99 EUR.</p>
-
-<p>Одна из полезностей которые пропали, была возможность прослушивания ключевых фраз во время изучения новых слов. Кнопка, при нажатие на которую должна произносится фраза, превратилась в обычную ссылку на страницу, которая предлагает купить Premium.</p>
-
-<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/play_button.png" alt="bussu play button" /></p>
-
-<p>Мне стало интересно, а можно ли это обойти? Оказалось, что можно! Файловый сервер, который отдаёт аудио-файлы никак не проверяет права пользователя, а сами ссылки на файлы можно прямо получить из ответов сервера на AJAX-запросы, которые отсылаются при нажатии на следующее/предыдущее слово.</p>
-
-<!--more-->
-
-
-<p>После полутора часов изучения и дебага родился скрипт, приведенный в конце статьи, который делает то, что мне нужно:</p>
-
-<ul>
-<li>Возвращает старую кнопку, вместо ссылки</li>
-<li>Переопределяет callback AJAX-запроса так, чтобы он получал из ответа ссылку на аудио-файл.</li>
-</ul>
-
-
-<h2>Как этим воспользоваться?</h2>
-
-<p>Предполагаю, что статью будут читать и нетехнические люди, поэтому опишу в деталях, как использовать эту уязвимость в своё благо.</p>
-
-<h3>Установка Firebug</h3>
-
-<p>Firebug - это расширение для Firefox, которым обычно пользуются веб-разработчики. Вам придётся его установить.
-Сделать это можно по <a href="http://getfirebug.com/">этой ссылке</a>, нажав на кнопку &#8220;Install Firebug&#8221;. После чего броузер должен перезагрузиться.</p>
-
-<h3>Основной трюк</h3>
-
-<p>Зайдите на busuu.com на страницу изучения слов. Откройте Firebug.
-В моём случае это делается через меню: Tools -> Web Developer -> Firebug -> открыть Firebug. Возможно в разных сборках Firefox, это может быть по-разному.</p>
-
-<p>Откройте консоль и полностью скопируйте в неё Javascript код, приведенный в конце этой статьи, как показано на рисунке. После чего нажмите кнопку &#8220;Выполнить&#8221;.</p>
-
-<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/firebug-1.png" alt="firebug" /></p>
-
-<h3>Изучайте ваш любимый язык</h3>
-
-<p>Дело сделано, вы можете закрыть Firebug. Теперь, кликнув на следующее слово у вас будет возможность прослушать ключевую фразу. Всё это будет работать до тех пор, пока вы не перезагрузите страницу.</p>
-
-<h2>Если у вас не Firefox</h2>
-
-<p>В большинстве других броузеров есть подобные инструменты для отладки, которые позволят вам проделать такой же трюк. Например, в броузере Google Chrome он встроенный, и открывается при нажатии клавиш Ctrl+Shift+J. В видео ниже показано, как именно это делается.</p>
-
-<iframe width="420" height="315" src="http://www.youtube.com/embed/cVn7IkkQFBU" frameborder="0" allowfullscreen></iframe>
-
-
-<h2>Javascript код</h2>
-
-<figure class='code'><figcaption><span>put it into Firebug console</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-<span class='line-number'>61</span>
-<span class='line-number'>62</span>
-<span class='line-number'>63</span>
-<span class='line-number'>64</span>
-<span class='line-number'>65</span>
-<span class='line-number'>66</span>
-<span class='line-number'>67</span>
-<span class='line-number'>68</span>
-<span class='line-number'>69</span>
-<span class='line-number'>70</span>
-<span class='line-number'>71</span>
-<span class='line-number'>72</span>
-<span class='line-number'>73</span>
-<span class='line-number'>74</span>
-<span class='line-number'>75</span>
-<span class='line-number'>76</span>
-<span class='line-number'>77</span>
-<span class='line-number'>78</span>
-<span class='line-number'>79</span>
-<span class='line-number'>80</span>
-<span class='line-number'>81</span>
-<span class='line-number'>82</span>
-<span class='line-number'>83</span>
-<span class='line-number'>84</span>
-<span class='line-number'>85</span>
-<span class='line-number'>86</span>
-<span class='line-number'>87</span>
-<span class='line-number'>88</span>
-<span class='line-number'>89</span>
-<span class='line-number'>90</span>
-<span class='line-number'>91</span>
-<span class='line-number'>92</span>
-<span class='line-number'>93</span>
-<span class='line-number'>94</span>
-<span class='line-number'>95</span>
-<span class='line-number'>96</span>
-<span class='line-number'>97</span>
-<span class='line-number'>98</span>
-<span class='line-number'>99</span>
-<span class='line-number'>100</span>
-<span class='line-number'>101</span>
-<span class='line-number'>102</span>
-<span class='line-number'>103</span>
-<span class='line-number'>104</span>
-<span class='line-number'>105</span>
-<span class='line-number'>106</span>
-<span class='line-number'>107</span>
-<span class='line-number'>108</span>
-<span class='line-number'>109</span>
-<span class='line-number'>110</span>
-<span class='line-number'>111</span>
-<span class='line-number'>112</span>
-<span class='line-number'>113</span>
-<span class='line-number'>114</span>
-<span class='line-number'>115</span>
-<span class='line-number'>116</span>
-<span class='line-number'>117</span>
-<span class='line-number'>118</span>
-<span class='line-number'>119</span>
-<span class='line-number'>120</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// Define languages</span>
-</span><span class='line'><span class="nx">hack_native_lang</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;lang&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">hack_matched</span> <span class="o">=</span> <span class="nx">location</span><span class="p">.</span><span class="nx">pathname</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/\/(enc|ar|zh|fr|de|it|ja|pl|pt|ru|es|tr)\//</span><span class="p">)</span>
-</span><span class='line'><span class="nx">hack_learning_lang</span> <span class="o">=</span> <span class="nx">hack_matched</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Replace link to subsribe with real play button</span>
-</span><span class='line'><span class="kd">var</span> <span class="nx">hack_player_div</span> <span class="o">=</span> <span class="s1">&#39;&lt;div id=&quot;player2&quot; class=&quot;busuu-player&quot;&gt;&lt;/div&gt;&#39;</span>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp-audio&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">hack_player_div</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Update onClick event</span>
-</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player2&quot;</span><span class="p">).</span><span class="nx">click</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-</span><span class='line'>   <span class="k">if</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">hasClass</span><span class="p">(</span><span class="s2">&quot;busuu-player-pause&quot;</span><span class="p">)){</span>
-</span><span class='line'>     <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">data</span><span class="p">(</span><span class="s2">&quot;jPlayer&quot;</span><span class="p">).</span><span class="nx">status</span><span class="p">.</span><span class="nx">paused</span><span class="p">){</span>
-</span><span class='line'>       <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">removeClass</span><span class="p">(</span><span class="s2">&quot;busuu-player-pause&quot;</span><span class="p">);</span>
-</span><span class='line'>       <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;pause&quot;</span><span class="p">);</span>
-</span><span class='line'>     <span class="p">}</span>
-</span><span class='line'>     <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>       <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;play&quot;</span><span class="p">);</span>
-</span><span class='line'>     <span class="p">}</span>
-</span><span class='line'>   <span class="p">}</span>
-</span><span class='line'>   <span class="k">else</span><span class="p">{</span>
-</span><span class='line'>     <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;setMedia&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">mp3</span><span class="o">:</span><span class="nx">kp_audio</span><span class="p">}).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;play&quot;</span><span class="p">);</span>
-</span><span class='line'>     <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s2">&quot;busuu-player-pause&quot;</span><span class="p">);</span>
-</span><span class='line'>   <span class="p">}</span>
-</span><span class='line'><span class="p">});</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// Redefine function getEnt() to make it set global variable kp_audio with link to mp3 file</span>
-</span><span class='line'><span class="kd">function</span> <span class="nx">getEnt</span><span class="p">(</span><span class="nx">pl</span><span class="p">,</span><span class="nx">entid</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>   <span class="nx">p_entid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">entities</span><span class="p">[</span><span class="nx">index</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">entities</span><span class="p">[</span><span class="nx">index</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class='line'>   <span class="nx">n_entid</span> <span class="o">=</span> <span class="p">(</span><span class="nx">entities</span><span class="p">[</span><span class="nx">index</span> <span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">entities</span><span class="p">[</span><span class="nx">index</span> <span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class='line'>   <span class="k">if</span> <span class="p">(</span><span class="nx">entid</span> <span class="o">==</span> <span class="mi">14069255</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">7312</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">1305</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">3279</span> <span class="o">||</span>
-</span><span class='line'>       <span class="nx">entid</span> <span class="o">==</span> <span class="mi">2310</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">81017</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">1450</span> <span class="o">||</span> <span class="nx">entid</span> <span class="o">==</span> <span class="mi">30872</span><span class="p">){</span>
-</span><span class='line'>     <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#ge&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">(</span><span class="s2">&quot;drop&quot;</span><span class="p">);</span>
-</span><span class='line'>   <span class="p">}</span>
-</span><span class='line'>   <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#ge&quot;</span><span class="p">).</span><span class="nx">hide</span><span class="p">();</span>
-</span><span class='line'>   <span class="p">}</span>
-</span><span class='line'>   <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">({</span>
-</span><span class='line'>       <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
-</span><span class='line'>       <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/js/busuuajax/entity/&quot;</span><span class="o">+</span><span class="nx">entid</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="nx">hack_learning_lang</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="nx">hack_native_lang</span><span class="o">+</span><span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nx">p_entid</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nx">n_entid</span><span class="p">,</span>
-</span><span class='line'>       <span class="nx">cache</span><span class="o">:</span><span class="kc">true</span><span class="p">,</span>
-</span><span class='line'>       <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;xml&quot;</span><span class="p">,</span>
-</span><span class='line'>       <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">xml</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#report_link&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;href&quot;</span><span class="p">,</span> <span class="s2">&quot;/js/busuuajax/user_report_entity/&quot;</span><span class="o">+</span><span class="nx">hack_learning_lang</span><span class="o">+</span><span class="s2">&quot;/1_1_4/&quot;</span><span class="o">+</span><span class="nx">entid</span><span class="o">+</span><span class="s2">&quot;?KeepThis=true&amp;TB_iframe=true&amp;height=270&amp;width=300&quot;</span><span class="p">);</span>
-</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#star&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;src&quot;</span><span class="p">,</span><span class="s2">&quot;http://static3.bscdn.net/sites/all/themes/busuunew/images/star_off.png&quot;</span><span class="p">);</span>
-</span><span class='line'>              <span class="nx">already_selected</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;flagged&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span> <span class="o">?</span> <span class="kc">true</span> <span class="o">:</span> <span class="kc">false</span><span class="p">;</span>
-</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="nx">already_selected</span> <span class="p">)</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#star&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;src&quot;</span><span class="p">,</span><span class="s2">&quot;http://static1.bscdn.net/sites/all/themes/busuunew/images/star_on.png&quot;</span><span class="p">);</span>
-</span><span class='line'>              <span class="nx">image</span> <span class="o">=</span> <span class="s2">&quot;&lt;img style=&#39;display:none;&#39; src=&#39;&quot;</span><span class="o">+</span><span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot;&#39; /&gt;&quot;</span><span class="p">;</span>
-</span><span class='line'>              <span class="nx">prev_image</span><span class="o">=</span><span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;prev_image&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="nx">next_image</span><span class="o">=</span><span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;next_image&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="nx">audio</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;audio&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="nx">word1</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;value1&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="nx">word2</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;value2&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="nx">phrase1</span> <span class="o">=</span>  <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;keyphrase1&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="nx">phrase2</span><span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;keyphrase2&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="nx">phonetics</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;entity_phonetics&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="k">if</span><span class="p">(</span><span class="nx">phonetics</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
-</span><span class='line'>                <span class="nx">entity_phonetics</span> <span class="o">=</span> <span class="s2">&quot;&lt;br&gt;&lt;div dir=\&quot;ltr\&quot; lang=\&quot;enc\&quot; class=\&quot;phonetics\&quot;&gt;&quot;</span><span class="p">;</span>
-</span><span class='line'>                <span class="nx">entity_phonetics</span> <span class="o">+=</span> <span class="nx">phonetics</span><span class="p">;</span>
-</span><span class='line'>                <span class="nx">entity_phonetics</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/div&gt;&quot;</span><span class="p">;</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>              <span class="nx">phonetics</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;kp_phonetics&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>              <span class="k">if</span><span class="p">(</span><span class="nx">phonetics</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
-</span><span class='line'>                <span class="nx">kp_phonetics</span> <span class="o">=</span> <span class="s2">&quot;&lt;br&gt;&lt;div dir=\&quot;ltr\&quot; lang=\&quot;enc\&quot; class=\&quot;phonetics\&quot;&gt;&quot;</span><span class="p">;</span>
-</span><span class='line'>                <span class="nx">kp_phonetics</span> <span class="o">+=</span>  <span class="nx">phonetics</span><span class="p">;</span>
-</span><span class='line'>                <span class="nx">kp_phonetics</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/div&gt;&quot;</span><span class="p">;</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>              <span class="nx">kp_audio</span><span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;kp_audio&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">();</span>
-</span><span class='line'>
-</span><span class='line'>              <span class="k">if</span><span class="p">(</span><span class="nx">navigator</span><span class="p">.</span><span class="nx">platform</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s2">&quot;iPad&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">){</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;setMedia&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">mp3</span><span class="o">:</span> <span class="nx">audio</span><span class="p">});</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>              <span class="k">else</span><span class="p">{</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player&quot;</span><span class="p">).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;setMedia&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">mp3</span><span class="o">:</span> <span class="nx">audio</span><span class="p">}).</span><span class="nx">jPlayer</span><span class="p">(</span><span class="s2">&quot;play&quot;</span><span class="p">);</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#player1&quot;</span><span class="p">).</span><span class="nx">addClass</span><span class="p">(</span><span class="s2">&quot;busuu-player-pause&quot;</span><span class="p">);</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="nx">index</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">){</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#left&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&lt;img style=&#39;cursor:pointer;&#39; src=&#39;&quot;</span><span class="o">+</span> <span class="nx">prev_image</span> <span class="o">+</span> <span class="s2">&quot;&#39; width=100  height=66&gt;&quot;</span><span class="p">);</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#left_arrow&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#left_border&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#left&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>                <span class="k">if</span> <span class="p">(</span><span class="nx">index</span> <span class="o">&lt;</span> <span class="nx">entities</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span><span class="mi">1</span> <span class="p">){</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#right&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&lt;img style=&#39;cursor:pointer;&#39;  src=&#39;&quot;</span><span class="o">+</span> <span class="nx">next_image</span> <span class="o">+</span> <span class="s2">&quot;&#39; width=100  height=66&gt;&quot;</span><span class="p">);</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#right&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#right_arrow&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#right_border&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.lu-learn-phraseA&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">word1</span> <span class="o">+</span> <span class="nx">entity_phonetics</span><span class="p">);</span>
-</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.lu-learn-phraseB&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">word2</span><span class="p">);</span>
-</span><span class='line'>             <span class="nx">kp_audio_html</span><span class="o">=</span><span class="s1">&#39;&lt;div id=&quot;player2&quot; class=&quot;busuu-player&quot;&gt;&lt;/div&gt;&#39;</span><span class="p">;</span>
-</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">$</span><span class="p">(</span><span class="nx">xml</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;keyphrase1&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">()</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.table-lu-key-phrases&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">kp_audio</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp1&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">phrase1</span> <span class="o">+</span> <span class="nx">kp_phonetics</span><span class="p">);</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp_divider&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp2&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">phrase2</span><span class="p">);</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp-audio&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">kp_audio_html</span><span class="p">);</span>
-</span><span class='line'>                  <span class="nx">activatePlayer2</span><span class="p">();</span>
-</span><span class='line'>                <span class="p">}</span>
-</span><span class='line'>                <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp1&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">phrase1</span> <span class="o">+</span> <span class="nx">kp_phonetics</span><span class="p">);</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp_divider&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp2&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">phrase2</span><span class="p">);</span>
-</span><span class='line'>                <span class="p">}</span>
-</span><span class='line'>                  <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.table-lu-key-phrases&quot;</span><span class="p">).</span><span class="nx">show</span><span class="p">();</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>              <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#kp_divider&quot;</span><span class="p">).</span><span class="nx">hide</span><span class="p">();</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.table-lu-key-phrases&quot;</span><span class="p">).</span><span class="nx">hide</span><span class="p">();</span>
-</span><span class='line'>              <span class="p">}</span>
-</span><span class='line'>              <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.lu-review-ratio&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">((</span><span class="nx">index</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span><span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nx">entities</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#middle&quot;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">image</span><span class="p">);</span>
-</span><span class='line'>                <span class="nx">$</span><span class="p">(</span><span class="s2">&quot;#middle&quot;</span><span class="p">).</span><span class="nx">children</span><span class="p">().</span><span class="nx">fadeIn</span><span class="p">(</span><span class="mi">300</span><span class="p">);</span>
-</span><span class='line'>           <span class="p">}</span>
-</span><span class='line'>      <span class="p">});</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
 ]]></content>
   </entry>
   

@@ -9,8 +9,9 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="After migrating to Debian Wheezy (current test Debian repository) I faced a problem
-with installing a local USB printer: on attempt to add new USB &hellip;">
+  <meta name="description" content="I switched from Gnome3 to Mate desktop
+and noticed that I&#8217;m able to use only few sreensavers.
+If you&#8217;re using Mate (it&#8217;s default &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +88,84 @@ with installing a local USB printer: on attempt to add new USB &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/02/02/install-more-screensavers-on-mate-desktop/">Install More Screensavers on Mate Desktop</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-02-02T22:24:00+01:00" pubdate data-updated="true">Feb 2<span>nd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I switched from Gnome3 to <a href="http://mate-desktop.org/">Mate desktop</a>
+and noticed that I&#8217;m able to use only few sreensavers.
+If you&#8217;re using Mate (it&#8217;s default for Linux Mint) you might experience the same problem.</p>
+
+<p>There is a workaround how to use much more screensavers with Mate as usually able
+to do with Gnome.</p>
+
+<p>Install packages with additional screensavers:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>apt-get install xscreensaver-data-extra xscreensaver-gl-extra</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Go to <code>/usr/share/applications/screensavers</code> directory:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cd /usr/share/applications/screensavers</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are located number of <code>.desktop</code> files. You should edit them by replacing the line</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>OnlyShowIn=GNOME;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>with</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>OnlyShowIn=GNOME;MATE;</span></code></pre></td></tr></table></div></figure>
+
+
+<p>.</p>
+
+<p>Obviously it&#8217;s a routine to change them all manually. So use <code>sed</code> tool to edit all files in once:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>find . -name <span class="s1">&#39;*.desktop&#39;</span> | xargs sed -i <span class="s1">&#39;s/OnlyShowIn=GNOME;/OnlyShowIn=GNOME;MATE;/&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now you are able to use more than hundred screensavers on Mate!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -843,57 +922,6 @@ That will the next step in this direction, since I realy need it.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/">Получаем Premium на busuu.com бесплатно</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-05-21T17:42:20+02:00" pubdate data-updated="true">May 21<span>st</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Пожалуйста, прочтитайте так же мою статью <a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a>.</p>
-
-<p>Недавно я начал пользоваться сервисом <a href="http://www.busuu.com">busuu.com</a>. Очень классная вещь, но вот беда: спустя неделю часть функционала перестала работать, предлагая купить Premium аккаунт за 69,99 EUR.</p>
-
-<p>Одна из полезностей которые пропали, была возможность прослушивания ключевых фраз во время изучения новых слов. Кнопка, при нажатие на которую должна произносится фраза, превратилась в обычную ссылку на страницу, которая предлагает купить Premium.</p>
-
-<p><img src="http://i1078.photobucket.com/albums/w484/greyblake/play_button.png" alt="bussu play button" /></p>
-
-<p>Мне стало интересно, а можно ли это обойти? Оказалось, что можно! Файловый сервер, который отдаёт аудио-файлы никак не проверяет права пользователя, а сами ссылки на файлы можно прямо получить из ответов сервера на AJAX-запросы, которые отсылаются при нажатии на следующее/предыдущее слово.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/05/21/poluchaem-premium-na-busuu-com-besplatno/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -911,6 +939,10 @@ That will the next step in this direction, since I realy need it.</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms/">Introduction to Rust whatlang library and natural language identification algorithms</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/">NLP, Toki Pona and Ruby. Part 2: language detector</a>
       </li>
     
@@ -924,10 +956,6 @@ That will the next step in this direction, since I realy need it.</p>
     
       <li class="post">
         <a href="/blog/2014/05/21/ignore-files-with-git-locally/">Ignore files with git locally</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to compare audio in ruby</a>
       </li>
     
   </ul>
@@ -989,7 +1017,7 @@ That will the next step in this direction, since I realy need it.</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2016 - Sergey Potapov -
+  Copyright &copy; 2017 - Sergey Potapov -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
