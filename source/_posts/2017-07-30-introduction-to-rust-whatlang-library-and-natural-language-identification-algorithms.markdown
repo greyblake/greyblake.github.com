@@ -43,8 +43,8 @@ The output:
 
 So, we can see, that library successfully detect short German sentence and we can even trust this information.
 
-You probably noticed, that we had to unwrap info, it's because `detect` function returns `Option<Info>`. 
-It may return `None`, if the text does not contain any valuable information for language detection 
+You probably noticed, that we had to unwrap info, it's because `detect` function returns `Option<Info>`.
+It may return `None`, if the text does not contain any valuable information for language detection
 (e.g. numbers or punctuations).
 
 
@@ -67,13 +67,13 @@ You probably know, that every written language has it's own statistic characteri
 For example in English text the most used letters are:
 
 * `e` - 12.7%
-* `t` - 9% 
+* `t` - 9%
 * `a` - 8.2%
 
 And so on. So let's say, if we have a big text with frequency of occurrence of "e" equal 12.7%, "t" equal 9%, and "a" equal 8.2%, we may
-claim that this text is written en English.
+claim that this text is written in English.
 
-Here the idea is similar, but with trigrams.
+The idea here is similar, but with trigrams.
 
 ### What is a trigram?
 
@@ -82,7 +82,7 @@ Instead of long words, I better give you an example. Let's say we have the follo
 
     love it
 
-Trigrams for this text would be: `_lo`, `lov`, `ove`, `ve_`, `e_i`, `_it`, `it_`. 
+Trigrams for this text would be: `_lo`, `lov`, `ove`, `ve_`, `e_i`, `_it`, `it_`.
 The underscore character `_` here just represents the word boundaries.
 
 ### Still how does it work?
@@ -133,8 +133,8 @@ dictionary lookup for short texts.
 
 ## Conclusion
 
-It was a small introduction to [whatlang](https://github.com/greyblake/whatlang-rs) library and language identification algorithms. 
-For information how to use the library (e.g. set a blacklist) please check the [documentation](https://docs.rs/whatlang).
+It was a small introduction to [whatlang](https://github.com/greyblake/whatlang-rs) library and language identification algorithms.
+For information how to use the library (e.g. set a blacklist languages) please check the [documentation](https://docs.rs/whatlang).
 
 The next step will be porting the library to C language.
 There is a [ticket](https://github.com/greyblake/whatlang-rs/issues/8) for this.
