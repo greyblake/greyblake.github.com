@@ -6,6 +6,65 @@ sharing: true
 footer: true
 ---
 
+## Whatlang
+
+Rust library for natural language detection.
+
+Links:
+[github](https://github.com/greyblake/whatlang-rs),
+[crates.io](https://crates.io/crates/whatlang),
+[docs](https://docs.rs/whatlang)
+
+
+## Brainv2
+
+[Brainv2](http://brainv2.com) is an online project with intention to help people to enhance their
+cognitive skills. You'll find there funny small games to train your memory, attention and
+peripheral vision.
+
+Links:
+[webpage](http://brainv2.com/games/catch-numbers)
+
+
+## Cossack
+
+Simple and flexible HTTP client for Crystal with middleware and test support.
+
+Links:
+[github](https://github.com/greyblake/crystal-cossack)
+
+
+## ICR
+
+Interactive console for Crystal programming language.
+
+Links:
+[github](https://github.com/greyblake/crystal-icr)
+
+
+## Crystal JWT
+
+Implementation of [JSON Web Token](https://jwt.io/) for Crystal programming language.
+
+Links:
+[github](https://github.com/greyblake/crystal-jwt)
+
+## Blogo
+
+A mountable blog engine for Ruby on Rails.
+
+Links:
+[github](https://github.com/greyblake/blogo),
+
+
+## Mago
+
+Magic number detector for Ruby code.
+
+Links:
+[github](https://github.com/greyblake/mago)
+[rubygems](https://rubygems.org/gems/mago)
+
 
 ## Smartdict
 
@@ -37,14 +96,6 @@ RSpec matchers to test DataMapper models.
 Links:
 [github](https://github.com/greyblake/dm-rspec),
 [rubygems](https://rubygems.org/gems/dm-rspec)
-
-
-## fast_seeder
-
-Library to speed up seeding database using multiple SQL inserts.
-
-[github](https://github.com/greyblake/fast_seeder),
-[rubygems](https://rubygems.org/gems/fast_seeder)
 
 
 ## Other
