@@ -4,7 +4,7 @@
   <title><![CDATA[Category: whatlang | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/whatlang/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2017-07-30T16:24:11+02:00</updated>
+  <updated>2017-08-09T23:40:34+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -92,9 +92,9 @@ For example in English text the most used letters are:</p>
 
 
 <p>And so on. So let's say, if we have a big text with frequency of occurrence of "e" equal 12.7%, "t" equal 9%, and "a" equal 8.2%, we may
-claim that this text is written en English.</p>
+claim that this text is written in English.</p>
 
-<p>Here the idea is similar, but with trigrams.</p>
+<p>The idea here is similar, but with trigrams.</p>
 
 <h3>What is a trigram?</h3>
 
@@ -164,7 +164,7 @@ dictionary lookup for short texts.</p>
 <h2>Conclusion</h2>
 
 <p>It was a small introduction to <a href="https://github.com/greyblake/whatlang-rs">whatlang</a> library and language identification algorithms.
-For information how to use the library (e.g. set a blacklist) please check the <a href="https://docs.rs/whatlang">documentation</a>.</p>
+For information how to use the library (e.g. set a blacklist languages) please check the <a href="https://docs.rs/whatlang">documentation</a>.</p>
 
 <p>The next step will be porting the library to C language.
 There is a <a href="https://github.com/greyblake/whatlang-rs/issues/8">ticket</a> for this.

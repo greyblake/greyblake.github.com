@@ -9,8 +9,12 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="I&#8217;d like to announce a new Rust library whatlang.
-Its purpose is to detect natural languages by a given text. Let me show you a quick example: &hellip;">
+  <meta name="description" content="Intro
+Hello from Rust example
+Naming conventions
+Representing plain enums
+Strings Passing a string to a function
+Returning a string from a function &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -57,7 +61,7 @@ Its purpose is to detect natural languages by a given text. Let me show you a qu
   	<div class="clear"></div>
   </div>
   
-    <h2>Talking about Linux, Ruby and other hackers' stuff.</h2>
+    <h2>A word from rustacean, rubist and linuxoid.</h2>
   
   <div class="clear"></div>
 </hgroup>
@@ -87,6 +91,555 @@ Its purpose is to detect natural languages by a given text. Let me show you a qu
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2017/08/10/porting-rust-library-to-c/">Porting a Rust Library to C</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-08-10T10:16:00+02:00" pubdate data-updated="true">Aug 10<span>th</span>, 2017</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><ul>
+<li><a href="#intro">Intro</a></li>
+<li><a href="#hello-from-rust-example">Hello from Rust example</a></li>
+<li><a href="#naming-conventions">Naming conventions</a></li>
+<li><a href="#plain-enums">Representing plain enums</a></li>
+<li><a href="#strings">Strings</a>
+
+<ul>
+<li><a href="#passing-a-string-to-a-function">Passing a string to a function</a></li>
+<li><a href="#returning-a-string-from-a-function">Returning a string from a function</a></li>
+</ul>
+</li>
+<li><a href="#structs">Dealing with structures</a>
+
+<ul>
+<li><a href="#representing-a-structure">Representing a structure</a></li>
+<li><a href="#returning-a-structure">Returning a structure</a></li>
+</ul>
+</li>
+<li><a href="#complex-enums">Complex enums?</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+
+
+<h2><a name="intro"></a> Intro</h2>
+
+<p>Recently I&#8217;ve ported <a href="https://github.com/greyblake/whatlang-rs">whatlang</a> library to C (<a href="https://github.com/greyblake/whatlang-ffi">whatlang-ffi</a>)
+and I&#8217;d like to share some experience.</p>
+
+<p>DISCLAIMER: I am not a professional C/C++ developer, so it means:</p>
+
+<ul>
+<li>I will describe some things that may look very obvious.</li>
+<li>The outcome probably will not be a 100% idiomatic C code.</li>
+<li>If you know how some things can be done better, please let me know by writing a comment.</li>
+</ul>
+
+
+<h2><a name="hello-from-rust-example"></a> Hello from Rust example</h2>
+
+<p>First let&#8217;s make a minimal C program, that calls Rust.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cargo new whatlang-ffi
+</span><span class='line'>cd whatlang-ffi
+</span><span class='line'>mkdir examples</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Add this to <code>Cargo.toml</code>:</p>
+
+<pre><code>[lib]
+name = "whatlang"
+crate-type = ["staticlib", "cdylib"]
+</code></pre>
+
+<p>It tells cargo that we want to compile a static library and get <code>.so</code> object.</p>
+
+<p>In <code>src/lib.rs</code> we implement a small function that prints a message to stdout:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="cp">#[no_mangle]</span>
+</span><span class='line'><span class="n">pub</span> <span class="n">extern</span> <span class="k">fn</span> <span class="n">print_hello_from_rust</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">println</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;Hello from Rust&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To explain <code>#[no_mangle]</code> and <code>extern</code> let me extract some quotes from:
+<a href="https://mgattozzi.com/haskell-rust">FFI with Haskell and Rust</a> article:</p>
+
+<blockquote><p>The #[no_mangle] tells the Rust compiler not to do anything weird with the symbols of this function when compiled because we need to be able to call it from other languages.<br/>This is needed if you plan on doing any FFI. Not doing so means you won&#8217;t be able to reference it in other languages</p></blockquote>
+
+
+
+
+<blockquote><p>extern means this is externally available outside our library and tells the compiler to follow the C calling convention when compiling</p></blockquote>
+
+
+<p>Let&#8217;s compile our lib:</p>
+
+<pre><code>cargo build --release
+</code></pre>
+
+<p>It creates <code>target/release/libwhatlang.so</code> file.</p>
+
+<p>Now using <code>nm</code> tool we can check that <code>libwhatlang.so</code> really contains <code>print_hello_from_rust()</code> function:</p>
+
+<pre><code>nm -D ./target/release/libwhatlang.so  | grep hello
+0000000000003190 T print_hello_from_rust
+</code></pre>
+
+<p>Then we need <code>src/whatlang.h</code> header file with a function declaration:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">print_hello_from_rust</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And finally a C program itself (we put it into <code>examples/hello.c</code>):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &quot;whatlang.h&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">print_hello_from_rust</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s compile!</p>
+
+<pre><code>gcc -o ./examples/hello ./examples/hello.c -Isrc  -L. -l:target/release/libwhatlang.so
+</code></pre>
+
+<p>This produces <code>examples/hello</code> binary, which we can run:</p>
+
+<pre><code>./examples/hello
+Hello from Rust
+</code></pre>
+
+<p>During the development process we&#8217;ll likely need to recompile and run the program frequently.
+To automate this let&#8217;s create a <code>Makefile</code> with few commands:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">GCC_BIN</span> <span class="o">?=</span> <span class="err">$</span><span class="p">(</span><span class="n">shell</span> <span class="n">which</span> <span class="n">gcc</span><span class="p">)</span>
+</span><span class='line'><span class="n">CARGO_BIN</span> <span class="o">?=</span> <span class="err">$</span><span class="p">(</span><span class="n">shell</span> <span class="n">which</span> <span class="n">cargo</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nl">run:</span> <span class="n">clean</span> <span class="n">build</span>
+</span><span class='line'>  <span class="p">.</span><span class="o">/</span><span class="n">examples</span><span class="o">/</span><span class="n">hello</span>
+</span><span class='line'><span class="nl">clean:</span>
+</span><span class='line'>  <span class="err">$</span><span class="p">(</span><span class="n">CARGO_BIN</span><span class="p">)</span> <span class="n">clean</span>
+</span><span class='line'>  <span class="n">rm</span> <span class="o">-</span><span class="n">f</span> <span class="p">.</span><span class="o">/</span><span class="n">examples</span><span class="o">/</span><span class="n">hello</span>
+</span><span class='line'><span class="nl">build:</span>
+</span><span class='line'>  <span class="err">$</span><span class="p">(</span><span class="n">CARGO_BIN</span><span class="p">)</span> <span class="n">build</span> <span class="o">--</span><span class="n">release</span>
+</span><span class='line'>  <span class="err">$</span><span class="p">(</span><span class="n">GCC_BIN</span><span class="p">)</span> <span class="o">-</span><span class="n">o</span> <span class="p">.</span><span class="o">/</span><span class="n">examples</span><span class="o">/</span><span class="n">hello</span> <span class="p">.</span><span class="o">/</span><span class="n">examples</span><span class="o">/</span><span class="n">hello</span><span class="p">.</span><span class="n">c</span> <span class="o">-</span><span class="n">Isrc</span>  <span class="o">-</span><span class="n">L</span><span class="p">.</span> <span class="o">-</span><span class="n">l</span><span class="o">:</span><span class="n">target</span><span class="o">/</span><span class="n">release</span><span class="o">/</span><span class="n">libwhatlang</span><span class="p">.</span><span class="n">so</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, we can run <code>make run</code> to recompile <code>lib.rs</code>, <code>hello.c</code> and run <code>hello</code> binary.</p>
+
+<p>In the rest for the article I&#8217;ll go through common problems, design decisions and pitfalls I faced.</p>
+
+<h2><a name="naming-conventions"></a>Naming conventions</h2>
+
+<p>Since C does not have namespaces (some people may <a href="https://stackoverflow.com/questions/4396140/why-doesnt-ansi-c-have-namespaces">disagree</a>)
+I had to stick to some rules in order to avoid name collision with other libraries and confusion:</p>
+
+<ul>
+<li>Every function, type or constant starts with <code>&lt;library&gt;_</code> prefix. Examples: <code>whatlang_detect()</code>, <code>whatlang_lang</code>.</li>
+<li>If a function is associated with a particular format then its name has format  <code>&lt;library&gt;_&lt;type&gt;_&lt;name&gt;</code>. Example: <code>whatlang_lang_code()</code>.</li>
+</ul>
+
+
+<p>Similar logic rules apply to everything else. It may seem too verbose,
+but as I see it&#8217;s a pretty common approach for many C libraries.</p>
+
+<h2><a name="plain-enums"></a> Representing plain enums</h2>
+
+<p>In whatlang I have enum <a href="https://docs.rs/whatlang/0.4.1/whatlang/enum.Lang.html">Lang</a>, which
+is probably is main entity in the library. First  I had to add <a href="https://doc.rust-lang.org/nomicon/other-reprs.html#reprc"><code>#[repr(C)]</code></a>
+to make rust compiler represent the data in memory in the same way as C does:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="cp">#[repr(C)]</span>
+</span><span class='line'><span class="n">pub</span> <span class="k">enum</span> <span class="n">Lang</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">Aka</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Amh</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Arb</span><span class="p">,</span>
+</span><span class='line'>    <span class="c1">// and so on</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>Lang</code> represents 83 different languages, which can be encoded with 1 byte.
+That was my initial assumption an it seemed to be correct, until later I uncovered some bugs.</p>
+
+<p>I decided to convert Lang enum into <code>u8</code> with <a href="https://doc.rust-lang.org/std/mem/fn.transmute.html">std::mem::transmute</a> function,
+in order to figure out how it&#8217;s encoded:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="k">let</span> <span class="n">lang_int</span><span class="o">:</span> <span class="k">u8</span> <span class="o">=</span> <span class="k">unsafe</span> <span class="p">{</span> <span class="n">std</span><span class="o">::</span><span class="n">mem</span><span class="o">::</span><span class="n">transmute</span><span class="p">(</span><span class="n">Lang</span><span class="o">::</span><span class="n">Eng</span><span class="p">)</span> <span class="p">};</span>
+</span><span class='line'><span class="n">println</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;lang_int = {:?}&quot;</span><span class="p">,</span> <span class="n">lang_int</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>and got the following error:</p>
+
+<pre><code>= note: source type: whatlang::Lang (32 bits)
+= note: target type: u8 (8 bits)
+</code></pre>
+
+<p>Wow! So, actually the enum takes 4 bytes, instead of 1.
+Replacing <code>u8</code> with <code>u32</code> makes things work as expected:</p>
+
+<pre><code>lang_int = 14
+</code></pre>
+
+<p>Now it make sense, because English is on 15th position in the Lang declaration
+(remember, counting starts with 0).</p>
+
+<p>So in C such enum can be mapped to <code>uint32_t</code> type from <code>stdint.h</code>.
+To define all the language I ended up with such list of constants:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &lt;stdint.h&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">static</span> <span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">WHATLANG_LANG_AKA</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="k">static</span> <span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">WHATLANG_LANG_AMH</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="k">static</span> <span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">WHATLANG_LANG_ARB</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class='line'><span class="c1">// and so on</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s quite verbose, so one would rather use scripting a language to generate such boilerplate code.</p>
+
+<p>UPDATE: later I figured out, that actually without <code>#[repr(C)]</code> Rust optimizes memory and
+uses 1 byte for <code>Lang</code> enum. So <code>uint32_t</code> can be replaced with <code>uint8_t</code>. It should work
+as far as number of enum variants does not exceed 256.</p>
+
+<h3>Returning a structure from a function</h3>
+
+<h2><a name="strings"></a> Strings</h2>
+
+<p>First I recommend you to read the docs for <a href="https://doc.rust-lang.org/std/ffi/struct.CStr.html">std::ffi::CStr</a>
+and <a href="https://doc.rust-lang.org/std/ffi/struct.CString.html">std::ffi::String</a>
+from the standard library. Those types exist to represent C strings in Rust.</p>
+
+<h3><a name="passing-a-string-to-a-function"></a> Passing a string to a function</h3>
+
+<p>From C side it&#8217;s relative simple: just pass a pointer to a string, like it&#8217;s done here with argument <code>text</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">uint8_t</span> <span class="nf">whatlang_detect</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">text</span><span class="p">,</span> <span class="k">struct</span> <span class="n">whatlang_info</span><span class="o">*</span> <span class="n">info</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>On Rust side you&#8217;ll need to convert a pointer into <code>&amp;str</code> or <code>String</code> so you can manipulate the data as a string.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="k">use</span> <span class="n">std</span><span class="o">::</span><span class="n">ffi</span><span class="o">::</span><span class="n">CStr</span><span class="p">;</span>
+</span><span class='line'><span class="k">use</span> <span class="n">std</span><span class="o">::</span><span class="n">os</span><span class="o">::</span><span class="n">raw</span><span class="o">::</span><span class="n">c_char</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">pub</span> <span class="n">extern</span> <span class="k">fn</span> <span class="n">whatlang_detect</span><span class="p">(</span><span class="n">ptr</span><span class="o">:</span> <span class="o">*</span><span class="k">const</span> <span class="n">c_char</span><span class="p">,</span> <span class="n">info</span><span class="o">:</span> <span class="o">&amp;</span><span class="k">mut</span> <span class="n">Info</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="k">u8</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">cstr</span> <span class="o">=</span> <span class="k">unsafe</span> <span class="p">{</span> <span class="n">CStr</span><span class="o">::</span><span class="n">from_ptr</span><span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">match</span> <span class="n">cstr</span><span class="p">.</span><span class="n">to_str</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">Ok</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">// Here `s` is regular `&amp;str` and we can work with it</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="n">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">// handle the error</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In the example above the function accepts a raw pointer <code>*const c_char</code> (it can be also <code>*mut c_char</code> if you need to mutate data).
+Then we transform it into <code>CStr</code> calling unsafe method <code>CStr::from_ptr(ptr)</code>.
+Finally we&#8217;re calling <code>CStr::to_str(&amp;self)</code> function, which converts C string into <code>&amp;str</code>.
+This operation may fail, if the C string does not contain a valid UTF-8 sequence.</p>
+
+<h3><a name="returning-a-string-from-a-function"></a> Returning a string from a function</h3>
+
+<p><code>Lang</code> provides some methods that return static strings, like <code>eng_name()</code> to get language name in English.
+Example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">assert_eq</span><span class="o">!</span><span class="p">(</span><span class="n">Eng</span><span class="o">::</span><span class="n">Rus</span><span class="p">.</span><span class="n">eng_name</span><span class="p">(),</span> <span class="s">&quot;Russian&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>My first thought was &#8220;I just can return a raw pointer to the string&#8221;, so the initial solution was like:</p>
+
+<p>C function declaration:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">char</span><span class="o">*</span> <span class="nf">whatlang_lang_eng_name</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">lang</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Rust implementation:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="cp">#[no_mangle]</span>
+</span><span class='line'><span class="n">pub</span> <span class="n">extern</span> <span class="k">fn</span> <span class="n">whatlang_lang_eng_name</span><span class="p">(</span><span class="n">lang</span><span class="o">:</span> <span class="n">Lang</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="o">*</span><span class="k">const</span> <span class="k">u8</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">lang</span><span class="p">.</span><span class="n">eng_name</span><span class="p">().</span><span class="n">as_ptr</span><span class="p">()</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But there is problem. C expects strings to be terminated with <code>\0</code> character, while  Rust actually
+organizes static strings in a different way.
+When I expected the output to be simple <code>Russian</code>, the output was the entire massive of static data:</p>
+
+<pre><code>RussianRundiRomanianPortuguesePolishPersianPunjabiOromoOriya....
+</code></pre>
+
+<p>So, I&#8217;ve decided that I actually need to copy string from Rust static memory and ensure that
+<code>\0</code> is added.</p>
+
+<p>So I came up with the following function:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">whatlang_lang_eng_name</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">lang</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">buffer</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now user needs to pass a pointer to a buffer, where result must be written.</p>
+
+<p>Rust implementation:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">extern</span> <span class="n">crate</span> <span class="n">libc</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="cp">#[no_mangle]</span>
+</span><span class='line'><span class="n">pub</span> <span class="n">extern</span> <span class="k">fn</span> <span class="n">whatlang_lang_code</span><span class="p">(</span><span class="n">lang</span><span class="o">:</span> <span class="n">Lang</span><span class="p">,</span> <span class="n">buffer_ptr</span><span class="o">:</span> <span class="o">*</span><span class="k">mut</span> <span class="n">c_char</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// Here unwrap is safe, because whatlang always returns a valid &amp;str</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">s</span> <span class="o">=</span> <span class="n">CString</span><span class="o">::</span><span class="n">new</span><span class="p">(</span><span class="n">lang</span><span class="p">.</span><span class="n">code</span><span class="p">()).</span><span class="n">unwrap</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">unsafe</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">libc</span><span class="o">::</span><span class="n">strcpy</span><span class="p">(</span><span class="n">buffer_ptr</span><span class="p">,</span> <span class="n">s</span><span class="p">.</span><span class="n">as_ptr</span><span class="p">());</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>First, we convert <code>&amp;str</code> into <code>CString</code>. Then we use <code>libc::strcpy</code> from <a href="https://doc.rust-lang.org/1.6.0/libc/index.html">libc</a>
+crate to copy the string.</p>
+
+<p>NOTE: it&#8217;s responsibility of a caller to ensure, that the buffer size is big enough (at least 30 bytes).</p>
+
+<h2><a name="structs"></a> Dealing with structures</h2>
+
+<h3><a name="representing-a-structure"></a> Representing a structure</h3>
+
+<p>I have the following flat Rust structure <code>Info</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="cp">#[repr(C)]</span>
+</span><span class='line'><span class="n">pub</span> <span class="n">struct</span> <span class="n">Info</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">lang</span><span class="o">:</span> <span class="n">Lang</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">script</span><span class="o">:</span> <span class="n">Script</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">confidence</span><span class="o">:</span> <span class="k">f64</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(where <code>Lang</code> and <code>Script</code> are plain enums), and it easily maps to <code>whatlang_info</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">whatlang_info</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">uint32_t</span> <span class="n">lang</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">uint32_t</span> <span class="n">script</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">double</span> <span class="n">confidence</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It could be slightly more complex with nested structures, but the idea stays the same.</p>
+
+<h3><a name="returning-a-structure"></a> Returning a structure</h3>
+
+<p>I guess it can be done at least in few different approaches.
+The way I do it: a function receives a pointer to a preallocated memory for a structure as one of the arguments.</p>
+
+<p>You&#8217;ve already seen <code>whatlang_detect</code> function above:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">uint8_t</span> <span class="nf">whatlang_detect</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">text</span><span class="p">,</span> <span class="k">struct</span> <span class="n">whatlang_info</span><span class="o">*</span> <span class="n">info</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here <code>info</code> is pointer, where result must be written in case of success (<code>0</code> is returned).</p>
+
+<p>Another way to do this is to return a pointer directly:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">whatlang_info</span><span class="o">*</span> <span class="nf">whatlang_get_info</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case Rust function must return boxed structure:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="cp">#[no_mangle]</span>
+</span><span class='line'><span class="n">pub</span> <span class="n">extern</span> <span class="k">fn</span> <span class="n">whatlang_get_info</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Box</span><span class="o">&lt;</span><span class="n">Info</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">info</span> <span class="o">=</span> <span class="n">Info</span> <span class="p">{</span> <span class="n">lang</span><span class="o">:</span> <span class="n">Lang</span><span class="o">::</span><span class="n">Ukr</span><span class="p">,</span> <span class="n">script</span><span class="o">:</span> <span class="n">Script</span><span class="o">::</span><span class="n">Cyrillic</span><span class="p">,</span> <span class="n">confidence</span><span class="o">:</span> <span class="m">0.9</span> <span class="p">};</span>
+</span><span class='line'>    <span class="n">Box</span><span class="o">::</span><span class="n">new</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>NOTE: In this approach the memory for the structure is allocated by Rust, but it&#8217;s responsibility of
+C program to free it.</p>
+
+<h2><a name="complex-enums"></a> Complex enums?</h2>
+
+<p>There is also some thing, that I am actually not aware how do properly:
+<strong>how to represent complex Rust enum in C?</strong></p>
+
+<p>Therefore I also don&#8217;t know how gracefully represent <code>Result&lt;T,E&gt;</code> and <code>Option&lt;T&gt;</code>
+types.</p>
+
+<p>Maybe, it&#8217;s not actually necessary. For know as a workaround my function</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">uint8_t</span> <span class="nf">whatlang_detect</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">text</span><span class="p">,</span> <span class="k">struct</span> <span class="n">whatlang_info</span><span class="o">*</span> <span class="n">info</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>returns <code>0</code> in case of <code>Some</code> and <code>1</code> in case of <code>None</code>. It writes
+a result to preallocated memory by a given pointer <code>info</code>.</p>
+
+<p>But I would appreciate if you share some other insights about this.</p>
+
+<p>There are also some things, that are not covered in this article like tuples and arrays.
+But you may get some ideas from this <a href="http://pramode.in/2016/09/13/using-unsafe-tricks-in-rust/">article</a>.</p>
+
+<h2><a name="conclusion"></a> Conclusion</h2>
+
+<p>It was shown how to create C bindings for a Rust library.
+It may not be something, that you would do often, but having such option is always nice.
+It means also, that Rust libraries may be ported to plenty other languages that has FFI support,
+and this sounds really cool!</p>
+
+<p>Thanks for reading. Below you&#8217;ll find some useful links that helped me during this investigation.</p>
+
+<h2><a name="links"></a> Links</h2>
+
+<ul>
+<li><a href="https://doc.rust-lang.org/book/first-edition/ffi.html">The Rust Book, Foreign Function Interface</a> - section in the first edition for The Rust book, about how to do FFI.</li>
+<li><a href="https://doc.rust-lang.org/nomicon/">The Nomicon book</a> - entire book dedicated to unsafe programming in Rust.</li>
+<li><a href="https://doc.rust-lang.org/libc/x86_64-unknown-linux-gnu/libc/index.html">LibC</a> - a crate, that allows to call C function from Rust. You&#8217;ll find here C type definitions, constants and standard functions.</li>
+<li><a href="https://thefullsnack.com/en/string-ffi-rust.html">Rust FFI: Sending strings to the outside world</a> - this article explains how to expose Rust strings for NodeJS.</li>
+<li><a href="https://mgattozzi.github.io/2016/10/01/haskell-rust.html">FFI with Haskell and Rust</a> - yet another blog article about FFI</li>
+<li><a href="http://pramode.in/2016/09/13/using-unsafe-tricks-in-rust/">Using unsafe tricks to examine Rust data structure layout</a></li>
+<li><a href="https://medium.com/jim-fleming/complex-types-with-rust-s-ffi-315d14619479">Complex types with Rust’s FFI</a></li>
+<li><a href="https://github.com/kaegi/netinfo-ffi">netinfo-ffi</a> - was my initial source of inspiration, where I could find some examples.</li>
+<li><a href="whatlang-ffi">https://github.com/greyblake/whatlang-ffi</a> - whatlang C bindings described in this post</li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -930,50 +1483,6 @@ a module:</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Почему я изучаю Эсперанто</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-30T01:54:00+01:00" pubdate data-updated="true">Mar 30<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Как вы знаете, я начал изучать Эсперанто, некоторым даже успел &#8220;съесть&#8221; мозг, но всё же большинство по-прежнему задают вопросы почему и для чего я это делаю. Из этого можно прийти к выводу, что либо я безумен, либо я понимаю что-то, что другие не могут понять.
-Поэтому я решил написать небольшую статью и постараться объясниться.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/03/30/pochiemu-ia-izuchaiu-esperanto/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -989,6 +1498,10 @@ a module:</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/08/10/porting-rust-library-to-c/">Porting a Rust library to C</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms/">Introduction to Rust whatlang library and natural language identification algorithms</a>
       </li>
     
@@ -1002,10 +1515,6 @@ a module:</p>
     
       <li class="post">
         <a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy object pattern in ruby</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/05/21/ignore-files-with-git-locally/">Ignore files with git locally</a>
       </li>
     
   </ul>
@@ -1039,26 +1548,6 @@ a module:</p>
   </script>
   <script src="/javascripts/github.js" type="text/javascript"> </script>
 </section>
-
-
-<section>
-  <h1>Latest Tweets</h1>
-  <ul id="tweets">
-    <li class="loading">Status updating&#8230;</li>
-  </ul>
-  <script type="text/javascript">
-    $.domReady(function(){
-      getTwitterFeed("greyblake", 3, false);
-    });
-  </script>
-  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
-  
-    <a href="http://twitter.com/greyblake" class="twitter-follow-button" data-show-count="false">Follow @greyblake</a>
-  
-</section>
-
-
-
 
 
   
