@@ -4,7 +4,7 @@
   <title><![CDATA[Category: C | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/c/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2017-08-09T23:40:34+02:00</updated>
+  <updated>2017-08-09T23:46:28+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -19,27 +19,27 @@
     <updated>2017-08-10T10:16:00+02:00</updated>
     <id>http://greyblake.com/blog/2017/08/10/porting-rust-library-to-c</id>
     <content type="html"><![CDATA[<ul>
-<li><a href="#intro">Intro</a></li>
-<li><a href="#hello-from-rust-example">Hello from Rust example</a></li>
-<li><a href="#naming-conventions">Naming conventions</a></li>
-<li><a href="#plain-enums">Representing plain enums</a></li>
-<li><a href="#strings">Strings</a>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#intro">Intro</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#hello-from-rust-example">Hello from Rust example</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#naming-conventions">Naming conventions</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#plain-enums">Representing plain enums</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#strings">Strings</a>
 
 <ul>
-<li><a href="#passing-a-string-to-a-function">Passing a string to a function</a></li>
-<li><a href="#returning-a-string-from-a-function">Returning a string from a function</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#passing-a-string-to-a-function">Passing a string to a function</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#returning-a-string-from-a-function">Returning a string from a function</a></li>
 </ul>
 </li>
-<li><a href="#structs">Dealing with structures</a>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#structs">Dealing with structures</a>
 
 <ul>
-<li><a href="#representing-a-structure">Representing a structure</a></li>
-<li><a href="#returning-a-structure">Returning a structure</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#representing-a-structure">Representing a structure</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#returning-a-structure">Returning a structure</a></li>
 </ul>
 </li>
-<li><a href="#complex-enums">Complex enums?</a></li>
-<li><a href="#conclusion">Conclusion</a></li>
-<li><a href="#links">Links</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#complex-enums">Complex enums?</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#conclusion">Conclusion</a></li>
+<li><a href="/blog/2017/08/10/porting-rust-library-to-c/#links">Links</a></li>
 </ul>
 
 
@@ -89,6 +89,9 @@ crate-type = ["staticlib", "cdylib"]
 
 <p>}
 ```</p>
+
+<!--more-->
+
 
 <p>To explain <code>#[no_mangle]</code> and <code>extern</code> let me extract some quotes from:
 <a href="https://mgattozzi.com/haskell-rust">FFI with Haskell and Rust</a> article:</p>
