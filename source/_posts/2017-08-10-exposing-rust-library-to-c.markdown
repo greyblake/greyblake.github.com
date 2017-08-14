@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Porting a Rust library to C"
+title: "Exposing a Rust library to C"
 date: 2017-08-10 10:16
 comments: true
 draft: true
@@ -399,6 +399,12 @@ It means also, that Rust libraries may be ported to plenty other languages that 
 and this sounds really cool!
 
 Thanks for reading. Below you'll find some useful links that helped me during this investigation.
+
+UPDATE:
+
+People on Reddit gave me a very good constructive feedback. Some things I did wrong
+here and I highly recommend you to read this [comment](https://www.reddit.com/r/rust/comments/6sosp0/porting_a_rust_library_to_c/dleg19i/)
+in addition.
 
 ## <a name="links"></a> Links
 * [The Rust Book, Foreign Function Interface](https://doc.rust-lang.org/book/first-edition/ffi.html) - section in the first edition for The Rust book, about how to do FFI.
