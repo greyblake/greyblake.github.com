@@ -7,19 +7,19 @@ draft: true
 categories: rust C FFI
 ---
 
-* [Intro](/blog/2017/08/10/porting-rust-library-to-c/#intro)
-* [Hello from Rust example](/blog/2017/08/10/porting-rust-library-to-c/#hello-from-rust-example)
-* [Naming conventions](/blog/2017/08/10/porting-rust-library-to-c/#naming-conventions)
-* [Representing plain enums](/blog/2017/08/10/porting-rust-library-to-c/#plain-enums)
-* [Strings](/blog/2017/08/10/porting-rust-library-to-c/#strings)
-  * [Passing a string to a function](/blog/2017/08/10/porting-rust-library-to-c/#passing-a-string-to-a-function)
-  * [Returning a string from a function](/blog/2017/08/10/porting-rust-library-to-c/#returning-a-string-from-a-function)
-* [Dealing with structures](/blog/2017/08/10/porting-rust-library-to-c/#structs)
-  * [Representing a structure](/blog/2017/08/10/porting-rust-library-to-c/#representing-a-structure)
-  * [Returning a structure](/blog/2017/08/10/porting-rust-library-to-c/#returning-a-structure)
-* [Complex enums?](/blog/2017/08/10/porting-rust-library-to-c/#complex-enums)
-* [Conclusion](/blog/2017/08/10/porting-rust-library-to-c/#conclusion)
-* [Links](/blog/2017/08/10/porting-rust-library-to-c/#links)
+* [Intro](/blog/2017/08/10/exposing-rust-library-to-c/#intro)
+* [Hello from Rust example](/blog/2017/08/10/exposing-rust-library-to-c/#hello-from-rust-example)
+* [Naming conventions](/blog/2017/08/10/exposing-rust-library-to-c/#naming-conventions)
+* [Representing plain enums](/blog/2017/08/10/exposing-rust-library-to-c/#plain-enums)
+* [Strings](/blog/2017/08/10/exposing-rust-library-to-c/#strings)
+  * [Passing a string to a function](/blog/2017/08/10/exposing-rust-library-to-c/#passing-a-string-to-a-function)
+  * [Returning a string from a function](/blog/2017/08/10/exposing-rust-library-to-c/#returning-a-string-from-a-function)
+* [Dealing with structures](/blog/2017/08/10/exposing-rust-library-to-c/#structs)
+  * [Representing a structure](/blog/2017/08/10/exposing-rust-library-to-c/#representing-a-structure)
+  * [Returning a structure](/blog/2017/08/10/exposing-rust-library-to-c/#returning-a-structure)
+* [Complex enums?](/blog/2017/08/10/exposing-rust-library-to-c/#complex-enums)
+* [Conclusion](/blog/2017/08/10/exposing-rust-library-to-c/#conclusion)
+* [Links](/blog/2017/08/10/exposing-rust-library-to-c/#links)
 
 ## <a name="intro"></a> Intro
 
