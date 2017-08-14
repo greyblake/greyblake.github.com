@@ -4,7 +4,7 @@
   <title><![CDATA[Category: FFI | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/ffi/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2017-08-09T23:46:28+02:00</updated>
+  <updated>2017-08-14T23:01:44+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -14,10 +14,10 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Porting a Rust library to C]]></title>
-    <link href="http://greyblake.com/blog/2017/08/10/porting-rust-library-to-c/"/>
+    <title type="html"><![CDATA[Exposing a Rust library to C]]></title>
+    <link href="http://greyblake.com/blog/2017/08/10/exposing-rust-library-to-c/"/>
     <updated>2017-08-10T10:16:00+02:00</updated>
-    <id>http://greyblake.com/blog/2017/08/10/porting-rust-library-to-c</id>
+    <id>http://greyblake.com/blog/2017/08/10/exposing-rust-library-to-c</id>
     <content type="html"><![CDATA[<ul>
 <li><a href="/blog/2017/08/10/porting-rust-library-to-c/#intro">Intro</a></li>
 <li><a href="/blog/2017/08/10/porting-rust-library-to-c/#hello-from-rust-example">Hello from Rust example</a></li>
@@ -467,6 +467,12 @@ It means also, that Rust libraries may be ported to plenty other languages that 
 and this sounds really cool!</p>
 
 <p>Thanks for reading. Below you'll find some useful links that helped me during this investigation.</p>
+
+<p>UPDATE:</p>
+
+<p>People on Reddit gave me a very good constructive feedback. Some things I did wrong
+here and I highly recommend you to read this <a href="https://www.reddit.com/r/rust/comments/6sosp0/porting_a_rust_library_to_c/dleg19i/">comment</a>
+in addition.</p>
 
 <h2><a name="links"></a> Links</h2>
 
