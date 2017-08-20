@@ -25,12 +25,12 @@ an open source project it should be transferred to anther maintainer if possible
 So I've decided to create [Crystalium](https://github.com/crystalium) github organization,
 where I moved some of my projects:
 
-* [icr](https://github.com/crystalium/icr) - Interactive console for Crystal programming language
-* [cossack](https://github.com/crystalium/cossack) - HTTP client with middleware support
-* [jwt](https://github.com/crystalium/jwt) - JSON web tokens implemented in Crystal
-* [kiwi](https://github.com/crystalium/kiwi) - unified interface for key-value stores
-* [leveldb](https://github.com/crystalium/leveldb) - Crystal bindings for LevelDB
-* [bloom_filter](https://github.com/crystalium/bloom_filter) - bloom filter implementation
+* [icr](https://github.com/crystal-community/icr) - Interactive console for Crystal programming language
+* [cossack](https://github.com/crystal-community/cossack) - HTTP client with middleware support
+* [jwt](https://github.com/crystal-community/jwt) - JSON web tokens implemented in Crystal
+* [kiwi](https://github.com/crystal-community/kiwi) - unified interface for key-value stores
+* [leveldb](https://github.com/crystal-community/leveldb) - Crystal bindings for LevelDB
+* [bloom_filter](https://github.com/crystal-community/bloom_filter) - bloom filter implementation
 
 If you'd like to become a member of the organization and maintain
 some of these projects in collaboration with others
