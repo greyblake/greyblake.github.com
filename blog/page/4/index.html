@@ -9,8 +9,7 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Intro Someone would say I am brainsick&#8230; So may be I am. By some reasons I had no my loudspeakers and an alarm on my mobile never wake me up.
-So &hellip;">
+  <meta name="description" content="Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +86,120 @@ So &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2011/02/04/backuping-and-restoring-postgresql-databases/">Backuping and Restoring PostgreSQL Databases</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-02-04T23:48:55+01:00" pubdate data-updated="true">Feb 4<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Recently I had a deal with backuping data from PostreSQL database. So I want to share two scripts I created, one to backup and one to restore databases.</p>
+
+<p>The first one is for backup:</p>
+
+<figure class='code'><figcaption><span>backup.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">BASE_BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;/backups/postgres/&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">timeslot</span><span class="o">=</span><span class="k">$(</span>date +<span class="s2">&quot;%F_%Hh%Mm%Ss&quot;</span><span class="k">)</span>
+</span><span class='line'><span class="nv">backup_dir</span><span class="o">=</span><span class="s2">&quot;${BASE_BACKUP_DIR}/${timeslot}&quot;</span>
+</span><span class='line'><span class="nv">databases</span><span class="o">=</span><span class="k">$(</span>sudo -u postgres sh -c <span class="s2">&quot;psql  -c &#39;\l&#39;&quot;</span> 2&gt; /dev/null | sed <span class="se">\</span>
+</span><span class='line'>-n 4,/<span class="se">\e</span>of/p | grep -v rows<span class="se">\)</span> | awk <span class="s1">&#39;{print $1}&#39;</span> | egrep <span class="s1">&#39;^\w&#39;</span><span class="k">)</span>
+</span><span class='line'>
+</span><span class='line'>mkdir -p <span class="nv">$backup_dir</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">for </span>db in <span class="nv">$databases</span>; <span class="k">do</span>
+</span><span class='line'><span class="k">    </span>sudo -u postgres sh -c <span class="s2">&quot;pg_dump -C ${db}&quot;</span> 2&gt; /dev/null | xz -9e &gt; <span class="nv">$backup_dir</span>/<span class="nv">$db</span>.xz
+</span><span class='line'><span class="k">done</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After executing script you&#8217;ll have all you database dumps in <code>/backups/postgres/date_time</code> directory compressed with <code>xz</code>. Sure instead of <code>xz</code> you can use <code>gzip</code> or <code>bzip2</code>.</p>
+
+<p>Okay. Now let&#8217;s take a look at the restore script:</p>
+
+<figure class='code'><figcaption><span>restore.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="o">[</span> <span class="nv">$# </span>-lt 1 <span class="o">]</span> ; <span class="k">then</span>
+</span><span class='line'><span class="k">    </span><span class="nb">echo</span> <span class="s2">&quot;Error: You should specify backup directory path&quot;</span> 1&gt;&amp;2
+</span><span class='line'>    <span class="nb">exit </span>1
+</span><span class='line'><span class="k">fi</span>
+</span><span class='line'><span class="nv">backup_dir</span><span class="o">=</span><span class="nv">$1</span>
+</span><span class='line'><span class="k">if</span> <span class="o">[</span> ! -d <span class="nv">$backup_dir</span> <span class="o">]</span>; <span class="k">then</span>
+</span><span class='line'><span class="k">    </span><span class="nb">echo</span> <span class="s2">&quot;Error: directory ${backup_dir} does not exist&quot;</span> 1&gt;&amp;2
+</span><span class='line'>    <span class="nb">exit </span>1
+</span><span class='line'><span class="k">fi</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">for </span>db_xz in <span class="nv">$backup_dir</span>/*.xz; <span class="k">do</span>
+</span><span class='line'><span class="k">    </span><span class="nv">db_name</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="nv">$db_xz</span> | sed <span class="s1">&#39;s/\.xz$//; s/^.*\///g&#39;</span><span class="k">)</span>
+</span><span class='line'>    sudo -u postgres sh -c <span class="s2">&quot;xz -cd ${db_xz} | psql&quot;</span>
+</span><span class='line'><span class="k">done</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It takes one parameter: a path to back directory with *.xz archives.</p>
+
+<p>Both scripts should be executed with with root permissions, cause they use <code>sudo</code> to execute <code>pg_dump</code> and <code>pg_restore</code> commands with <code>postgres</code> user permissions. It allows avoiding asking a password for database. It&#8217;s not the only way, but I decided to use this one.</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -218,6 +331,10 @@ Have you ever type something like this:</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/08/20/announcing-crystalium-organization/">Announcing Crystalium organization</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/08/10/exposing-rust-library-to-c/">Exposing a Rust library to C</a>
       </li>
     
@@ -231,10 +348,6 @@ Have you ever type something like this:</p>
     
       <li class="post">
         <a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/">NLP, Toki Pona and Ruby: part 1</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy object pattern in ruby</a>
       </li>
     
   </ul>

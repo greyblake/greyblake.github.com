@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: opensource | Sergey Potapov]]></title>
+  <link href="http://greyblake.com/blog/categories/opensource/atom.xml" rel="self"/>
+  <link href="http://greyblake.com/"/>
+  <updated>2017-08-20T13:58:52+02:00</updated>
+  <id>http://greyblake.com/</id>
+  <author>
+    <name><![CDATA[Sergey Potapov]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Announcing Crystalium organization]]></title>
+    <link href="http://greyblake.com/blog/2017/08/20/announcing-crystalium-organization/"/>
+    <updated>2017-08-20T13:04:00+02:00</updated>
+    <id>http://greyblake.com/blog/2017/08/20/announcing-crystalium-organization</id>
+    <content type="html"><![CDATA[<p>Hello, dear Crystal community!</p>
+
+<p>I discovered Crystal in December 2015. It was so exciting, I wanted to learn!
+And the best way to learn a programming language is to use it. So I started looking for what
+is missed in the Crystal ecosystem and what would be interesting for me to implement.
+That's how I ended up with 6-8 crystal projects in my github account, that seem to be used
+by other people.</p>
+
+<p>Since that my life and my interests have changed. My focus moved to different things I'd like learn,
+and I see I don't have enough time to maintain properly the projects I started.
+Some of them have opened issues and pull requests for pretty long time. I thought I will address them
+in few days.. or in few weeks.. But months passed and this has not happened. So I have to apologize.</p>
+
+<p>I recall "The Cathedral and the Bazaar" book by Eric S. Raymond, who said that if one can not maintain
+an open source project it should be transferred to anther maintainer if possible.</p>
+
+<p>So I've decided to create <a href="https://github.com/crystalium">Crystalium</a> github organization,
+where I moved some of my projects:</p>
+
+<ul>
+<li><a href="https://github.com/crystalium/icr">icr</a> - Interactive console for Crystal programming language</li>
+<li><a href="https://github.com/crystalium/cossack">cossack</a> - HTTP client with middleware support</li>
+<li><a href="https://github.com/crystalium/jwt">jwt</a> - JSON web tokens implemented in Crystal</li>
+<li><a href="https://github.com/crystalium/kiwi">kiwi</a> - unified interface for key-value stores</li>
+<li><a href="https://github.com/crystalium/leveldb">leveldb</a> - Crystal bindings for LevelDB</li>
+<li><a href="https://github.com/crystalium/bloom_filter">bloom_filter</a> - bloom filter implementation</li>
+</ul>
+
+
+<p>If you'd like to become a member of the organization and maintain
+some of these projects in collaboration with others
+please let me know by sending an email to blake131313 at gmail.</p>
+
+<p>If you are a designer and you'd like to create a logo you are welcome as well.</p>
+
+<p>Thanks!</p>
+]]></content>
+  </entry>
+  
+</feed>

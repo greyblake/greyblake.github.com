@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2017-08-14T23:05:17+02:00</updated>
+  <updated>2017-08-20T13:58:52+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,50 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Announcing Crystalium organization]]></title>
+    <link href="http://greyblake.com/blog/2017/08/20/announcing-crystalium-organization/"/>
+    <updated>2017-08-20T13:04:00+02:00</updated>
+    <id>http://greyblake.com/blog/2017/08/20/announcing-crystalium-organization</id>
+    <content type="html"><![CDATA[<p>Hello, dear Crystal community!</p>
+
+<p>I discovered Crystal in December 2015. It was so exciting, I wanted to learn!
+And the best way to learn a programming language is to use it. So I started looking for what
+is missed in the Crystal ecosystem and what would be interesting for me to implement.
+That&#8217;s how I ended up with 6-8 crystal projects in my github account, that seem to be used
+by other people.</p>
+
+<p>Since that my life and my interests have changed. My focus moved to different things I&#8217;d like learn,
+and I see I don&#8217;t have enough time to maintain properly the projects I started.
+Some of them have opened issues and pull requests for pretty long time. I thought I will address them
+in few days.. or in few weeks.. But months passed and this has not happened. So I have to apologize.</p>
+
+<p>I recall &#8220;The Cathedral and the Bazaar&#8221; book by Eric S. Raymond, who said that if one can not maintain
+an open source project it should be transferred to anther maintainer if possible.</p>
+
+<p>So I&#8217;ve decided to create <a href="https://github.com/crystalium">Crystalium</a> github organization,
+where I moved some of my projects:</p>
+
+<ul>
+<li><a href="https://github.com/crystalium/icr">icr</a> - Interactive console for Crystal programming language</li>
+<li><a href="https://github.com/crystalium/cossack">cossack</a> - HTTP client with middleware support</li>
+<li><a href="https://github.com/crystalium/jwt">jwt</a> - JSON web tokens implemented in Crystal</li>
+<li><a href="https://github.com/crystalium/kiwi">kiwi</a> - unified interface for key-value stores</li>
+<li><a href="https://github.com/crystalium/leveldb">leveldb</a> - Crystal bindings for LevelDB</li>
+<li><a href="https://github.com/crystalium/bloom_filter">bloom_filter</a> - bloom filter implementation</li>
+</ul>
+
+
+<p>If you&#8217;d like to become a member of the organization and maintain
+some of these projects in collaboration with others
+please let me know by sending an email to blake131313 at gmail.</p>
+
+<p>If you are a designer and you&#8217;d like to create a logo you are welcome as well.</p>
+
+<p>Thanks!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Exposing a Rust library to C]]></title>
@@ -3947,229 +3991,6 @@ But it&#8217;s easy to patch vim sources to force it to use <code>1.9</code> ins
 
 
 <p>So, everything is OK. Enjoy Vim and builtin ruby 1.9 ;)</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Тестируем вложенные ActiveRecord-модели с RSpec]]></title>
-    <link href="http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec/"/>
-    <updated>2012-07-06T22:19:00+02:00</updated>
-    <id>http://greyblake.com/blog/2012/07/06/tiestiruiem-vlojenie-activerecord-modeli-s-rspec</id>
-    <content type="html"><![CDATA[<p>Иногда бывает так, что вам нужно построить большой граф вложенных объектов,
-и конечно же протестировать, что ваш &#8220;builder&#8221; работает так, как нужно. На самом деле
-задача элементарная, но я всё же попробую поискать наиболее элегантный путь её решения.</p>
-
-<!--more-->
-
-
-<p>Расмотрим следующий пример, когда у нас есть три небольшие модели: User, Account, Preference.
-(На практике обычно моделей намного больше с большим количеством свойств).</p>
-
-<figure class='code'><figcaption><span>user.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
-</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:first_name</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">has_one</span> <span class="ss">:account</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'><figcaption><span>account.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Account</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
-</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:last_visit_date</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
-</span><span class='line'>  <span class="n">has_one</span> <span class="ss">:preference</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'><figcaption><span>preference.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Preference</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
-</span><span class='line'>  <span class="n">attr_accessible</span> <span class="ss">:language</span><span class="p">,</span> <span class="ss">:weapon</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">belongs_to</span> <span class="ss">:user</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Предположим у нас есть некий builder, который строит объект User и все завимимые
-модели(Account и Preference). Всё что мы хотим сделать - это протестировать,
-что граф объектов построен правильно.</p>
-
-<p>Вот пример реализации стандартного rspec-теста, который первым приходит на ум:</p>
-
-<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
-</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">describe</span> <span class="s1">&#39;user&#39;</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
-</span><span class='line'>      <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>      <span class="n">its</span><span class="p">(</span><span class="ss">:first_name</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>      <span class="p">}</span>
-</span><span class='line'>      <span class="n">its</span><span class="p">(</span><span class="ss">:last_name</span><span class="p">)</span>  <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>      <span class="n">describe</span> <span class="s1">&#39;account&#39;</span> <span class="k">do</span>
-</span><span class='line'>        <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span><span class="o">.</span><span class="n">account</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">its</span><span class="p">(</span><span class="ss">:email</span><span class="p">)</span>           <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>       <span class="p">}</span>
-</span><span class='line'>        <span class="n">its</span><span class="p">(</span><span class="ss">:last_visit_date</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">describe</span> <span class="s1">&#39;preference&#39;</span> <span class="k">do</span>
-</span><span class='line'>          <span class="n">subject</span> <span class="p">{</span> <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>          <span class="n">its</span><span class="p">(</span><span class="ss">:language</span><span class="p">)</span> <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span> <span class="p">}</span>
-</span><span class='line'>          <span class="n">its</span><span class="p">(</span><span class="ss">:weapon</span><span class="p">)</span>   <span class="p">{</span> <span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>      <span class="p">}</span>
-</span><span class='line'>        <span class="k">end</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Всё читаемо, красиво и просто. Но проблема в том, что получилось шесть тестов(по тесту на
-каждый атрибут), которые тестируют лишь одно действие - постороение объекта. Когда операция построения
-занимает немало времени, а количество атрибутов на порядок больше, такой подход
-становится далеко не самым лучшим, поскольку возрастает время выполнения.
-Если объект не сохраняется в базе то вполне разумным будет использовать <code>before :all</code>. Но если
-вам приходится сохранять объект и вы используете опцию <code>config.use_transactional_fixtures = true</code>,
-потому что не хотите &#8220;гадить&#8221; в базу, то этот вариант не подойдёт.</p>
-
-<p>Можно пойти по пути классического unit-тестирования и сделать тест подобным этому:</p>
-
-<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
-</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">it</span> <span class="s1">&#39;should correctly build a user&#39;</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>
-</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="o">.</span><span class="n">should</span>  <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span>
-</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">should</span>           <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>
-</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">last_visit_date</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span>
-</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span>
-</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">preference</span><span class="o">.</span><span class="n">weapon</span><span class="o">.</span><span class="n">should</span>   <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Получилось даже лаконичнее, но менее читаемо(уж когда будет больше вложенность объектов,
-будет точно менее читаемо). Так же раздрожает длинные цепочки одинаковых методов.</p>
-
-<p>Помедитировав над проблемой, я нашёл компроммиссное решение на основе метода <code>instance_eval</code>.</p>
-
-<figure class='code'><figcaption><span>user_builder_spec.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">UserBuilder</span> <span class="k">do</span>
-</span><span class='line'>  <span class="n">describe</span> <span class="s1">&#39;#build&#39;</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">let</span><span class="p">(</span><span class="ss">:user</span><span class="p">)</span> <span class="p">{</span> <span class="n">described_class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">some_attrs</span><span class="p">)</span><span class="o">.</span><span class="n">build</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">it</span> <span class="s1">&#39;should correctly build a user&#39;</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">user</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
-</span><span class='line'>        <span class="n">first_name</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Rodion&quot;</span>
-</span><span class='line'>        <span class="n">last_name</span><span class="o">.</span><span class="n">should</span>  <span class="o">==</span> <span class="s2">&quot;Raskolnikov&quot;</span>
-</span><span class='line'>
-</span><span class='line'>        <span class="n">account</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
-</span><span class='line'>          <span class="n">email</span><span class="o">.</span><span class="n">should</span>           <span class="o">==</span> <span class="s2">&quot;rodion@mail.ru&quot;</span>
-</span><span class='line'>          <span class="n">last_visit_date</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="no">Date</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1866</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">27</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>          <span class="n">preference</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
-</span><span class='line'>            <span class="n">language</span><span class="o">.</span><span class="n">should</span> <span class="o">==</span> <span class="s2">&quot;Russian&quot;</span>
-</span><span class='line'>            <span class="n">weapon</span><span class="o">.</span><span class="n">should</span>   <span class="o">==</span> <span class="s2">&quot;ax&quot;</span>
-</span><span class='line'>          <span class="k">end</span>
-</span><span class='line'>        <span class="k">end</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Это по-прежнему один тест, но мы избавились от длинных цепочек методов.
-Нужно заметить, что у такого подхода есть тоже свои недостатки: используя <code>instance_eval</code>
-мы покидаем контекст теста, и переходим прямо в контекст объекта, в котором не существует методов подобных
-<code>be_valid</code>, <code>be_instance_of</code>, etc.</p>
-
-<p>Надеюсь, эта идея будет вам полезной. Буду рад узнать чужое мнение.</p>
 ]]></content>
   </entry>
   

@@ -9,12 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Intro
-Hello from Rust example
-Naming conventions
-Representing plain enums
-Strings Passing a string to a function
-Returning a string from a function &hellip;">
+  <meta name="description" content="Hello, dear Crystal community! I discovered Crystal in December 2015. It was so exciting, I wanted to learn!
+And the best way to learn a programming &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -91,6 +87,79 @@ Returning a string from a function &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2017/08/20/announcing-crystalium-organization/">Announcing Crystalium Organization</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-08-20T13:04:00+02:00" pubdate data-updated="true">Aug 20<span>th</span>, 2017</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Hello, dear Crystal community!</p>
+
+<p>I discovered Crystal in December 2015. It was so exciting, I wanted to learn!
+And the best way to learn a programming language is to use it. So I started looking for what
+is missed in the Crystal ecosystem and what would be interesting for me to implement.
+That&#8217;s how I ended up with 6-8 crystal projects in my github account, that seem to be used
+by other people.</p>
+
+<p>Since that my life and my interests have changed. My focus moved to different things I&#8217;d like learn,
+and I see I don&#8217;t have enough time to maintain properly the projects I started.
+Some of them have opened issues and pull requests for pretty long time. I thought I will address them
+in few days.. or in few weeks.. But months passed and this has not happened. So I have to apologize.</p>
+
+<p>I recall &#8220;The Cathedral and the Bazaar&#8221; book by Eric S. Raymond, who said that if one can not maintain
+an open source project it should be transferred to anther maintainer if possible.</p>
+
+<p>So I&#8217;ve decided to create <a href="https://github.com/crystalium">Crystalium</a> github organization,
+where I moved some of my projects:</p>
+
+<ul>
+<li><a href="https://github.com/crystalium/icr">icr</a> - Interactive console for Crystal programming language</li>
+<li><a href="https://github.com/crystalium/cossack">cossack</a> - HTTP client with middleware support</li>
+<li><a href="https://github.com/crystalium/jwt">jwt</a> - JSON web tokens implemented in Crystal</li>
+<li><a href="https://github.com/crystalium/kiwi">kiwi</a> - unified interface for key-value stores</li>
+<li><a href="https://github.com/crystalium/leveldb">leveldb</a> - Crystal bindings for LevelDB</li>
+<li><a href="https://github.com/crystalium/bloom_filter">bloom_filter</a> - bloom filter implementation</li>
+</ul>
+
+
+<p>If you&#8217;d like to become a member of the organization and maintain
+some of these projects in collaboration with others
+please let me know by sending an email to blake131313 at gmail.</p>
+
+<p>If you are a designer and you&#8217;d like to create a logo you are welcome as well.</p>
+
+<p>Thanks!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -925,131 +994,6 @@ is a standard ruby library which provides a method to escape shell commands.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/08/19/validation-in-rails-with-themis/">Validation in Rails With Themis</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-19T17:21:00+02:00" pubdate data-updated="true">Aug 19<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Sometimes ActiveRecord is not enough to meet complicated validation needs.
-At <a href="http://tmxcredit.com/">TMXCredit</a> we&#8217;ve created <a href="https://github.com/TMXCredit/themis">Themis</a> -
-ActiveRecord extension which helps to organize validations in a better way and adds
-some flexibility. Here I&#8217;m gonna describe some problems which Themis solves after that
-I&#8217;ll take a brief look at possible alternative solutions.</p>
-
-<h2>Modular validation</h2>
-
-<p>Themis allows you to extract duplicated validations into module for reuse.
-Usually rails applications are small enough so you don&#8217;t need it. But sometimes
-you do.</p>
-
-<p>The next example is pretty flat(in real life you probably would use STI or composition to
-represent <code>Doctor</code> and <code>Patient</code> models) but it illustrates where Themis could be useful.</p>
-
-<p>Let&#8217;s say you have 2 models:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Doctor</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:diploma</span><span class="p">,</span>
-</span><span class='line'>            <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Patient</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:age</span><span class="p">,</span>
-</span><span class='line'>            <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You see that both models have the same validation for <code>first_name</code>, <code>last_name</code> and <code>email</code>.</p>
-
-<p>Themis allows you to fix the duplication problem by extracting common validations into
-a module:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Module with common validations.</span>
-</span><span class='line'><span class="k">module</span> <span class="nn">PersonValidation</span>
-</span><span class='line'>  <span class="kp">extend</span> <span class="ss">Themis</span><span class="p">:</span><span class="ss">:Validation</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">validates</span> <span class="ss">:first_name</span><span class="p">,</span> <span class="ss">:last_name</span><span class="p">,</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Doctor</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="c1"># import validation of first_name, last_name, email</span>
-</span><span class='line'>  <span class="kp">include</span> <span class="no">PersonValidation</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">validates</span> <span class="ss">:diploma</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Patient</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="kp">include</span> <span class="no">PersonValidation</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">validates</span> <span class="ss">:age</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/08/19/validation-in-rails-with-themis/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1065,6 +1009,10 @@ a module:</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/08/20/announcing-crystalium-organization/">Announcing Crystalium organization</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/08/10/exposing-rust-library-to-c/">Exposing a Rust library to C</a>
       </li>
     
@@ -1078,10 +1026,6 @@ a module:</p>
     
       <li class="post">
         <a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/">NLP, Toki Pona and Ruby: part 1</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/10/05/lazy-object-pattern-in-ruby/">Lazy object pattern in ruby</a>
       </li>
     
   </ul>
