@@ -40,5 +40,7 @@ If you are a designer and you'd like to create a logo you are welcome as well.
 
 Thanks!
 
+UPDATE:
 
-
+I got an invitation to move the projects to [crystal-community](https://github.com/crystal-community)
+what makes sense to me. I believe it's a better option, than creating another separate organization.
