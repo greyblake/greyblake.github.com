@@ -9,9 +9,9 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Sometimes ActiveRecord is not enough to meet complicated validation needs.
-At TMXCredit we&#8217;ve created Themis -
-ActiveRecord extension which &hellip;">
+  <meta name="description" content="Few days ago I was writing a ruby wrapper for SoX
+command line tool. To reduce disk IO I wanted to use process substitution.
+It&#8217;s a cool shell &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -88,6 +88,132 @@ ActiveRecord extension which &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/09/21/how-to-call-bash-not-shell-from-ruby/">How to Call Bash(not Shell) From Ruby</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-21T21:53:00+02:00" pubdate data-updated="true">Sep 21<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Few days ago I was writing a ruby wrapper for <a href="http://sox.sourceforge.net/">SoX</a>
+command line tool. To reduce disk IO I wanted to use <a href="http://en.wikipedia.org/wiki/Process_substitution">process substitution</a>.
+It&#8217;s a cool shell feature which allows to use command output as an input file for another command.
+It&#8217;s pretty useful if the second command doesn&#8217;t work with standard input or you need
+to pass more than 1 input.</p>
+
+<p>Let me show the classic example(works in bash and zsh):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>cat &lt;<span class="o">(</span><span class="nb">echo</span> <span class="s1">&#39;Saluton!&#39;</span><span class="o">)</span> &lt;<span class="o">(</span><span class="nb">echo</span> <span class="s1">&#39;Kiel vi fartas?&#39;</span><span class="o">)</span>
+</span><span class='line'><span class="c"># =&gt; Saluton! Kiel vi fartas?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So statement <code>&lt;(echo 'Saluton!')</code> is treated like a file which contains line <code>Saluton!</code>.
+Underhood bash(zsh) creates a named pipeline where output of <code>echo 'Saluton!'</code> is written.
+Then the named pipeline is passed to <code>cat</code> command.</p>
+
+<p>You can see it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">echo</span>  &lt;<span class="o">(</span><span class="nb">echo</span> <span class="s1">&#39;Saluton!&#39;</span><span class="o">)</span>
+</span><span class='line'><span class="c"># =&gt; /dev/fd/63</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So I wanted to use it in ruby:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;cat &lt;(echo &#39;Saluton!&#39;) &lt;(echo &#39;Kiel vi fartas?&#39;)&quot;</span>
+</span><span class='line'><span class="nb">system</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But unfortunately it doesn&#8217;t work:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">sh</span><span class="p">:</span> <span class="mi">1</span><span class="p">:</span> <span class="no">Syntax</span> <span class="ss">error</span><span class="p">:</span> <span class="s2">&quot;(&quot;</span> <span class="n">unexpected</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The problem is that ruby&#8217;s <code>system</code> method and back quotes use<code>sh</code>
+not your current shell (which in my case is <code>bash</code>).</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">system</span> <span class="s2">&quot;echo $0&quot;</span>
+</span><span class='line'><span class="c1"># =&gt; sh</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In shells <code>$0</code>points to the current script or to interpreter if you&#8217;re running it interactively.</p>
+
+<p>Fortunately there is a way to create a workaround to run bash:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;shellwords&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">bash</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">escaped_command</span> <span class="o">=</span> <span class="no">Shellwords</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">system</span> <span class="s2">&quot;bash -c </span><span class="si">#{</span><span class="n">escaped_command</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Bash has option <code>-c</code> which takes bash script to execute.
+<a href="http://www.ruby-doc.org/stdlib-2.0/libdoc/shellwords/rdoc/Shellwords.html">Shellwords</a>
+is a standard ruby library which provides a method to escape shell commands.</p>
+
+<p>So now it works as we want it to be:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">bash</span><span class="p">(</span><span class="s2">&quot;echo $0&quot;</span><span class="p">)</span>  <span class="c1"># =&gt; bash</span>
+</span><span class='line'><span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;cat &lt;(echo &#39;Saluton!&#39;) &lt;(echo &#39;Kiel vi fartas?&#39;)&quot;</span>
+</span><span class='line'><span class="n">bash</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>        <span class="c1"># =&gt; Saluton! Kiel vi fartas?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Thanks for reading!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -959,51 +1085,6 @@ It might take long hours to debug some weird issues for unenlightened newbies.</
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">How to Build Vim Against Specific Ruby Version</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-07-15T23:00:00+02:00" pubdate data-updated="true">Jul 15<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Let&#8217;s say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
-But what if you need Vim compiled with Ruby 1.9.x?
-I&#8217;m gonna tell you how to do it.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -1021,6 +1102,10 @@ I&#8217;m gonna tell you how to do it.</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/09/02/how-to-run-rust-tests-automatically/">How to run Rust tests automatically</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/08/20/announcing-crystalium-organization/">Announcing Crystalium organization</a>
       </li>
     
@@ -1034,10 +1119,6 @@ I&#8217;m gonna tell you how to do it.</p>
     
       <li class="post">
         <a href="/blog/2015/09/25/nlp-toki-pona-and-ruby-par2-language-detector/">NLP, Toki Pona and Ruby. Part 2: language detector</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/09/20/nlp-toki-pona-and-ruby-part1/">NLP, Toki Pona and Ruby: part 1</a>
       </li>
     
   </ul>

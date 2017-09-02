@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2017-08-20T18:36:50+02:00</updated>
+  <updated>2017-09-02T20:30:28+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,47 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[How to run Rust tests automatically]]></title>
+    <link href="http://greyblake.com/blog/2017/09/02/how-to-run-rust-tests-automatically/"/>
+    <updated>2017-09-02T20:13:00+02:00</updated>
+    <id>http://greyblake.com/blog/2017/09/02/how-to-run-rust-tests-automatically</id>
+    <content type="html"><![CDATA[<p>If you prefer to use TDD approach to write Rust code like I do, you would need a fast feedback from your tests.</p>
+
+<p><img src="http://articles.tbscg.com/wp-content/uploads/2015/11/tdd-cycle-300x235.png" alt="TDD cycle" /></p>
+
+<p>Running <code>cargo test</code> every time you change a code base, quickly becomes a routine task.
+But you can automate this using <a href="https://github.com/passcod/cargo-watch">cargo-watch</a> plugin:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cargo watch -x test</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now <code>cargo test</code> will run automatically on every change in the source files.</p>
+
+<p>However it can be still inconvenient, because you need to switch between your text editor and a terminal to see a result.</p>
+
+<p>To overcome the problem we can use desktop notifications, so I&#8217;ve decided to create
+another small cargo plugin <a href="https://github.com/greyblake/cargo-testify">cargo-testify</a>.</p>
+
+<p>You can install it with the following command:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cargo install cargo-testify</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And then run it within your rust project:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cargo testify</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It detects changes in source files, run tests, and shows friendly desktop notifications, just like in the GIF below:</p>
+
+<p><img src="https://raw.githubusercontent.com/greyblake/cargo-testify/master/artifacts/demo.gif" alt="cargo-testify" /></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Announcing Crystalium organization]]></title>
@@ -3840,162 +3881,6 @@ But I wish the implementation of their <code>#dup</code> methods looked like thi
 If you know some fancy Ruby things I haven&#8217;t mentioned please let me know.</p>
 
 <p>Thanks.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[How to build Vim against specific Ruby version]]></title>
-    <link href="http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version/"/>
-    <updated>2012-07-15T23:00:00+02:00</updated>
-    <id>http://greyblake.com/blog/2012/07/15/how-to-build-vim-against-specific-ruby-version</id>
-    <content type="html"><![CDATA[<p>Let&#8217;s say you installed your Vim editor as a system package. Likely it was compiled against Ruby 1.8.7.
-But what if you need Vim compiled with Ruby 1.9.x?
-I&#8217;m gonna tell you how to do it.</p>
-
-<!--more-->
-
-
-<h2>Clone vim repository</h2>
-
-<p>Make sure you have installed <code>mercurial</code> package:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>sudo apt-get install mercurial
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Clone Vim repository from google code:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>hg clone https://vim.googlecode.com/hg/ vim_sources
-</span><span class='line'><span class="nv">$ </span><span class="nb">cd </span>vim_sources
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Patching</h2>
-
-<p>There is no option to specify Ruby version to compile Vim against.
-But it&#8217;s easy to patch vim sources to force it to use <code>1.9</code> instead of <code>1.8</code>.</p>
-
-<p>Open file <code>src/Make_mvc.mak</code> in vim sources directory.</p>
-
-<p>Find lines like this:</p>
-
-<figure class='code'><figcaption><span>src/Make_mvc.mak</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='make'><span class='line'><span class="c">#</span>
-</span><span class='line'><span class="c"># Support Ruby interface</span>
-</span><span class='line'><span class="c">#</span>
-</span><span class='line'><span class="err">!ifdef</span> <span class="err">RUBY</span>
-</span><span class='line'><span class="c">#  Set default value</span>
-</span><span class='line'><span class="err">!ifndef</span> <span class="err">RUBY_VER</span>
-</span><span class='line'><span class="nv">RUBY_VER</span> <span class="o">=</span> 18
-</span><span class='line'>!endif
-</span><span class='line'>!ifndef RUBY_VER_LONG
-</span><span class='line'><span class="nv">RUBY_VER_LONG</span> <span class="o">=</span> 1.8
-</span><span class='line'>!endif
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Replace <code>18</code> and <code>1.8</code> with <code>19</code> and <code>1.9</code>. So it should look this way:</p>
-
-<figure class='code'><figcaption><span>src/Make_mvc.mak</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='make'><span class='line'><span class="c">#</span>
-</span><span class='line'><span class="c"># Support Ruby interface</span>
-</span><span class='line'><span class="c">#</span>
-</span><span class='line'><span class="err">!ifdef</span> <span class="err">RUBY</span>
-</span><span class='line'><span class="c">#  Set default value</span>
-</span><span class='line'><span class="err">!ifndef</span> <span class="err">RUBY_VER</span>
-</span><span class='line'><span class="nv">RUBY_VER</span> <span class="o">=</span> 19
-</span><span class='line'>!endif
-</span><span class='line'>!ifndef RUBY_VER_LONG
-</span><span class='line'><span class="nv">RUBY_VER_LONG</span> <span class="o">=</span> 1.9
-</span><span class='line'>!endif
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Configure and compile</h2>
-
-<p>At first make sure your current ruby version is which one you need:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>rvm use 1.9.3 --default
-</span><span class='line'><span class="nv">$ </span>ruby -v
-</span><span class='line'>ruby 1.9.3p194 <span class="o">(</span>2012-04-20 revision 35410<span class="o">)</span> <span class="o">[</span>x86_64-linux<span class="o">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>No we are ready to run <code>./configure</code> script:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>./configure --enable-rubyinterp<span class="o">=</span>yes --prefix<span class="o">=</span>/where/you/want/ruby/to/be/installed/
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If everything is OK we can go ahead and compile it:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>make -j 3
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>-j</code> option defines number of processes to make builing faster. It&#8217;s useful if number of CPU cores is greater than one.</p>
-
-<p>Finally install built Vim to <code>/where/you/want/ruby/to/be/installed/</code> directory which you passed as <code>--prefix</code> option:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>make install
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Verify Ruby version</h2>
-
-<p>Now let&#8217;s open your new Vim:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span><span class="nb">cd</span> /where/you/want/ruby/to/be/installed/
-</span><span class='line'><span class="nv">$ </span>./bin/vim
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And run the next command:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='vim'><span class='line'><span class="p">:</span><span class="k">ruby</span> puts RUBY_DESCRIPTION
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The ouput should looks similar to this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='vim'><span class='line'><span class="k">ruby</span> <span class="m">1</span>.<span class="m">9</span>.<span class="m">3</span>p<span class="m">194</span> <span class="p">(</span><span class="m">2012-04-20</span> revision <span class="m">35410</span><span class="p">)</span> [x86_64<span class="p">-</span>linux]
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So, everything is OK. Enjoy Vim and builtin ruby 1.9 ;)</p>
 ]]></content>
   </entry>
   

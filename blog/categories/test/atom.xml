@@ -4,7 +4,7 @@
   <title><![CDATA[Category: test | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/test/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2017-08-20T18:36:50+02:00</updated>
+  <updated>2017-09-02T20:30:28+02:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,47 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[How to run Rust tests automatically]]></title>
+    <link href="http://greyblake.com/blog/2017/09/02/how-to-run-rust-tests-automatically/"/>
+    <updated>2017-09-02T20:13:00+02:00</updated>
+    <id>http://greyblake.com/blog/2017/09/02/how-to-run-rust-tests-automatically</id>
+    <content type="html"><![CDATA[<p>If you prefer to use TDD approach to write Rust code like I do, you would need a fast feedback from your tests.</p>
+
+<p><img src="http://articles.tbscg.com/wp-content/uploads/2015/11/tdd-cycle-300x235.png" alt="TDD cycle" /></p>
+
+<p>Running <code>cargo test</code> every time you change a code base, quickly becomes a routine task.
+But you can automate this using <a href="https://github.com/passcod/cargo-watch">cargo-watch</a> plugin:</p>
+
+<p><code>
+cargo watch -x test
+</code></p>
+
+<p>Now <code>cargo test</code> will run automatically on every change in the source files.</p>
+
+<p>However it can be still inconvenient, because you need to switch between your text editor and a terminal to see a result.</p>
+
+<p>To overcome the problem we can use desktop notifications, so I've decided to create
+another small cargo plugin <a href="https://github.com/greyblake/cargo-testify">cargo-testify</a>.</p>
+
+<p>You can install it with the following command:</p>
+
+<p><code>
+cargo install cargo-testify
+</code></p>
+
+<p>And then run it within your rust project:</p>
+
+<p><code>
+cargo testify
+</code></p>
+
+<p>It detects changes in source files, run tests, and shows friendly desktop notifications, just like in the GIF below:</p>
+
+<p><img src="https://raw.githubusercontent.com/greyblake/cargo-testify/master/artifacts/demo.gif" alt="cargo-testify" /></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Custom expectations with RSpec]]></title>
