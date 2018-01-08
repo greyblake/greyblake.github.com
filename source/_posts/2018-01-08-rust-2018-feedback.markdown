@@ -1,0 +1,82 @@
+---
+layout: post
+title: "Rust 2018 feedback"
+date: 2018-01-08 00:08
+comments: true
+categories:
+---
+
+With this post I would like to give my feedback to rust community in
+scope of [A Call for Community Blogposts](https://blog.rust-lang.org/2018/01/03/new-years-rust-a-call-for-community-blogposts.html).
+
+This article is structured in the following way:
+
+* A little bit about my background, so you can understand my perception of things.
+* Things that I like in Rust.
+* Things that I miss or things that can be improved.
+
+## My background
+
+For the last 10 years my main programming language is Ruby and my main working area is web development.
+I started hacking Rust about 1.5 years ago, as you may guess it's not very typical for web developers
+to jump to system programming languages. So my perception is quite different from majority who comes
+with C++ or Java background.
+
+I've decided to learn Rust by doing: I search for a vacuum in the ecosystem and pick some little libraries
+that seem interesting for me and realistic for me to implement and maintain. You can find them
+on [github](https://github.com/greyblake?utf8=%E2%9C%93&tab=repositories&q=&type=&language=rust).
+
+Apart from that I've implemented a little framework to develop and test trading strategies and
+an arbitrage bot for cryptocurrencies. Those are quick'n'dirty projects, where I've just tried to prototype
+ideas.
+
+## What I found awesome about Rust?
+
+One of big reasons why I am tending to switch from Ruby to Rust, is because Rust looks to me like a
+language that would be suitable for all type of tasks: desktop GUI applications, CLI tools, parallel
+programming with utilizing multiple CPUs, web backend development and
+probably in the future even [frontend](https://github.com/DenisKolodin/yew).
+For some of these tasks Ruby is good or even perfect, however one can not use multiple CPUs with MRI
+(main Ruby implementation), in general Ruby is much slower, it has GC but in practice there are often
+memory leaks (once I had to spend 2 weeks to hunt down [one](https://github.com/thoughtbot/factory_bot/pull/588)
+of them), CLI tools may be too slow if there are too many dependencies.
+
+If I compare Rust with Ruby only type safety alone is worth a lot. In Ruby I would write a unit test for
+every single line of code just to ensure, that I don't have a typo in a method name. In Rust I write tests
+mostly to ensure there are no logical errors.
+
+I really like `Option<T>` type. It makes so much sense to me!
+Usually about 50% of the errors in Ruby are `NoMethodError: undefined method 'foo' for nil:NilClass` what is
+a ruby version for of famous null pointer error.
+
+I also like `Result<T, E>`, it makes errors very explicit: I always know which kind of error I can expect so I can
+handle it properly. It's much trickier with Ruby exceptions, especially if one uses a library that uses a dozen of
+other libraries under the hood.
+
+Pattern matching is another amazing things in Rust from the functional programming world.
+Sometimes I found very useful `while let foo = bar` and `if let foo == bar` syntax.
+
+To give you a real example that I have in my code: let's say I need to do some specific action only
+if 4 values of `Option<T>` are present. I can check the presence of all values and deconstruct `Option`s in
+a very simple way:
+
+```rust
+if let (Some(min_c1), Some(min_c2), Some(b1), Some(b2)) = (opt_min_c1, opt_min_c2, opt_b1, opt_b2) {
+    // ...
+else {
+    // ...
+}
+```
+
+
+
+- Small standard library.
+- Community and strategic organization (Mozilla)
+
+
+## Bads
+
+* Rust files are too big (> 1000 lines)
+* Error messages with too many generics (like complex futures)
+* Inability to specify all generics in one scope and than implement multiple structs.
+* Chicken-egg problem: Rust is not widely used in production, therefore not that many developers are interested in it.
