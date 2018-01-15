@@ -1,0 +1,525 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Rust 2018 - Sergey Potapov</title>
+  <meta name="author" content="Sergey Potapov">
+
+  
+  <meta name="description" content="With this post, I would like to give my feedback to the rust community in the
+scope of A Call for Community Blogposts. This article is structured in &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://greyblake.com/blog/2018/01/16/rust-2018/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Sergey Potapov" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-20913158-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Sergey Potapov</a></h1>
+  <div id="logo">
+  	<div id="logoLeft">[</div>
+  	<div id="logoText">greyblake</div>
+  	<div id="logoRight">]</div>
+  	<div class="clear"></div>
+  </div>
+  
+    <h2>A word from rustacean, rubist and linuxoid.</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:greyblake.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about-me">About me</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Rust 2018</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2018-01-16T00:08:00+01:00" pubdate data-updated="true">Jan 16<span>th</span>, 2018</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>With this post, I would like to give my feedback to the rust community in the
+scope of <a href="https://blog.rust-lang.org/2018/01/03/new-years-rust-a-call-for-community-blogposts.html">A Call for Community Blogposts</a>.</p>
+
+<p>This article is structured in the following way:</p>
+
+<ul>
+<li>A little bit of my background</li>
+<li>Things that I like in Rust.</li>
+<li>Things that I miss or things that can be improved.</li>
+</ul>
+
+
+<h2>My background</h2>
+
+<p>For the last 10 years, my main programming language is Ruby and my main working area is web development.
+I started hacking Rust about 1.5 years ago, as you may guess it&#8217;s not very typical for web developers
+to jump to system programming languages. So my perception is quite different from the majority who comes
+with C++ or Java background.</p>
+
+<p>I&#8217;ve decided to learn Rust by doing: I search for a vacuum in the ecosystem and pick some little libraries
+that seem interesting to me and realistic to implement and maintain for one person. You can find them
+on <a href="https://github.com/greyblake?utf8=%E2%9C%93&amp;tab=repositories&amp;q=&amp;type=&amp;language=rust">github</a>.</p>
+
+<p>Apart from that, I&#8217;ve implemented a little framework to develop and test trading strategies and
+an arbitrage bot for cryptocurrencies. Those are quick&#8217;n&#8217;dirty projects, where I&#8217;ve just tried to prototype
+ideas.</p>
+
+<h2>What I found awesome about Rust?</h2>
+
+<p>Here is just a short list of things:</p>
+
+<ul>
+<li>Type safety</li>
+<li>Package management with cargo</li>
+<li>Pattern matching</li>
+<li>Meaningful and helpful error messages (I could see how it was improved during last 1.5 years)</li>
+<li>Doc tests</li>
+<li>Dead code warnings</li>
+<li>Community and the way Mozilla organizes the work</li>
+<li>Performance</li>
+<li>Language syntax and its expressiveness</li>
+<li>Ability to write law-level as well as high-level code.</li>
+<li>Usage of <code>!</code> to indicate a magic behind macros</li>
+</ul>
+
+
+<p>Every point here deserves its own discussion but in this post, I&#8217;d like to focus on the
+stuff that can be improved.</p>
+
+<h2>Improvement points</h2>
+
+<p>Here is just a list of things that I sometimes miss in Rust.</p>
+
+<h3>TryFrom and TryInto traits</h3>
+
+<p>Quite often I need to convert one type into another with possible failure. An idiomatic way to do this
+would be using <a href="https://github.com/rust-lang/rust/issues/33417">TryFrom<T> and TryInto<T></a> traits,
+but they are not stable yet. Those are just like
+<a href="https://doc.rust-lang.org/std/convert/trait.Into.html">From<T> and Into<T></a> but return <code>Result</code>.
+Hope they will be stabilized soon.</p>
+
+<h3>Parametrization of generic types with constants</h3>
+
+<p>I don&#8217;t know is there an RFC for this already, but it would be nice to be able to pass constants like <code>usize</code>
+(maybe some others) to generic types.
+Let&#8217;s say I want to implement a structure to calculate <a href="https://en.wikipedia.org/wiki/Moving_average">moving average</a> of
+length <code>SIZE</code>. The pseudo-code may look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">struct</span> <span class="n">MovingAverage</span><span class="o">&lt;</span><span class="n">SIZE</span><span class="o">:</span> <span class="n">usize</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">array</span><span class="o">:</span> <span class="p">[</span><span class="n">SIZE</span><span class="p">;</span> <span class="k">f64</span><span class="p">]</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">ma</span><span class="o">:</span> <span class="n">MovingAverage</span><span class="o">&lt;</span><span class="m">10</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">MovingAverage</span><span class="o">::</span><span class="n">new</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note: for this particular case one can come up with a workaround parameterizing <code>MovingAverage</code> with an array type.
+For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">struct</span> <span class="n">MovingAverage</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">array</span><span class="o">:</span> <span class="n">T</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">ma</span><span class="o">:</span> <span class="n">MovingAverage</span><span class="o">&lt;</span><span class="p">[</span><span class="m">10</span><span class="p">;</span> <span class="k">f64</span><span class="p">]</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">MovingAverage</span><span class="o">::</span><span class="n">new</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Shared trait bounds</h3>
+
+<p>Sometimes when I deal with generic types and there are too many trait bounds, the code
+gets monstrous, and the worst is that I need to duplicate it.</p>
+
+<p>Consider the following example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="k">impl</span><span class="o">&lt;</span><span class="n">A</span><span class="o">:</span> <span class="n">X</span><span class="p">,</span> <span class="n">B</span><span class="o">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">C</span><span class="o">:</span> <span class="n">Z</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Foo</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span>  <span class="p">{</span>
+</span><span class='line'>    <span class="p">...</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">impl</span><span class="o">&lt;</span><span class="n">A</span><span class="o">:</span> <span class="n">X</span><span class="p">,</span> <span class="n">B</span><span class="o">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">C</span><span class="o">:</span> <span class="n">Z</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Bar</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span>  <span class="p">{</span>
+</span><span class='line'>    <span class="p">...</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">impl</span> <span class="o">&lt;</span><span class="n">B</span><span class="o">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">C</span><span class="o">:</span> <span class="n">Z</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Baz</span><span class="o">&lt;</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="p">...</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It would be cool to be able to define the trait bounds only once
+for implementation of all structures, like in the following pseudo-code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">scope</span><span class="o">&lt;</span><span class="n">A</span><span class="o">:</span> <span class="n">X</span><span class="p">,</span> <span class="n">B</span><span class="o">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">C</span><span class="o">:</span> <span class="n">Z</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">impl</span> <span class="k">for</span> <span class="n">Foo</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">...</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">impl</span> <span class="k">for</span> <span class="n">Bar</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">...</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">impl</span> <span class="k">for</span> <span class="n">Baz</span><span class="o">&lt;</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">...</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Crazy generic types are hard to read in error messages</h3>
+
+<p>If one happens to work with a big chain of iterators or futures, they could see error messages with
+huge dreadful generic types.</p>
+
+<p>I&#8217;ll take one relatively simple example from <a href="https://www.reddit.com/r/rust/comments/5ovjwp/need_help_to_understand_futuretokio/">reddit</a> to
+illustrate what I mean:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="o">--&gt;</span> <span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">51</span><span class="o">:</span><span class="m">22</span>
+</span><span class='line'>   <span class="o">|</span>
+</span><span class='line'><span class="m">51</span> <span class="o">|</span>                     <span class="p">.</span><span class="n">boxed</span><span class="p">()</span>
+</span><span class='line'>   <span class="o">|</span>                      <span class="o">^^^^^</span> <span class="n">within</span> <span class="err">`</span><span class="n">futures</span><span class="o">::</span><span class="n">AndThen</span><span class="o">&lt;</span><span class="n">Box</span><span class="o">&lt;</span><span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span> <span class="n">Item</span><span class="o">=</span><span class="n">Box</span><span class="o">&lt;</span><span class="n">line</span><span class="o">::</span><span class="n">Client</span><span class="o">&gt;&gt;</span> <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">marker</span><span class="o">::</span><span class="n">Send</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">futures</span><span class="o">::</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">Box</span><span class="o">&lt;</span><span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span> <span class="n">Item</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">String</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="p">[</span><span class="n">closure</span><span class="o">@</span><span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">46</span><span class="o">:</span><span class="m">34</span><span class="o">:</span> <span class="m">49</span><span class="o">:</span><span class="m">30</span> <span class="n">client</span><span class="o">:</span><span class="n">_</span><span class="p">]</span><span class="o">&gt;</span><span class="p">,</span> <span class="p">[</span><span class="n">closure</span><span class="o">@</span><span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">44</span><span class="o">:</span><span class="m">32</span><span class="o">:</span> <span class="m">50</span><span class="o">:</span><span class="m">22</span> <span class="n">i</span><span class="o">:</span><span class="n">_</span><span class="p">]</span><span class="o">&gt;</span><span class="err">`</span><span class="p">,</span> <span class="n">the</span> <span class="n">trait</span> <span class="err">`</span><span class="n">std</span><span class="o">::</span><span class="n">marker</span><span class="o">::</span><span class="n">Send</span><span class="err">`</span> <span class="n">is</span> <span class="n">not</span> <span class="n">implemented</span> <span class="k">for</span> <span class="err">`</span><span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span> <span class="n">Item</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">String</span><span class="o">&gt;</span><span class="err">`</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s quite hard to understand the data type from the first glance.
+I prefer manually to reformat such complex types into the readable multi-line representation:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">futures</span><span class="o">::</span><span class="n">AndThen</span><span class="o">&lt;</span>
+</span><span class='line'>    <span class="n">Box</span><span class="o">&lt;</span>
+</span><span class='line'>        <span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span>
+</span><span class='line'>            <span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">Item</span><span class="o">=</span><span class="n">Box</span><span class="o">&lt;</span><span class="n">line</span><span class="o">::</span><span class="n">Client</span><span class="o">&gt;</span>
+</span><span class='line'>        <span class="o">&gt;</span>
+</span><span class='line'>        <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">marker</span><span class="o">::</span><span class="n">Send</span>
+</span><span class='line'>    <span class="o">&gt;</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">futures</span><span class="o">::</span><span class="n">Map</span><span class="o">&lt;</span>
+</span><span class='line'>        <span class="n">Box</span><span class="o">&lt;</span>
+</span><span class='line'>            <span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span>
+</span><span class='line'>                <span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span>
+</span><span class='line'>                <span class="n">Item</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">String</span>
+</span><span class='line'>            <span class="o">&gt;</span>
+</span><span class='line'>        <span class="o">&gt;</span><span class="p">,</span>
+</span><span class='line'>        <span class="p">[</span><span class="n">closure</span><span class="o">@</span><span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">46</span><span class="o">:</span><span class="m">34</span><span class="o">:</span> <span class="m">49</span><span class="o">:</span><span class="m">30</span> <span class="n">client</span><span class="o">:</span><span class="n">_</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&gt;</span><span class="p">,</span>
+</span><span class='line'>    <span class="p">[</span><span class="n">closure</span><span class="o">@</span><span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">44</span><span class="o">:</span><span class="m">32</span><span class="o">:</span> <span class="m">50</span><span class="o">:</span><span class="m">22</span> <span class="n">i</span><span class="o">:</span><span class="n">_</span><span class="p">]</span>
+</span><span class='line'><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But it would be nice if <code>rustc</code> could emit similar error messages for me.</p>
+
+<h3>Large source files</h3>
+
+<p>I&#8217;ve noticed many popular Rust libraries including the standard library contain large source files (> 1000 LOC).
+Probably it&#8217;s a question of taste, however I would prefer to keep things in the more granular way: one
+entity (structure + functions) per file. In my opinion, when a code base is organized like this it&#8217;s easier to
+read and maintain.</p>
+
+<h3>More Rust in production</h3>
+
+<p>It would be pleasant to see more production usage of Rust in 2018 and more
+new job positions for Rust developers opened =)</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Sergey Potapov</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2018-01-16T00:08:00+01:00" pubdate data-updated="true">Jan 16<span>th</span>, 2018</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/rust/'>rust</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://greyblake.com/blog/2018/01/16/rust-2018/" data-via="greyblake" data-counturl="http://greyblake.com/blog/2018/01/16/rust-2018/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2017/09/02/how-to-run-rust-tests-automatically/" title="Previous Post: How to run Rust tests automatically">&laquo; How to run Rust tests automatically</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2018/01/16/rust-2018/">Rust 2018</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/09/02/how-to-run-rust-tests-automatically/">How to run Rust tests automatically</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/08/20/announcing-crystalium-organization/">Announcing Crystalium organization</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/08/10/exposing-rust-library-to-c/">Exposing a Rust library to C</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms/">Introduction to Rust whatlang library and natural language identification algorithms</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/greyblake">@greyblake</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'greyblake',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2018 - Sergey Potapov -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'greyblake';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://greyblake.com/blog/2018/01/16/rust-2018/';
+        var disqus_url = 'http://greyblake.com/blog/2018/01/16/rust-2018/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

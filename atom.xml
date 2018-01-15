@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2017-09-30T01:33:41+02:00</updated>
+  <updated>2018-01-15T23:50:19+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,251 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Rust 2018]]></title>
+    <link href="http://greyblake.com/blog/2018/01/16/rust-2018/"/>
+    <updated>2018-01-16T00:08:00+01:00</updated>
+    <id>http://greyblake.com/blog/2018/01/16/rust-2018</id>
+    <content type="html"><![CDATA[<p>With this post, I would like to give my feedback to the rust community in the
+scope of <a href="https://blog.rust-lang.org/2018/01/03/new-years-rust-a-call-for-community-blogposts.html">A Call for Community Blogposts</a>.</p>
+
+<p>This article is structured in the following way:</p>
+
+<ul>
+<li>A little bit of my background</li>
+<li>Things that I like in Rust.</li>
+<li>Things that I miss or things that can be improved.</li>
+</ul>
+
+
+<h2>My background</h2>
+
+<p>For the last 10 years, my main programming language is Ruby and my main working area is web development.
+I started hacking Rust about 1.5 years ago, as you may guess it&#8217;s not very typical for web developers
+to jump to system programming languages. So my perception is quite different from the majority who comes
+with C++ or Java background.</p>
+
+<p>I&#8217;ve decided to learn Rust by doing: I search for a vacuum in the ecosystem and pick some little libraries
+that seem interesting to me and realistic to implement and maintain for one person. You can find them
+on <a href="https://github.com/greyblake?utf8=%E2%9C%93&amp;tab=repositories&amp;q=&amp;type=&amp;language=rust">github</a>.</p>
+
+<p>Apart from that, I&#8217;ve implemented a little framework to develop and test trading strategies and
+an arbitrage bot for cryptocurrencies. Those are quick&#8217;n&#8217;dirty projects, where I&#8217;ve just tried to prototype
+ideas.</p>
+
+<h2>What I found awesome about Rust?</h2>
+
+<p>Here is just a short list of things:</p>
+
+<ul>
+<li>Type safety</li>
+<li>Package management with cargo</li>
+<li>Pattern matching</li>
+<li>Meaningful and helpful error messages (I could see how it was improved during last 1.5 years)</li>
+<li>Doc tests</li>
+<li>Dead code warnings</li>
+<li>Community and the way Mozilla organizes the work</li>
+<li>Performance</li>
+<li>Language syntax and its expressiveness</li>
+<li>Ability to write law-level as well as high-level code.</li>
+<li>Usage of <code>!</code> to indicate a magic behind macros</li>
+</ul>
+
+
+<p>Every point here deserves its own discussion but in this post, I&#8217;d like to focus on the
+stuff that can be improved.</p>
+
+<h2>Improvement points</h2>
+
+<p>Here is just a list of things that I sometimes miss in Rust.</p>
+
+<h3>TryFrom and TryInto traits</h3>
+
+<p>Quite often I need to convert one type into another with possible failure. An idiomatic way to do this
+would be using <a href="https://github.com/rust-lang/rust/issues/33417">TryFrom<T> and TryInto<T></a> traits,
+but they are not stable yet. Those are just like
+<a href="https://doc.rust-lang.org/std/convert/trait.Into.html">From<T> and Into<T></a> but return <code>Result</code>.
+Hope they will be stabilized soon.</p>
+
+<h3>Parametrization of generic types with constants</h3>
+
+<p>I don&#8217;t know is there an RFC for this already, but it would be nice to be able to pass constants like <code>usize</code>
+(maybe some others) to generic types.
+Let&#8217;s say I want to implement a structure to calculate <a href="https://en.wikipedia.org/wiki/Moving_average">moving average</a> of
+length <code>SIZE</code>. The pseudo-code may look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">struct</span> <span class="n">MovingAverage</span><span class="o">&lt;</span><span class="n">SIZE</span><span class="o">:</span> <span class="n">usize</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">array</span><span class="o">:</span> <span class="p">[</span><span class="n">SIZE</span><span class="p">;</span> <span class="k">f64</span><span class="p">]</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">ma</span><span class="o">:</span> <span class="n">MovingAverage</span><span class="o">&lt;</span><span class="m">10</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">MovingAverage</span><span class="o">::</span><span class="n">new</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note: for this particular case one can come up with a workaround parameterizing <code>MovingAverage</code> with an array type.
+For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">struct</span> <span class="n">MovingAverage</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">array</span><span class="o">:</span> <span class="n">T</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">let</span> <span class="n">ma</span><span class="o">:</span> <span class="n">MovingAverage</span><span class="o">&lt;</span><span class="p">[</span><span class="m">10</span><span class="p">;</span> <span class="k">f64</span><span class="p">]</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">MovingAverage</span><span class="o">::</span><span class="n">new</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Shared trait bounds</h3>
+
+<p>Sometimes when I deal with generic types and there are too many trait bounds, the code
+gets monstrous, and the worst is that I need to duplicate it.</p>
+
+<p>Consider the following example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="k">impl</span><span class="o">&lt;</span><span class="n">A</span><span class="o">:</span> <span class="n">X</span><span class="p">,</span> <span class="n">B</span><span class="o">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">C</span><span class="o">:</span> <span class="n">Z</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Foo</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span>  <span class="p">{</span>
+</span><span class='line'>    <span class="p">...</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">impl</span><span class="o">&lt;</span><span class="n">A</span><span class="o">:</span> <span class="n">X</span><span class="p">,</span> <span class="n">B</span><span class="o">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">C</span><span class="o">:</span> <span class="n">Z</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Bar</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span>  <span class="p">{</span>
+</span><span class='line'>    <span class="p">...</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">impl</span> <span class="o">&lt;</span><span class="n">B</span><span class="o">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">C</span><span class="o">:</span> <span class="n">Z</span><span class="o">&gt;</span> <span class="k">for</span> <span class="n">Baz</span><span class="o">&lt;</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="p">...</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It would be cool to be able to define the trait bounds only once
+for implementation of all structures, like in the following pseudo-code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">scope</span><span class="o">&lt;</span><span class="n">A</span><span class="o">:</span> <span class="n">X</span><span class="p">,</span> <span class="n">B</span><span class="o">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">C</span><span class="o">:</span> <span class="n">Z</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">impl</span> <span class="k">for</span> <span class="n">Foo</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">...</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">impl</span> <span class="k">for</span> <span class="n">Bar</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">...</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">impl</span> <span class="k">for</span> <span class="n">Baz</span><span class="o">&lt;</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">&gt;</span> <span class="p">{</span>
+</span><span class='line'>        <span class="p">...</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Crazy generic types are hard to read in error messages</h3>
+
+<p>If one happens to work with a big chain of iterators or futures, they could see error messages with
+huge dreadful generic types.</p>
+
+<p>I&#8217;ll take one relatively simple example from <a href="https://www.reddit.com/r/rust/comments/5ovjwp/need_help_to_understand_futuretokio/">reddit</a> to
+illustrate what I mean:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="o">--&gt;</span> <span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">51</span><span class="o">:</span><span class="m">22</span>
+</span><span class='line'>   <span class="o">|</span>
+</span><span class='line'><span class="m">51</span> <span class="o">|</span>                     <span class="p">.</span><span class="n">boxed</span><span class="p">()</span>
+</span><span class='line'>   <span class="o">|</span>                      <span class="o">^^^^^</span> <span class="n">within</span> <span class="err">`</span><span class="n">futures</span><span class="o">::</span><span class="n">AndThen</span><span class="o">&lt;</span><span class="n">Box</span><span class="o">&lt;</span><span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span> <span class="n">Item</span><span class="o">=</span><span class="n">Box</span><span class="o">&lt;</span><span class="n">line</span><span class="o">::</span><span class="n">Client</span><span class="o">&gt;&gt;</span> <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">marker</span><span class="o">::</span><span class="n">Send</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">futures</span><span class="o">::</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">Box</span><span class="o">&lt;</span><span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span> <span class="n">Item</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">String</span><span class="o">&gt;&gt;</span><span class="p">,</span> <span class="p">[</span><span class="n">closure</span><span class="o">@</span><span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">46</span><span class="o">:</span><span class="m">34</span><span class="o">:</span> <span class="m">49</span><span class="o">:</span><span class="m">30</span> <span class="n">client</span><span class="o">:</span><span class="n">_</span><span class="p">]</span><span class="o">&gt;</span><span class="p">,</span> <span class="p">[</span><span class="n">closure</span><span class="o">@</span><span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">44</span><span class="o">:</span><span class="m">32</span><span class="o">:</span> <span class="m">50</span><span class="o">:</span><span class="m">22</span> <span class="n">i</span><span class="o">:</span><span class="n">_</span><span class="p">]</span><span class="o">&gt;</span><span class="err">`</span><span class="p">,</span> <span class="n">the</span> <span class="n">trait</span> <span class="err">`</span><span class="n">std</span><span class="o">::</span><span class="n">marker</span><span class="o">::</span><span class="n">Send</span><span class="err">`</span> <span class="n">is</span> <span class="n">not</span> <span class="n">implemented</span> <span class="k">for</span> <span class="err">`</span><span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span> <span class="n">Item</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">String</span><span class="o">&gt;</span><span class="err">`</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&#8217;s quite hard to understand the data type from the first glance.
+I prefer manually to reformat such complex types into the readable multi-line representation:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="n">futures</span><span class="o">::</span><span class="n">AndThen</span><span class="o">&lt;</span>
+</span><span class='line'>    <span class="n">Box</span><span class="o">&lt;</span>
+</span><span class='line'>        <span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span>
+</span><span class='line'>            <span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span>
+</span><span class='line'>            <span class="n">Item</span><span class="o">=</span><span class="n">Box</span><span class="o">&lt;</span><span class="n">line</span><span class="o">::</span><span class="n">Client</span><span class="o">&gt;</span>
+</span><span class='line'>        <span class="o">&gt;</span>
+</span><span class='line'>        <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">marker</span><span class="o">::</span><span class="n">Send</span>
+</span><span class='line'>    <span class="o">&gt;</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">futures</span><span class="o">::</span><span class="n">Map</span><span class="o">&lt;</span>
+</span><span class='line'>        <span class="n">Box</span><span class="o">&lt;</span>
+</span><span class='line'>            <span class="n">futures</span><span class="o">::</span><span class="n">Future</span><span class="o">&lt;</span>
+</span><span class='line'>                <span class="n">Error</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">io</span><span class="o">::</span><span class="n">Error</span><span class="p">,</span>
+</span><span class='line'>                <span class="n">Item</span><span class="o">=</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">String</span>
+</span><span class='line'>            <span class="o">&gt;</span>
+</span><span class='line'>        <span class="o">&gt;</span><span class="p">,</span>
+</span><span class='line'>        <span class="p">[</span><span class="n">closure</span><span class="o">@</span><span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">46</span><span class="o">:</span><span class="m">34</span><span class="o">:</span> <span class="m">49</span><span class="o">:</span><span class="m">30</span> <span class="n">client</span><span class="o">:</span><span class="n">_</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&gt;</span><span class="p">,</span>
+</span><span class='line'>    <span class="p">[</span><span class="n">closure</span><span class="o">@</span><span class="n">examples</span><span class="err">\</span><span class="n">echo_client_server</span><span class="p">.</span><span class="n">rs</span><span class="o">:</span><span class="m">44</span><span class="o">:</span><span class="m">32</span><span class="o">:</span> <span class="m">50</span><span class="o">:</span><span class="m">22</span> <span class="n">i</span><span class="o">:</span><span class="n">_</span><span class="p">]</span>
+</span><span class='line'><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But it would be nice if <code>rustc</code> could emit similar error messages for me.</p>
+
+<h3>Large source files</h3>
+
+<p>I&#8217;ve noticed many popular Rust libraries including the standard library contain large source files (> 1000 LOC).
+Probably it&#8217;s a question of taste, however I would prefer to keep things in the more granular way: one
+entity (structure + functions) per file. In my opinion, when a code base is organized like this it&#8217;s easier to
+read and maintain.</p>
+
+<h3>More Rust in production</h3>
+
+<p>It would be pleasant to see more production usage of Rust in 2018 and more
+new job positions for Rust developers opened =)</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[How to run Rust tests automatically]]></title>
@@ -3394,493 +3639,6 @@ dynamic method           0.150000   0.000000   0.150000 (  0.156537)
 
 
 <p>Danke.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Unexpected Ruby behaviour]]></title>
-    <link href="http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour/"/>
-    <updated>2012-08-10T23:28:00+02:00</updated>
-    <id>http://greyblake.com/blog/2012/08/10/unexpected-ruby-behaviour</id>
-    <content type="html"><![CDATA[<p>Ruby is a cool language with intuitive grammar. However there are a number of things which don&#8217;t seem to be expected.
-It might take long hours to debug some weird issues for unenlightened newbies.</p>
-
-<!--more-->
-
-
-<h2>Implicitly variable declaration</h2>
-
-<p>Variable mentioned in conditional block of code become declared and initialized with <code>nil</code> even if the declaration was not executed.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="kp">false</span>
-</span><span class='line'>  <span class="n">var</span> <span class="o">=</span> <span class="s2">&quot;never executed&quot;</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'><span class="n">var</span> <span class="c1"># =&gt; nil</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>Expected:</strong> addressing to <code>var</code> raises <code>NameError: undefined local variable or method 'var'</code></p>
-
-<h2>Calling #utc and #gmt on Time object removes time zone information</h2>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
-</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">utc</span>         <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012</span>
-</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012, WTF? O_o</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
-</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">gmtime</span>      <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012</span>
-</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012, WTF? O_o</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>IMHO, this methods should be called <code>utc!</code> and <code>gmtime!</code> instead.
-I have an experience when it caused a really voodoo thing: a test failed only from 20:00 to 00:00
-in USA on CI server, and could never be reproduced in my time zone.</p>
-
-<p>Instead it&#8217;s better to use <code>getutc</code> and <code>getgm</code> methods which return UTC and GMT time accordingly,
-but don&#8217;t change Time object:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
-</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">getutc</span>      <span class="c1"># =&gt; Fri Aug 10 22:11:52 UTC 2012</span>
-</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Sat Aug 11 01:11:52 +0300 2012</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">t</span> <span class="o">=</span> <span class="no">Time</span><span class="o">.</span><span class="n">new</span>  <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
-</span><span class='line'><span class="n">t</span><span class="o">.</span><span class="n">getgm</span>       <span class="c1"># =&gt; Fri Aug 10 22:17:06 UTC 2012</span>
-</span><span class='line'><span class="n">t</span>             <span class="c1"># =&gt; Sat Aug 11 01:17:06 +0300 2012</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Methods do not return value from ensure statement</h2>
-
-<p>Usually ruby methods return the value of the last method line unless <code>return</code> is called explicitly.
-But how about this?</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">run</span>
-</span><span class='line'>  <span class="mi">1</span>
-</span><span class='line'><span class="k">ensure</span>
-</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;ensure block...&quot;</span>
-</span><span class='line'>  <span class="mi">2</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">run</span> <span class="c1"># =&gt; 1</span>
-</span><span class='line'><span class="c1"># pints `ensure block...`</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So if you want to return a value from <code>ensure</code> statement use <code>return</code> word:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">run</span>
-</span><span class='line'>  <span class="mi">1</span>
-</span><span class='line'><span class="k">ensure</span>
-</span><span class='line'>  <span class="k">return</span> <span class="mi">2</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">run</span> <span class="c1"># =&gt; 2</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Anchors ^ and $ do not mean a start and an end of a string</h2>
-
-<p>Most of script languages uses anchors <code>^</code> and <code>$</code> of regular expressions as a start and an end of string accordingly.
-But not in Ruby! In Ruby they are a start and an end of a <strong>line</strong>.
-See the difference:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">pattern</span>      <span class="o">=</span> <span class="sr">/^[a-zA-Z]{3,12}$/</span>    <span class="c1"># 3-12 alphabetic characters</span>
-</span><span class='line'><span class="n">valid_name</span>   <span class="o">=</span> <span class="s2">&quot;Tatiana&quot;</span>
-</span><span class='line'><span class="n">invalid_name</span> <span class="o">=</span> <span class="s2">&quot;23</span><span class="se">\n</span><span class="s2">abc</span><span class="se">\n</span><span class="s2">!&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">valid_name</span>   <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 0, matchers</span>
-</span><span class='line'><span class="n">invalid_name</span> <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 3, matchers</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Instead use <code>\A</code> and <code>\z</code> anchors. They are a start and an end of a <strong>string</strong>.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">pattern</span>      <span class="o">=</span> <span class="sr">/\A[a-zA-Z]{3,12}\z/</span>    <span class="c1"># 3-12 alphabetic characters</span>
-</span><span class='line'><span class="n">valid_name</span>   <span class="o">=</span> <span class="s2">&quot;Tatiana&quot;</span>
-</span><span class='line'><span class="n">invalid_name</span> <span class="o">=</span> <span class="s2">&quot;23</span><span class="se">\n</span><span class="s2">abc</span><span class="se">\n</span><span class="s2">!&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">valid_name</span>   <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; 0, matchers</span>
-</span><span class='line'><span class="n">invalid_name</span> <span class="o">=~</span> <span class="n">pattern</span>   <span class="c1"># =&gt; nil</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Pay attention when you write validations.
-<a href="http://homakov.blogspot.com/2012/05/saferweb-injects-in-various-ruby.html">Read Egor Homakov&#8217;s article</a>
-to get more information about it.</p>
-
-<h2>\m regexp option</h2>
-
-<p>When other languages use <code>\s</code> option to make <code>.</code> match newline, Ruby uses <code>\m</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">=~</span> <span class="sr">/./</span>   <span class="c1"># =&gt; nil</span>
-</span><span class='line'> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">=~</span> <span class="sr">/./m</span>  <span class="c1"># =&gt; 0</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Calling super and super() are not the same</h2>
-
-<p>There is no matter for ruby methods do you use parentheses or not. But be careful with <code>super</code>
-since it&#8217;s not a method, but a key word.
-Let me show an example when parentheses matter:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Parent</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Parent m1: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Parent m2: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Child</span> <span class="o">&lt;</span> <span class="no">Parent</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Child m1: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>    <span class="k">super</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Child m2: arg = </span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>    <span class="k">super</span><span class="p">()</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">child</span> <span class="o">=</span> <span class="no">Child</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m1</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m2</span><span class="p">(</span><span class="s2">&quot;bar&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Output:</p>
-
-<pre><code>Child m1: arg = "foo"
-Parent m1: arg = "foo"
-Child m2: arg = "bar"
-super.rb:6:in `m2': wrong number of arguments (0 for 1) (ArgumentError)
-        from super.rb:19:in `m2'
-        from super.rb:25:in `&lt;main&gt;'
-</code></pre>
-
-<p>When you use <code>super</code> it calls same method of parent class passing same arguments to it.
-But when you use <code>super(...)</code> you have to pass arguments manually. In my example <code>ArgumentError</code>
-was raised because <code>Parent#m2</code> expects to receive exactly one argument, but nothing was passed to <code>super()</code></p>
-
-<p>However <code>super()</code> still delegates a passed block. If you don&#8217;t wanna pass
-a block you have to do it explicitly using <code>super(&amp;nil)</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Parent</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span>
-</span><span class='line'>    <span class="k">yield</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span>
-</span><span class='line'>    <span class="k">yield</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Child</span> <span class="o">&lt;</span> <span class="no">Parent</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">m1</span>
-</span><span class='line'>    <span class="k">super</span><span class="p">()</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">m2</span>
-</span><span class='line'>    <span class="k">super</span><span class="p">(</span><span class="o">&amp;</span><span class="kp">nil</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">child</span> <span class="o">=</span> <span class="no">Child</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m1</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hi, m1&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="n">child</span><span class="o">.</span><span class="n">m2</span> <span class="p">{</span> <span class="nb">puts</span> <span class="s2">&quot;Hi, m2&quot;</span> <span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Output:</p>
-
-<pre><code>Hi, m1
-/tmp/super.rb:7:in `m2': no block given (yield) (LocalJumpError)
-</code></pre>
-
-<h2>lambda and Proc.new act differently</h2>
-
-<p>It&#8217;s a well known thing but I want to remind.
-There 2 differences between proc objects created with <code>lambda</code> and <code>Proc.new</code>:</p>
-
-<ul>
-<li><code>lambda</code> raises <code>ArgumentError</code> if parameter is missing when <code>Proc.new</code> uses <code>nil</code> instead.</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">lm</span> <span class="o">=</span> <span class="nb">lambda</span>   <span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">a</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2"> and </span><span class="si">#{</span><span class="n">b</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
-</span><span class='line'><span class="n">pr</span> <span class="o">=</span> <span class="no">Proc</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span><span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">|</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">a</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2"> and </span><span class="si">#{</span><span class="n">b</span><span class="o">.</span><span class="n">inspect</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">lm</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># =&gt; ArgumentError: wrong number of arguments (1 for 2)</span>
-</span><span class='line'><span class="n">pr</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># =&gt; &quot;10 and nil&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>For <code>lambda</code> word <code>return</code> means returning from proc object, when for <code>Proc.new</code> it means returning from scope where proc is defined.</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">lambda_method</span>
-</span><span class='line'>  <span class="n">lm</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>     <span class="c1"># return from lambda</span>
-</span><span class='line'>  <span class="n">half</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">call</span>
-</span><span class='line'>  <span class="n">half</span> <span class="o">*</span> <span class="mi">2</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">proc_method</span>
-</span><span class='line'>  <span class="n">pr</span> <span class="o">=</span> <span class="no">Proc</span><span class="o">.</span><span class="n">new</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">10</span> <span class="p">}</span>   <span class="c1"># return from proc_method</span>
-</span><span class='line'>  <span class="n">half</span> <span class="o">=</span> <span class="n">pr</span><span class="o">.</span><span class="n">call</span>
-</span><span class='line'>  <span class="n">half</span> <span class="o">*</span> <span class="mi">2</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">lambda_method</span>   <span class="c1"># =&gt; 20</span>
-</span><span class='line'><span class="n">proc_method</span>     <span class="c1"># =&gt; 10</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Note there is also method <code>proc</code>. In Ruby 1.8 it&#8217;s a synonym for <code>lambda</code>
-but in Ruby 1.9 it&#8217;s a synonym for <code>Proc.new</code>. So avoid using <code>proc</code> to keep you code compatible
-for both ruby versions.</p>
-
-<h2>DelegateClass instance does not eql itself</h2>
-
-<p>Ruby standard library provides <a href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/delegate/rdoc/Object.html">DelegateClass</a>
-which can be <a href="http://pivotallabs.com/users/jdean/blog/articles/1138-delegateclass-rocks-my-world">pretty useful</a>.
-But some things are not so obvious about it:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;delegate&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Animal</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Dog</span> <span class="o">&lt;</span> <span class="no">DelegateClass</span><span class="p">(</span><span class="no">Animal</span><span class="p">)</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'><span class="n">animal</span> <span class="o">=</span> <span class="no">Animal</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'><span class="n">dog</span> <span class="o">=</span> <span class="no">Dog</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="n">dog</span><span class="p">)</span>  <span class="c1"># =&gt; false, WTF? O_o</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It happens because <code>eql?</code> is delegated to base object(animal):</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">eql?</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>  <span class="c1"># =&gt; true</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>On other hand <code>equal?</code> is not:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">equal?</span><span class="p">(</span><span class="n">dog</span><span class="p">)</span>     <span class="c1"># =&gt; true</span>
-</span><span class='line'><span class="n">dog</span><span class="o">.</span><span class="n">equal?</span><span class="p">(</span><span class="n">animal</span><span class="p">)</span>  <span class="c1"># =&gt; false</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>dup method do not work for all objects</h2>
-
-<p>As you might know every object in Ruby has <a href="http://ruby-doc.org/core-1.9.3/Object.html#method-i-dup">dup</a>
-method inherited from <code>Object</code> class. It&#8217;s convenient, I like it. But <strong>it does not mean that every object
-can be duplicated</strong>.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="o">[</span><span class="ss">:symbol</span><span class="p">,</span> <span class="kp">true</span><span class="p">,</span> <span class="kp">false</span><span class="o">].</span><span class="n">all?</span> <span class="p">{</span> <span class="o">|</span><span class="n">obj</span><span class="o">|</span> <span class="n">obj</span><span class="o">.</span><span class="n">respond_to?</span> <span class="ss">:dup</span> <span class="p">}</span> <span class="c1"># =&gt; true</span>
-</span><span class='line'><span class="ss">:symbol</span><span class="o">.</span><span class="n">dup</span>   <span class="c1"># =&gt; TypeError: can&#39;t dup Symbol</span>
-</span><span class='line'><span class="kp">true</span><span class="o">.</span><span class="n">dup</span>      <span class="c1"># =&gt; TypeError: can&#39;t dup TrueClass</span>
-</span><span class='line'><span class="kp">false</span><span class="o">.</span><span class="n">dup</span>     <span class="c1"># =&gt; TypeError: can&#39;t dup FalseClass</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It means you can&#8217;t make a deep copy of an array (with one level depth) like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:dup</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Or like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span> <span class="n">val</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:dup</span><span class="p">)</span> <span class="p">?</span> <span class="n">val</span><span class="o">.</span><span class="n">dup</span> <span class="p">:</span> <span class="n">val</span> <span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Since all your objects respond to <code>#dup</code>.</p>
-
-<p>ActiveSupport provides <code>duplicable?</code> method to inspect an ability
-to duplicate an object, so finally your solution would look the next way:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">copy</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">val</span><span class="o">|</span> <span class="n">val</span><span class="o">.</span><span class="n">duplicable?</span> <span class="p">?</span> <span class="n">val</span><span class="o">.</span><span class="n">dup</span> <span class="p">:</span> <span class="n">val</span> <span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Internally ruby symbols and booleans point to constant memory addresses, and
-there is no reason to copy them since they are unchangable.
-But I wish the implementation of their <code>#dup</code> methods looked like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Symbol</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">dup</span>
-</span><span class='line'>    <span class="nb">self</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<br />
-
-
-<br />
-
-
-<p>So I hope the article was useful for you.
-If you know some fancy Ruby things I haven&#8217;t mentioned please let me know.</p>
-
-<p>Thanks.</p>
 ]]></content>
   </entry>
   

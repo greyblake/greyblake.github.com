@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rust | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/rust/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2017-09-30T01:33:41+02:00</updated>
+  <updated>2018-01-15T23:50:19+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,216 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Rust 2018]]></title>
+    <link href="http://greyblake.com/blog/2018/01/16/rust-2018/"/>
+    <updated>2018-01-16T00:08:00+01:00</updated>
+    <id>http://greyblake.com/blog/2018/01/16/rust-2018</id>
+    <content type="html"><![CDATA[<p>With this post, I would like to give my feedback to the rust community in the
+scope of <a href="https://blog.rust-lang.org/2018/01/03/new-years-rust-a-call-for-community-blogposts.html">A Call for Community Blogposts</a>.</p>
+
+<p>This article is structured in the following way:</p>
+
+<ul>
+<li>A little bit of my background</li>
+<li>Things that I like in Rust.</li>
+<li>Things that I miss or things that can be improved.</li>
+</ul>
+
+
+<h2>My background</h2>
+
+<p>For the last 10 years, my main programming language is Ruby and my main working area is web development.
+I started hacking Rust about 1.5 years ago, as you may guess it's not very typical for web developers
+to jump to system programming languages. So my perception is quite different from the majority who comes
+with C++ or Java background.</p>
+
+<p>I've decided to learn Rust by doing: I search for a vacuum in the ecosystem and pick some little libraries
+that seem interesting to me and realistic to implement and maintain for one person. You can find them
+on <a href="https://github.com/greyblake?utf8=%E2%9C%93&amp;tab=repositories&amp;q=&amp;type=&amp;language=rust">github</a>.</p>
+
+<p>Apart from that, I've implemented a little framework to develop and test trading strategies and
+an arbitrage bot for cryptocurrencies. Those are quick'n'dirty projects, where I've just tried to prototype
+ideas.</p>
+
+<h2>What I found awesome about Rust?</h2>
+
+<p>Here is just a short list of things:</p>
+
+<ul>
+<li>Type safety</li>
+<li>Package management with cargo</li>
+<li>Pattern matching</li>
+<li>Meaningful and helpful error messages (I could see how it was improved during last 1.5 years)</li>
+<li>Doc tests</li>
+<li>Dead code warnings</li>
+<li>Community and the way Mozilla organizes the work</li>
+<li>Performance</li>
+<li>Language syntax and its expressiveness</li>
+<li>Ability to write law-level as well as high-level code.</li>
+<li>Usage of <code>!</code> to indicate a magic behind macros</li>
+</ul>
+
+
+<p>Every point here deserves its own discussion but in this post, I'd like to focus on the
+stuff that can be improved.</p>
+
+<h2>Improvement points</h2>
+
+<p>Here is just a list of things that I sometimes miss in Rust.</p>
+
+<h3>TryFrom and TryInto traits</h3>
+
+<p>Quite often I need to convert one type into another with possible failure. An idiomatic way to do this
+would be using <a href="https://github.com/rust-lang/rust/issues/33417">TryFrom<T> and TryInto<T></a> traits,
+but they are not stable yet. Those are just like
+<a href="https://doc.rust-lang.org/std/convert/trait.Into.html">From<T> and Into<T></a> but return <code>Result</code>.
+Hope they will be stabilized soon.</p>
+
+<h3>Parametrization of generic types with constants</h3>
+
+<p>I don't know is there an RFC for this already, but it would be nice to be able to pass constants like <code>usize</code>
+(maybe some others) to generic types.
+Let's say I want to implement a structure to calculate <a href="https://en.wikipedia.org/wiki/Moving_average">moving average</a> of
+length <code>SIZE</code>. The pseudo-code may look like this:</p>
+
+<p>```rust
+struct MovingAverage&lt;SIZE: usize> {</p>
+
+<pre><code>array: [SIZE; f64]
+</code></pre>
+
+<p>}</p>
+
+<p>let ma: MovingAverage<10> = MovingAverage::new();
+```</p>
+
+<p>Note: for this particular case one can come up with a workaround parameterizing <code>MovingAverage</code> with an array type.
+For example:</p>
+
+<p>```rust</p>
+
+<p>struct MovingAverage<T> {</p>
+
+<pre><code>array: T
+</code></pre>
+
+<p>}</p>
+
+<p>let ma: MovingAverage&lt;[10; f64]> = MovingAverage::new();
+```</p>
+
+<h3>Shared trait bounds</h3>
+
+<p>Sometimes when I deal with generic types and there are too many trait bounds, the code
+gets monstrous, and the worst is that I need to duplicate it.</p>
+
+<p>Consider the following example:</p>
+
+<p>```rust</p>
+
+<p>impl&lt;A: X, B: Y, C: Z> for Foo&lt;A, B, C>  {</p>
+
+<pre><code>...
+</code></pre>
+
+<p>}</p>
+
+<p>impl&lt;A: X, B: Y, C: Z> for Bar&lt;A, B, C>  {</p>
+
+<pre><code>...
+</code></pre>
+
+<p>}</p>
+
+<p>impl &lt;B: Y, C: Z> for Baz&lt;B, C> {</p>
+
+<pre><code>...
+</code></pre>
+
+<p>}
+```</p>
+
+<p>It would be cool to be able to define the trait bounds only once
+for implementation of all structures, like in the following pseudo-code:</p>
+
+<p>```rust
+scope&lt;A: X, B: Y, C: Z> {</p>
+
+<pre><code>impl for Foo&lt;A, B, C&gt; {
+    ...
+}
+
+impl for Bar&lt;A, B, C&gt; {
+    ...
+}
+
+impl for Baz&lt;B, C&gt; {
+    ...
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<h3>Crazy generic types are hard to read in error messages</h3>
+
+<p>If one happens to work with a big chain of iterators or futures, they could see error messages with
+huge dreadful generic types.</p>
+
+<p>I'll take one relatively simple example from <a href="https://www.reddit.com/r/rust/comments/5ovjwp/need_help_to_understand_futuretokio/">reddit</a> to
+illustrate what I mean:</p>
+
+<p><code>
+--&gt; examples\echo_client_server.rs:51:22
+   |
+51 |                     .boxed()
+   |                      ^^^^^ within `futures::AndThen&lt;Box&lt;futures::Future&lt;Error=std::io::Error, Item=Box&lt;line::Client&gt;&gt; + std::marker::Send&gt;, futures::Map&lt;Box&lt;futures::Future&lt;Error=std::io::Error, Item=std::string::String&gt;&gt;, [closure@examples\echo_client_server.rs:46:34: 49:30 client:_]&gt;, [closure@examples\echo_client_server.rs:44:32: 50:22 i:_]&gt;`, the trait `std::marker::Send` is not implemented for `futures::Future&lt;Error=std::io::Error, Item=std::string::String&gt;`
+</code></p>
+
+<p>It's quite hard to understand the data type from the first glance.
+I prefer manually to reformat such complex types into the readable multi-line representation:</p>
+
+<p>```rust
+futures::AndThen&lt;</p>
+
+<pre><code>Box&lt;
+    futures::Future&lt;
+        Error=std::io::Error,
+        Item=Box&lt;line::Client&gt;
+    &gt;
+    + std::marker::Send
+&gt;,
+futures::Map&lt;
+    Box&lt;
+        futures::Future&lt;
+            Error=std::io::Error,
+            Item=std::string::String
+        &gt;
+    &gt;,
+    [closure@examples\echo_client_server.rs:46:34: 49:30 client:_]
+&gt;,
+[closure@examples\echo_client_server.rs:44:32: 50:22 i:_]
+</code></pre>
+
+<blockquote><p>```</p></blockquote>
+
+<p>But it would be nice if <code>rustc</code> could emit similar error messages for me.</p>
+
+<h3>Large source files</h3>
+
+<p>I've noticed many popular Rust libraries including the standard library contain large source files (> 1000 LOC).
+Probably it's a question of taste, however I would prefer to keep things in the more granular way: one
+entity (structure + functions) per file. In my opinion, when a code base is organized like this it's easier to
+read and maintain.</p>
+
+<h3>More Rust in production</h3>
+
+<p>It would be pleasant to see more production usage of Rust in 2018 and more
+new job positions for Rust developers opened =)</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Exposing a Rust library to C]]></title>
