@@ -1,0 +1,187 @@
+---
+layout: post
+title: "Rust 2018"
+date: 2018-01-16 00:08
+comments: true
+categories: rust
+---
+
+With this post, I would like to give my feedback to the rust community in the
+scope of [A Call for Community Blogposts](https://blog.rust-lang.org/2018/01/03/new-years-rust-a-call-for-community-blogposts.html).
+
+This article is structured in the following way:
+
+* A little bit of my background
+* Things that I like in Rust.
+* Things that I miss or things that can be improved.
+
+## My background
+
+For the last 10 years, my main programming language is Ruby and my main working area is web development.
+I started hacking Rust about 1.5 years ago, as you may guess it's not very typical for web developers
+to jump to system programming languages. So my perception is quite different from the majority who comes
+with C++ or Java background.
+
+I've decided to learn Rust by doing: I search for a vacuum in the ecosystem and pick some little libraries
+that seem interesting to me and realistic to implement and maintain for one person. You can find them
+on [github](https://github.com/greyblake?utf8=%E2%9C%93&tab=repositories&q=&type=&language=rust).
+
+Apart from that, I've implemented a little framework to develop and test trading strategies and
+an arbitrage bot for cryptocurrencies. Those are quick'n'dirty projects, where I've just tried to prototype
+ideas.
+
+## What I found awesome about Rust?
+
+Here is just a short list of things:
+
+* Type safety
+* Package management with cargo
+* Pattern matching
+* Meaningful and helpful error messages (I could see how it was improved during last 1.5 years)
+* Doc tests
+* Dead code warnings
+* Community and the way Mozilla organizes the work
+* Performance
+* Language syntax and its expressiveness
+* Ability to write law-level as well as high-level code.
+* Usage of `!` to indicate a magic behind macros
+
+Every point here deserves its own discussion but in this post, I'd like to focus on the
+stuff that can be improved.
+
+
+## Improvement points
+
+Here is just a list of things that I sometimes miss in Rust.
+
+### TryFrom and TryInto traits
+
+Quite often I need to convert one type into another with possible failure. An idiomatic way to do this
+would be using [TryFrom<T> and TryInto<T>](https://github.com/rust-lang/rust/issues/33417) traits,
+but they are not stable yet. Those are just like
+[From<T> and Into<T>](https://doc.rust-lang.org/std/convert/trait.Into.html) but return `Result`.
+Hope they will be stabilized soon.
+
+### Parametrization of generic types with constants
+
+I don't know is there an RFC for this already, but it would be nice to be able to pass constants like `usize`
+(maybe some others) to generic types.
+Let's say I want to implement a structure to calculate [moving average](https://en.wikipedia.org/wiki/Moving_average) of
+length `SIZE`. The pseudo-code may look like this:
+
+```rust
+struct MovingAverage<SIZE: usize> {
+    array: [SIZE; f64]
+}
+
+let ma: MovingAverage<10> = MovingAverage::new();
+```
+
+Note: for this particular case one can come up with a workaround parameterizing `MovingAverage` with an array type.
+For example:
+
+```rust
+
+struct MovingAverage<T> {
+    array: T
+}
+
+let ma: MovingAverage<[10; f64]> = MovingAverage::new();
+```
+
+
+### Shared trait bounds
+
+Sometimes when I deal with generic types and there are too many trait bounds, the code
+gets monstrous, and the worst is that I need to duplicate it.
+
+Consider the following example:
+
+
+```rust
+
+impl<A: X, B: Y, C: Z> for Foo<A, B, C>  {
+    ...
+}
+
+impl<A: X, B: Y, C: Z> for Bar<A, B, C>  {
+    ...
+}
+
+impl <B: Y, C: Z> for Baz<B, C> {
+    ...
+}
+```
+
+It would be cool to be able to define the trait bounds only once
+for implementation of all structures, like in the following pseudo-code:
+
+```rust
+scope<A: X, B: Y, C: Z> {
+    impl for Foo<A, B, C> {
+        ...
+    }
+
+    impl for Bar<A, B, C> {
+        ...
+    }
+
+    impl for Baz<B, C> {
+        ...
+    }
+}
+```
+
+### Crazy generic types are hard to read in error messages
+
+If one happens to work with a big chain of iterators or futures, they could see error messages with
+huge dreadful generic types.
+
+I'll take one relatively simple example from [reddit](https://www.reddit.com/r/rust/comments/5ovjwp/need_help_to_understand_futuretokio/) to
+illustrate what I mean:
+
+```
+--> examples\echo_client_server.rs:51:22
+   |
+51 |                     .boxed()
+   |                      ^^^^^ within `futures::AndThen<Box<futures::Future<Error=std::io::Error, Item=Box<line::Client>> + std::marker::Send>, futures::Map<Box<futures::Future<Error=std::io::Error, Item=std::string::String>>, [closure@examples\echo_client_server.rs:46:34: 49:30 client:_]>, [closure@examples\echo_client_server.rs:44:32: 50:22 i:_]>`, the trait `std::marker::Send` is not implemented for `futures::Future<Error=std::io::Error, Item=std::string::String>`
+```
+
+It's quite hard to understand the data type from the first glance.
+I prefer manually to reformat such complex types into the readable multi-line representation:
+
+```rust
+futures::AndThen<
+    Box<
+        futures::Future<
+            Error=std::io::Error,
+            Item=Box<line::Client>
+        >
+        + std::marker::Send
+    >,
+    futures::Map<
+        Box<
+            futures::Future<
+                Error=std::io::Error,
+                Item=std::string::String
+            >
+        >,
+        [closure@examples\echo_client_server.rs:46:34: 49:30 client:_]
+    >,
+    [closure@examples\echo_client_server.rs:44:32: 50:22 i:_]
+>
+```
+
+But it would be nice if `rustc` could emit similar error messages for me.
+
+### Large source files
+
+I've noticed many popular Rust libraries including the standard library contain large source files (> 1000 LOC).
+Probably it's a question of taste, however I would prefer to keep things in the more granular way: one
+entity (structure + functions) per file. In my opinion, when a code base is organized like this it's easier to
+read and maintain.
+
+### More Rust in production
+
+It would be pleasant to see more production usage of Rust in 2018 and more
+new job positions for Rust developers opened =)
