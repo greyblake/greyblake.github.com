@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rust | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/rust/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2018-01-15T23:50:19+01:00</updated>
+  <updated>2018-02-18T19:03:19+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -59,7 +59,7 @@ ideas.</p>
 <li>Community and the way Mozilla organizes the work</li>
 <li>Performance</li>
 <li>Language syntax and its expressiveness</li>
-<li>Ability to write law-level as well as high-level code.</li>
+<li>Ability to write low-level as well as high-level code.</li>
 <li>Usage of <code>!</code> to indicate a magic behind macros</li>
 </ul>
 

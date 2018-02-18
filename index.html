@@ -9,8 +9,9 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="With this post, I would like to give my feedback to the rust community in the
-scope of A Call for Community Blogposts. This article is structured in &hellip;">
+  <meta name="description" content="Intro
+Order dependent tests How to reproduce order dependent tests?
+How to fix order dependent tests? Single intermittent tests Order related &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -94,6 +95,118 @@ scope of A Call for Community Blogposts. This article is structured in &hellip;"
   <header>
     
       <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/">How to Fix Intermittent Test Failures</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2018-02-19T20:18:00+01:00" pubdate data-updated="true">Feb 19<span>th</span>, 2018</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><ul>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Intro</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Order dependent tests</a>
+
+<ul>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#how-to-reproduce-order-dependent-tests">How to reproduce order dependent tests?</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#how-to-fix-order-dependent-tests">How to fix order dependent tests?</a></li>
+</ul>
+</li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#single-intermittent-tests">Single intermittent tests</a>
+
+<ul>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-related-problems">Order related problems</a>
+
+<ul>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#database-selection-without-ordering">Database selection without ordering</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#unstable-sort">Unstable sort</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#iterating-over-hashmap-like-structures">Iterating over HashMap-like structures</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#other-order-related-problems">Other order related problems</a></li>
+</ul>
+</li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#time-and-timezone-related-failures">Time and timezone related failures</a></li>
+</ul>
+</li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#confusion">Conclusion</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#resources">Resources</a></li>
+</ul>
+
+
+<h2><a name="order-dependent-tests"></a> Intro</h2>
+
+<p>You probably happened to face some nasty tests in your continuous integration,
+that fails from to time and make your build red.
+It slows down the deployment pipeline and could be very annoying.
+Today I would like to dive into the nature of such tests: investigate the origin of problems,
+explain how to reproduce the failures and how to fix them.</p>
+
+<p>In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
+I will cover both in this article.</p>
+
+<h2><a name="order-dependent-tests"></a> Order dependent tests</h2>
+
+<p><strong>An order dependent test is a test that always passes in isolation but fails when it runs with other tests in a particular order</strong>.</p>
+
+<p>Example: let&#8217;s say we have tests <code>A</code> and <code>B</code>. Test <code>A</code> passes in isolation and passes
+when we run sequence <code>A, B</code>, but permanently fails in sequence <code>B, A</code>.</p>
+
+<p>Usually, it happens when test <code>B</code> does not clean up the environment properly and this in some way affects <code>A</code>.</p>
+
+<h3><a name="how-to-reproduce-order-dependent-tests"></a> How to reproduce order dependent tests?</h3>
+
+<p>Quite often in CI tests run in a random order. For reproduction, it&#8217;s important to know the exact order.</p>
+
+<p>Let&#8217;s say you know from your CI logs that in a test sequence <code>A, B, C, D, E, F</code>  test <code>E</code> fails.
+Most likely it fails because one of the preceding tests changes the global environment.</p>
+
+<p>Try to run sequence <code>A, B, C, D, E</code> locally to confirm the hypothesis.
+Make sure that tests run exactly in the specified order. If you&#8217;re using RSpec you need to
+pass <code>--order defined</code> option.</p>
+
+<pre><code>rspec --order defined ./a_spec.rb ./b_spec.rb ./c_spec.rb ./d_spec.rb ./e_spec.rb
+</code></pre>
+
+<p>Now how do you know which of <code>A</code>, <code>B</code>, <code>C</code>, <code>D</code> makes <code>E</code> break? You need to experiment, running different sequences like
+<code>A, E</code>, <code>B, E</code>, <code>C, E</code>, <code>D, E</code>. If there are a lot of tests it may take long, so I prefer to use binary search.
+Split preceding tests into 2 groups: <code>A, B</code> and <code>C, D</code> and determine which of the following sequences fail:
+<code>A, B, E</code> or <code>C, D, E</code>. Then do the same with the failing group until you get a minimal reproducible example. E.g.</p>
+
+<pre><code>rspec --order defined ./b_spec.rb ./e_spec.rb
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
         <h1 class="entry-title"><a href="/blog/2018/01/16/rust-2018/">Rust 2018</a></h1>
       
     
@@ -159,7 +272,7 @@ ideas.</p>
 <li>Community and the way Mozilla organizes the work</li>
 <li>Performance</li>
 <li>Language syntax and its expressiveness</li>
-<li>Ability to write law-level as well as high-level code.</li>
+<li>Ability to write low-level as well as high-level code.</li>
 <li>Usage of <code>!</code> to indicate a magic behind macros</li>
 </ul>
 
@@ -1076,69 +1189,6 @@ certain files:</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to Compare Audio in Ruby</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-12-19T19:51:00+01:00" pubdate data-updated="true">Dec 19<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>Or how to implement sound_like RSpec matcher</h2>
-
-<p>The problem I&#8217;m trying to solve in this article is comparison of two
-audio files. We&#8217;ll figure out how to verify that they sound similar.</p>
-
-<p>I was developing an application that has a deal with audio processing and
-I had to write a test to verify outcome audio file matches a one
-from fixtures. Well, I&#8217;ve decided to compare audio binaries like these:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">expect</span><span class="p">(</span><span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;outcome.mp3&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;fixture.mp3&#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And it worked!</p>
-
-<p>But soon my colleagues let me know I had broken the build. It turned out
-that <code>outcome.mp3</code>generated on their Mac books didn&#8217;t match <code>fixture.mp3</code>
-generated on my linux laptop, despite the fact that both sounded
-absolutely the same. Probably we had different codecs.
-So I had to come up with a better idea.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -1154,6 +1204,10 @@ So I had to come up with a better idea.</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/">How to fix intermittent test failures</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2018/01/16/rust-2018/">Rust 2018</a>
       </li>
     
@@ -1167,10 +1221,6 @@ So I had to come up with a better idea.</p>
     
       <li class="post">
         <a href="/blog/2017/08/10/exposing-rust-library-to-c/">Exposing a Rust library to C</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms/">Introduction to Rust whatlang library and natural language identification algorithms</a>
       </li>
     
   </ul>

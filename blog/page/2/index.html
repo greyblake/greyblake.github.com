@@ -9,8 +9,8 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Install fonts There are a lot of fonts in standard Debian repository. Packages which contains
-fonts starts with fonts-, so lets install them all. Run &hellip;">
+  <meta name="description" content="Or how to implement sound_like RSpec matcher The problem I&#8217;m trying to solve in this article is comparison of two
+audio files. We&#8217;ll &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -87,6 +87,69 @@ fonts starts with fonts-, so lets install them all. Run &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">How to Compare Audio in Ruby</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-19T19:51:00+01:00" pubdate data-updated="true">Dec 19<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Or how to implement sound_like RSpec matcher</h2>
+
+<p>The problem I&#8217;m trying to solve in this article is comparison of two
+audio files. We&#8217;ll figure out how to verify that they sound similar.</p>
+
+<p>I was developing an application that has a deal with audio processing and
+I had to write a test to verify outcome audio file matches a one
+from fixtures. Well, I&#8217;ve decided to compare audio binaries like these:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">expect</span><span class="p">(</span><span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;outcome.mp3&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;fixture.mp3&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And it worked!</p>
+
+<p>But soon my colleagues let me know I had broken the build. It turned out
+that <code>outcome.mp3</code>generated on their Mac books didn&#8217;t match <code>fixture.mp3</code>
+generated on my linux laptop, despite the fact that both sounded
+absolutely the same. Probably we had different codecs.
+So I had to come up with a better idea.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/12/19/how-to-compare-audio-in-ruby/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -1000,124 +1063,6 @@ schema prefix in module and models will use it build table name automatically.</
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/09/02/ruby-perfomance-tricks/">Ruby Performance Tricks</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-02T23:34:00+02:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I did some benchmarks to find out which alternatives to write code work faster. I wanna
-share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.</p>
-
-<h2>Do not use exceptions for a control flow</h2>
-
-<p>The next example is pretty stupid but it shows how exceptions slow against
-conditional statements.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Obj</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">with_condition</span>
-</span><span class='line'>    <span class="nb">respond_to?</span><span class="p">(</span><span class="ss">:mythical_method</span><span class="p">)</span> <span class="p">?</span> <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span> <span class="p">:</span> <span class="kp">nil</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">with_rescue</span>
-</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span>
-</span><span class='line'>  <span class="k">rescue</span> <span class="no">NoMethodError</span>
-</span><span class='line'>    <span class="kp">nil</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">obj</span> <span class="o">=</span> <span class="no">Obj</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
-</span><span class='line'>
-</span><span class='line'><span class="nb">puts</span> <span class="no">RUBY_DESCRIPTION</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s2">&quot;rescue/condition&quot;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">rescue_report</span>     <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;rescue:&quot;</span><span class="p">)</span>    <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_rescue</span>    <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="n">condition_report</span>  <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;condition:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_condition</span> <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="o">[</span><span class="n">rescue_report</span> <span class="o">/</span> <span class="n">condition_report</span><span class="o">]</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>MRI 1.9.3:</p>
-
-<pre><code>ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
-                        user     system      total        real
-rescue:           111.530000   2.650000 114.180000 (115.837103)
-condition:          2.620000   0.010000   2.630000 (  2.633154)
-rescue/condition:  42.568702 265.000000        NaN ( 43.991767)
-</code></pre>
-
-<p>MRI 1.8.7 (REE has similar result):</p>
-
-<pre><code>ruby 1.8.7 (2011-12-28 patchlevel 357) [x86_64-linux]
-                        user     system      total        real
-rescue:            80.510000   0.940000  81.450000 ( 81.529022)
-if:                 3.320000   0.000000   3.320000 (  3.330166)
-rescue/condition:  24.250000        inf       -nan ( 24.481970)
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/09/02/ruby-perfomance-tricks/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -1135,6 +1080,10 @@ rescue/condition:  24.250000        inf       -nan ( 24.481970)
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/">How to fix intermittent test failures</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2018/01/16/rust-2018/">Rust 2018</a>
       </li>
     
@@ -1148,10 +1097,6 @@ rescue/condition:  24.250000        inf       -nan ( 24.481970)
     
       <li class="post">
         <a href="/blog/2017/08/10/exposing-rust-library-to-c/">Exposing a Rust library to C</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/07/30/introduction-to-rust-whatlang-library-and-natural-language-identification-algorithms/">Introduction to Rust whatlang library and natural language identification algorithms</a>
       </li>
     
   </ul>

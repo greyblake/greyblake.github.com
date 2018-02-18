@@ -4,7 +4,7 @@
   <title><![CDATA[Sergey Potapov]]></title>
   <link href="http://greyblake.com/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2018-01-15T23:50:19+01:00</updated>
+  <updated>2018-02-18T19:03:19+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,550 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[How to fix intermittent test failures]]></title>
+    <link href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/"/>
+    <updated>2018-02-19T20:18:00+01:00</updated>
+    <id>http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures</id>
+    <content type="html"><![CDATA[<ul>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Intro</a></li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Order dependent tests</a>
+
+<ul>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#how-to-reproduce-order-dependent-tests">How to reproduce order dependent tests?</a></li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#how-to-fix-order-dependent-tests">How to fix order dependent tests?</a></li>
+</ul>
+</li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#single-intermittent-tests">Single intermittent tests</a>
+
+<ul>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-related-problems">Order related problems</a>
+
+<ul>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#database-selection-without-ordering">Database selection without ordering</a></li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#unstable-sort">Unstable sort</a></li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#iterating-over-hashmap-like-structures">Iterating over HashMap-like structures</a></li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#other-order-related-problems">Other order related problems</a></li>
+</ul>
+</li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#time-and-timezone-related-failures">Time and timezone related failures</a></li>
+</ul>
+</li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#confusion">Conclusion</a></li>
+<li><a href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/#resources">Resources</a></li>
+</ul>
+
+
+<h2><a name="order-dependent-tests"></a> Intro</h2>
+
+<p>You probably happened to face some nasty tests in your continuous integration,
+that fails from to time and make your build red.
+It slows down the deployment pipeline and could be very annoying.
+Today I would like to dive into the nature of such tests: investigate the origin of problems,
+explain how to reproduce the failures and how to fix them.</p>
+
+<p>In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
+I will cover both in this article.</p>
+
+<h2><a name="order-dependent-tests"></a> Order dependent tests</h2>
+
+<p><strong>An order dependent test is a test that always passes in isolation but fails when it runs with other tests in a particular order</strong>.</p>
+
+<p>Example: let&#8217;s say we have tests <code>A</code> and <code>B</code>. Test <code>A</code> passes in isolation and passes
+when we run sequence <code>A, B</code>, but permanently fails in sequence <code>B, A</code>.</p>
+
+<p>Usually, it happens when test <code>B</code> does not clean up the environment properly and this in some way affects <code>A</code>.</p>
+
+<h3><a name="how-to-reproduce-order-dependent-tests"></a> How to reproduce order dependent tests?</h3>
+
+<p>Quite often in CI tests run in a random order. For reproduction, it&#8217;s important to know the exact order.</p>
+
+<p>Let&#8217;s say you know from your CI logs that in a test sequence <code>A, B, C, D, E, F</code>  test <code>E</code> fails.
+Most likely it fails because one of the preceding tests changes the global environment.</p>
+
+<p>Try to run sequence <code>A, B, C, D, E</code> locally to confirm the hypothesis.
+Make sure that tests run exactly in the specified order. If you&#8217;re using RSpec you need to
+pass <code>--order defined</code> option.</p>
+
+<pre><code>rspec --order defined ./a_spec.rb ./b_spec.rb ./c_spec.rb ./d_spec.rb ./e_spec.rb
+</code></pre>
+
+<p>Now how do you know which of <code>A</code>, <code>B</code>, <code>C</code>, <code>D</code> makes <code>E</code> break? You need to experiment, running different sequences like
+<code>A, E</code>, <code>B, E</code>, <code>C, E</code>, <code>D, E</code>. If there are a lot of tests it may take long, so I prefer to use binary search.
+Split preceding tests into 2 groups: <code>A, B</code> and <code>C, D</code> and determine which of the following sequences fail:
+<code>A, B, E</code> or <code>C, D, E</code>. Then do the same with the failing group until you get a minimal reproducible example. E.g.</p>
+
+<pre><code>rspec --order defined ./b_spec.rb ./e_spec.rb
+</code></pre>
+
+<!--more-->
+
+
+<h3><a name="how-to-fix-order-dependent-tests"></a> How to fix order dependent tests?</h3>
+
+<p>Now you need to inspect test <code>B</code> to see where exactly it doesn&#8217;t clean up the environment.
+Quite often it can be one of the following reasons:</p>
+
+<ul>
+<li>The test creates new records in the database without deleting them after.</li>
+<li>The test stubs some object methods (e.g. <code>Time.now</code>) without reverting the change.</li>
+</ul>
+
+
+<p>It often happens with <code>Timecop</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">before</span> <span class="p">{</span> <span class="no">Timecop</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="mi">2017</span><span class="p">,</span> <span class="mo">02</span><span class="p">,</span> <span class="mi">17</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># If this is forgotten, the time will be frozen for all the subsequent tests</span>
+</span><span class='line'><span class="n">after</span> <span class="p">{</span> <span class="no">Timecop</span><span class="o">.</span><span class="n">return</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>The test creates files in the file system and does not delete them after.</li>
+<li>The test defines some classes that conflict with real classes from the code and it breaks autoloading mechanism in Rails.</li>
+</ul>
+
+
+<p>The latest point may not be easy to understand, so let me illustrate it with an example.
+Let&#8217;s say we have <code>DummyModule</code> module that we want to test:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">DummyModule</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">dummy</span>
+</span><span class='line'>    <span class="s2">&quot;dummy&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The test may look like the following:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">DummyModule</span> <span class="k">do</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">DummyService</span>
+</span><span class='line'>    <span class="kp">include</span> <span class="no">DummyModule</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">subject</span><span class="p">(</span><span class="ss">:service</span><span class="p">)</span> <span class="p">{</span> <span class="no">DummyService</span><span class="o">.</span><span class="n">new</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">it</span> <span class="s2">&quot;includes dummy method&quot;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">expect</span><span class="p">(</span><span class="n">service</span><span class="o">.</span><span class="n">dummy</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="s2">&quot;dummy&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So what&#8217;s wrong with it? It creates a new global constant named <code>DummyService</code>.
+The constant lives even when the test ends. If you define <code>DummyService</code> in multiple tests they overlap
+and may have side effects. Or if you have real <code>DummyService</code> class in you rails app in <code>app/services/dummy_service.rb</code>,
+and you run a test sequence, where <code>dummy_service_spec.rb</code> follows <code>dummy_module_spec.rb</code>, you may get an order
+dependent test.</p>
+
+<p>Since <code>DummyService</code> is already defined in <code>dummy_module_spec.rb</code> rails autoload will never try to load
+<code>app/service/dummy_service.rb</code> file and as result <code>dummy_service_spec.rb</code> will fail, because
+it tests a wrong version of <code>DummyService</code> (defined in <code>dummy_module_spec.rb</code>).</p>
+
+<p>To test such modules you should prefer to use anonymous classes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="no">DummyModule</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">subject</span><span class="p">(</span><span class="ss">:service</span><span class="p">)</span> <span class="p">{</span> <span class="n">dummy_class</span><span class="o">.</span><span class="n">new</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">let</span><span class="p">(</span><span class="ss">:dummy_class</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>    <span class="no">Class</span><span class="o">.</span><span class="n">new</span> <span class="k">do</span>
+</span><span class='line'>      <span class="kp">include</span> <span class="no">DummyModule</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">it</span> <span class="s2">&quot;includes dummy method&quot;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">expect</span><span class="p">(</span><span class="n">service</span><span class="o">.</span><span class="n">dummy</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="s2">&quot;dummy&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Such test does not pollute global environment.</p>
+
+<h2><a name="single-intermittent-tests"></a> Single intermittent tests</h2>
+
+<h3><a name="order-related-problems"></a> Order related problems</h3>
+
+<p>Sometimes programming languages and databases have undefined behavior regarding
+order related operations. We, developers, may make wrong assumptions about it
+and introduce a bug or an intermittent test.
+Fortunately, those issues are often easy to spot and fix.</p>
+
+<h4><a name="database-selection-without-ordering"></a> Database selection without ordering</h4>
+
+<p>Most of the databases do not guarantee an order of returned items unless it&#8217;s explicitly specified in the request.
+You should always keep this in mind if your test relies on a specific order.</p>
+
+<p>Assume we have an ActiveRecord model <code>User</code> and we want to write a test for
+<code>fetch_all_users</code> function, which returns all existing records from the database.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">fetch_all_users</span>
+</span><span class='line'>  <span class="no">User</span><span class="o">.</span><span class="n">all</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">it</span> <span class="s2">&quot;fethes all existing records&quot;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="no">User</span><span class="o">.</span><span class="n">create!</span><span class="p">(</span><span class="nb">name</span><span class="p">:</span> <span class="s2">&quot;Anthony&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="no">User</span><span class="o">.</span><span class="n">create!</span><span class="p">(</span><span class="nb">name</span><span class="p">:</span> <span class="s2">&quot;Ahmed&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="no">User</span><span class="o">.</span><span class="n">create!</span><span class="p">(</span><span class="nb">name</span><span class="p">:</span> <span class="s2">&quot;Paulo&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="no">User</span><span class="o">.</span><span class="n">create!</span><span class="p">(</span><span class="nb">name</span><span class="p">:</span> <span class="s2">&quot;Max&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="no">User</span><span class="o">.</span><span class="n">create!</span><span class="p">(</span><span class="nb">name</span><span class="p">:</span> <span class="s2">&quot;Ricardo&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">names</span> <span class="o">=</span> <span class="n">fetch_all_users</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:name</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">expect</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="o">[</span><span class="s2">&quot;Anthony&quot;</span><span class="p">,</span> <span class="s2">&quot;Ahmed&quot;</span><span class="p">,</span> <span class="s2">&quot;Paulo&quot;</span><span class="p">,</span> <span class="s2">&quot;Max&quot;</span><span class="p">,</span> <span class="s2">&quot;Ricardo&quot;</span><span class="o">]</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At first glance, this test may look innocent. And it will probably pass if you try to run it.
+I had to loop the test and run it about 5000 times to reproduce one single failure
+(with PostgreSQL 9.5, and RSpec option <code>use_transactional_fixtures</code> set to <code>false</code>):</p>
+
+<pre><code>1) fethes all existing records
+   Failure/Error: expect(names).to eq ["Anthony", "Ahmed", "Paulo", "Max", "Ricardo"]
+
+     expected: ["Anthony", "Ahmed", "Paulo", "Max", "Ricardo"]
+          got: ["Max", "Ricardo", "Anthony", "Ahmed", "Paulo"]
+</code></pre>
+
+<p>There are two possible solutions to make the test stable.</p>
+
+<p>First one is to modify <code>fetch_all_users</code> to enforce the order of returned items:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">fetch_all_users</span>
+</span><span class='line'>  <span class="no">User</span><span class="o">.</span><span class="n">all</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="ss">:id</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The second one, if you really don&#8217;t care about the order,
+is to update the test to be order-agnostic.
+With RSpec you can use <a href="http://www.rubydoc.info/gems/rspec-expectations/RSpec/Matchers#contain_exactly-instance_method">contain_exactly</a>
+matcher for that. As the documentation says:</p>
+
+<blockquote><p>Passes if actual contains all of the expected regardless of order.</p></blockquote>
+
+
+<p>So the expectation statement becomes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'>  <span class="n">expect</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">contain_exactly</span><span class="p">(</span><span class="s2">&quot;Anthony&quot;</span><span class="p">,</span> <span class="s2">&quot;Ahmed&quot;</span><span class="p">,</span> <span class="s2">&quot;Paulo&quot;</span><span class="p">,</span> <span class="s2">&quot;Max&quot;</span><span class="p">,</span> <span class="s2">&quot;Ricardo&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4><a name="unstable-sort"></a> Unstable sort</h4>
+
+<p>You should learn the difference between stable and unstable sorting algorithms and know which one
+is used by default in your programming language and your database.</p>
+
+<p>Let&#8217;s take a look at an example with a stable sorting algorithm.
+Here we have 3 people, 2 of them have the same age. We&#8217;re gonna sort people by age.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Reproduced on MRI 2.4.2 which has a stable sorting algorithm.</span>
+</span><span class='line'><span class="c1"># NOTE: different ruby implementation and versions use different sort algorithms be default.</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Person</span>
+</span><span class='line'>  <span class="kp">attr_reader</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:age</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">age</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@name</span> <span class="o">=</span> <span class="nb">name</span>
+</span><span class='line'>    <span class="vi">@age</span> <span class="o">=</span> <span class="n">age</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">&lt;=&gt;</span> <span class="p">(</span><span class="n">other</span><span class="p">)</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">age</span> <span class="o">&lt;=&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">age</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">people_set1</span> <span class="o">=</span> <span class="o">[</span>
+</span><span class='line'>  <span class="no">Person</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Bernard&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span>
+</span><span class='line'>  <span class="no">Person</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Johannes&quot;</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>
+</span><span class='line'>  <span class="no">Person</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Steffen&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+</span><span class='line'><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Bernard precedes Steffen (as in the input data set)</span>
+</span><span class='line'><span class="nb">p</span> <span class="n">people_set1</span><span class="o">.</span><span class="n">sort</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:name</span><span class="p">)</span> <span class="c1"># =&gt; [&quot;Johannes&quot;, &quot;Bernard&quot;, &quot;Steffen&quot;]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Now let&#39;s swap Bernard and Steffen</span>
+</span><span class='line'><span class="n">people_set2</span> <span class="o">=</span> <span class="o">[</span>
+</span><span class='line'>  <span class="no">Person</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Steffen&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span>
+</span><span class='line'>  <span class="no">Person</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Johannes&quot;</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>
+</span><span class='line'>  <span class="no">Person</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Bernard&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+</span><span class='line'><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Now Steffen precedes Bernard</span>
+</span><span class='line'><span class="nb">p</span> <span class="n">people_set2</span><span class="o">.</span><span class="n">sort</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:name</span><span class="p">)</span> <span class="c1"># =&gt; [&quot;Johannes&quot;, &quot;Steffen&quot;, &quot;Bernard&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Stable sorting algorithms retain the relative order of items with equal keys</strong>.</p>
+
+<p>As you may conclude, unstable sorting algorithms are those, that do not match the
+definition of &#8220;stable sorting algorithm&#8221;.</p>
+
+<p>However, there are 2 possible types of unstable sorting algorithms:</p>
+
+<ul>
+<li>Those that persist the same output for the same given input</li>
+<li>Those that may return different output when the same input is given</li>
+</ul>
+
+
+<p>The second is not desired and must be avoided since it introduces
+a real randomness. An example could be a <a href="https://en.wikipedia.org/wiki/Quicksort">quicksort</a>
+implementation with literally randomly chosen pivot.</p>
+
+<p>Most of the languages have the first type of unstable sort. But it&#8217;s good to be on the alert.</p>
+
+<p>By the way, if you wonder what kind of sorting algorithm has your Ruby version,
+I recommend you to take a look at this <a href="https://stackoverflow.com/a/44486562/1013173">stackoverflow answer</a>.</p>
+
+<h4><a name="iterating-over-hashmap-like-structures"></a> Iterating over HashMap-like structures</h4>
+
+<p>HashMap-like structures are widely used in many scripting languages: in Ruby it&#8217;s called &#8220;hash&#8221;, in JavaScript - &#8220;object&#8221;,
+in Python - &#8220;dictionary&#8221;, in PHP - &#8220;associated array&#8221;, etc.</p>
+
+<p>The problem is, some implementations do not guarantee order persistence on iteration over HashMap keys.
+For example it was the case for Ruby before version 1.9, that&#8217;s why ActiveSupport used to have
+<a href="http://api.rubyonrails.org/v3.2/classes/ActiveSupport/OrderedHash.html">OrderedHash</a>.</p>
+
+<p>In case of JavaScript <a href="http://2ality.com/2015/10/property-traversal-order-es6.html">the traversion order was only defined in ES6</a>.</p>
+
+<p>Here is a little Rust program, that illustrates the issue with an equivalent Ruby code in
+the comments.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="c1">// Reproduced with rust version 1.22.1</span>
+</span><span class='line'><span class="k">use</span> <span class="n">std</span><span class="o">::</span><span class="n">collections</span><span class="o">::</span><span class="n">HashMap</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">fn</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// hash = { 1 =&gt; 1, 2 =&gt; 4 }</span>
+</span><span class='line'>    <span class="k">let</span> <span class="k">mut</span> <span class="n">hash</span> <span class="o">=</span> <span class="n">HashMap</span><span class="o">::</span><span class="n">new</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">hash</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">1</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">hash</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">4</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// keys = hash.keys</span>
+</span><span class='line'>    <span class="k">let</span> <span class="n">keys</span><span class="o">:</span> <span class="n">Vec</span><span class="o">&lt;</span><span class="k">i32</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">hash</span><span class="p">.</span><span class="n">keys</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">x</span><span class="o">|</span> <span class="o">*</span><span class="n">x</span><span class="p">).</span><span class="n">collect</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// expect(keys).to eq [1, 2]</span>
+</span><span class='line'>    <span class="n">assert_eq</span><span class="o">!</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">vec</span><span class="o">!</span><span class="p">[</span><span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">])</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you run this program multiple times, sometimes it may succeed, sometimes it fails:</p>
+
+<pre><code>thread 'main' panicked at 'assertion failed: `(left == right)`
+  left: `[2, 1]`,
+ right: `[1, 2]`', src/main.rs:16:4
+</code></pre>
+
+<p>The solution is the same as for the previous order related problems.
+Either to update the code to sort keys explicitly or to make the test be order agnostic:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='rust'><span class='line'><span class="c1">// keys = hash.keys</span>
+</span><span class='line'><span class="k">let</span> <span class="k">mut</span> <span class="n">keys</span><span class="o">:</span> <span class="n">Vec</span><span class="o">&lt;</span><span class="k">i32</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">hash</span><span class="p">.</span><span class="n">keys</span><span class="p">().</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">x</span><span class="o">|</span> <span class="o">*</span><span class="n">x</span><span class="p">).</span><span class="n">collect</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// keys.sort!</span>
+</span><span class='line'><span class="n">keys</span><span class="p">.</span><span class="n">sort</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// expect(keys).to eq [1, 2]</span>
+</span><span class='line'><span class="n">assert_eq</span><span class="o">!</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">vec</span><span class="o">!</span><span class="p">[</span><span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4><a name="other-order-related-problems"></a> Other order related problems</h4>
+
+<p>Everything that has not 100% defined behavior may lead to the similar issues.
+There are few other examples:</p>
+
+<ul>
+<li>Iterating over entries in the file system may vary depending on a file system, operating system, file system drivers, etc.</li>
+<li>If you run concurrent operations they are not guaranteed to finish in the order they start. So you may want to do some kind of sorting to aggregate the final result.</li>
+</ul>
+
+
+<h3><a name="time-and-timezone-related-failures"></a> Time and timezone related failures</h3>
+
+<p>Tests should not depend on current time and date.</p>
+
+<p>It&#8217;s not obvious, but sometime a test may fail on CI just because it runs in a specific time in a
+specific (different from your local) timezone. E.g. it may fail in time frame from 20:00 to 00:00
+in CI server that runs in Pacific Time Zone, but the failure may not be reproducible in Europe.</p>
+
+<p>If you suspect this, the first step would be to change your local time settings in order to
+reproduce the same time conditions as on the CI server, when the test failed.</p>
+
+<p>After you&#8217;re able to reproduce the failure locally it must be relatively easy to debug.</p>
+
+<p>Another example of a test that depends on the current time:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">current_year</span>
+</span><span class='line'>  <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">year</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">it</span> <span class="s2">&quot;returns current year&quot;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">expect</span><span class="p">(</span><span class="n">current_year</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="mi">2018</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Obviously, on the 1st of January 2019 it will start failing.
+For this test you&#8217;d need to stub the current time with <a href="https://github.com/travisjeffery/timecop">Timecop</a>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">it</span> <span class="s2">&quot;returns current year&quot;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="no">Timecop</span><span class="o">.</span><span class="n">freeze</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">expect</span><span class="p">(</span><span class="n">current_year</span><span class="p">)</span><span class="o">.</span><span class="n">to</span> <span class="n">eq</span> <span class="mi">2018</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2><a name="confusion"></a> Conclusion</h2>
+
+<p>We have covered the most common cases where an intermittent test can be
+introduced to a smooth CI process. However, some situations may be tricker and tests may fail
+only when multiple of the covered factors combined together.</p>
+
+<p>Usually, it is better to spot problems on the code review stage,
+at least by now you should know what you should pay attention to.</p>
+
+<p>Also it worth saying, that the article does not cover problems related to concurrency and asynchronous
+communication which are very big topics by themselves.</p>
+
+<p>Thanks for reading please give me feedback.
+What was the toughest intermittent you had to debug? =)</p>
+
+<h2><a name="resources"></a> Resources</h2>
+
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Mozilla/QA/Avoiding_intermittent_oranges">Avoiding intermittent test failures</a></li>
+<li><a href="https://8thlight.com/blog/will-warner/2013/03/26/stable-sorting-in-ruby.html">Stable Sorting in Ruby</a></li>
+<li><a href="https://stackoverflow.com/a/44486562/1013173">Comparison of different ruby implementations for sorting stability</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Rust 2018]]></title>
@@ -59,7 +603,7 @@ ideas.</p>
 <li>Community and the way Mozilla organizes the work</li>
 <li>Performance</li>
 <li>Language syntax and its expressiveness</li>
-<li>Ability to write law-level as well as high-level code.</li>
+<li>Ability to write low-level as well as high-level code.</li>
 <li>Usage of <code>!</code> to indicate a magic behind macros</li>
 </ul>
 
@@ -3052,593 +3596,6 @@ schema prefix in module and models will use it build table name automatically.</
 <p>I hope you will enjoy <a href="https://github.com/TMXCredit/pg_power">pg_power</a>. Let us know what you think!</p>
 
 <p>Thanks. Sergey Potapov.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Ruby performance tricks]]></title>
-    <link href="http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks/"/>
-    <updated>2012-09-02T23:34:00+02:00</updated>
-    <id>http://greyblake.com/blog/2012/09/02/ruby-perfomance-tricks</id>
-    <content type="html"><![CDATA[<p>I did some benchmarks to find out which alternatives to write code work faster. I wanna
-share it with you. All benchmarks are made against ruby 1.9.3p194 MRI.</p>
-
-<h2>Do not use exceptions for a control flow</h2>
-
-<p>The next example is pretty stupid but it shows how exceptions slow against
-conditional statements.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Obj</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">with_condition</span>
-</span><span class='line'>    <span class="nb">respond_to?</span><span class="p">(</span><span class="ss">:mythical_method</span><span class="p">)</span> <span class="p">?</span> <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span> <span class="p">:</span> <span class="kp">nil</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">with_rescue</span>
-</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">mythical_method</span>
-</span><span class='line'>  <span class="k">rescue</span> <span class="no">NoMethodError</span>
-</span><span class='line'>    <span class="kp">nil</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">obj</span> <span class="o">=</span> <span class="no">Obj</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
-</span><span class='line'>
-</span><span class='line'><span class="nb">puts</span> <span class="no">RUBY_DESCRIPTION</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="s2">&quot;rescue/condition&quot;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">rescue_report</span>     <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;rescue:&quot;</span><span class="p">)</span>    <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_rescue</span>    <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="n">condition_report</span>  <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;condition:&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">with_condition</span> <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="o">[</span><span class="n">rescue_report</span> <span class="o">/</span> <span class="n">condition_report</span><span class="o">]</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>MRI 1.9.3:</p>
-
-<pre><code>ruby 1.9.3p194 (2012-04-20 revision 35410) [x86_64-linux]
-                        user     system      total        real
-rescue:           111.530000   2.650000 114.180000 (115.837103)
-condition:          2.620000   0.010000   2.630000 (  2.633154)
-rescue/condition:  42.568702 265.000000        NaN ( 43.991767)
-</code></pre>
-
-<p>MRI 1.8.7 (REE has similar result):</p>
-
-<pre><code>ruby 1.8.7 (2011-12-28 patchlevel 357) [x86_64-linux]
-                        user     system      total        real
-rescue:            80.510000   0.940000  81.450000 ( 81.529022)
-if:                 3.320000   0.000000   3.320000 (  3.330166)
-rescue/condition:  24.250000        inf       -nan ( 24.481970)
-</code></pre>
-
-<!--more-->
-
-
-<h2>String concatenation</h2>
-
-<p>Avoid using <code>+=</code> to concatenate strings in favor of <code>&lt;&lt;</code> method.
-The result is absolutely the same: add a string to the end of an existing one.
-What is the difference then?</p>
-
-<p>See the example:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;first&quot;</span>
-</span><span class='line'><span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;second&quot;</span>
-</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>       <span class="c1"># =&gt; 16241320</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">str1</span> <span class="o">+=</span> <span class="n">str2</span>    <span class="c1"># str1 = str1 + str2</span>
-</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>  <span class="c1"># =&gt; 16241240, id is changed</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">str1</span> <span class="o">&lt;&lt;</span> <span class="n">str2</span>
-</span><span class='line'><span class="n">str1</span><span class="o">.</span><span class="n">object_id</span>  <span class="c1"># =&gt; 16241240, id is the same</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>When you use <code>+=</code> ruby creates a temporal object which is result of <code>str1 + str2</code>.
-Then it overrides <code>str1</code> variable with reference to the new built object.
-On other hand <code>&lt;&lt;</code> modifies existing one.</p>
-
-<p>As a result of using <code>+=</code> you have the next disadvantages:</p>
-
-<ul>
-<li>More calculation to join strings.</li>
-<li>Redundant string object in memory (previous value of <code>str1</code>), which approximates time when
-<a href="http://en.wikipedia.org/wiki/Garbage_collection_%28computer_science%29">GC</a> will trigger.</li>
-</ul>
-
-
-<p>How <code>+=</code> is slow? Basically it depends on length of strings you have operation with.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>
-</span><span class='line'><span class="no">BASIC_LENGTH</span> <span class="o">=</span> <span class="mi">10</span>
-</span><span class='line'>
-</span><span class='line'><span class="mi">5</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">factor</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">length</span> <span class="o">=</span> <span class="no">BASIC_LENGTH</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">factor</span><span class="p">)</span>
-</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;_&quot;</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">LENGTH: </span><span class="si">#{</span><span class="n">length</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;+= VS &lt;&lt;&#39;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>    <span class="n">concat_report</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;+=&quot;</span><span class="p">)</span>  <span class="k">do</span>
-</span><span class='line'>      <span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-</span><span class='line'>      <span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span> <span class="o">*</span> <span class="n">length</span>
-</span><span class='line'>      <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">str1</span> <span class="o">+=</span> <span class="n">str2</span> <span class="p">}</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">modify_report</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;&lt;&lt;&quot;</span><span class="p">)</span>  <span class="k">do</span>
-</span><span class='line'>      <span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span>
-</span><span class='line'>      <span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span> <span class="o">*</span> <span class="n">length</span>
-</span><span class='line'>      <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">str1</span> <span class="o">&lt;&lt;</span> <span class="n">str2</span> <span class="p">}</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="o">[</span><span class="n">concat_report</span> <span class="o">/</span> <span class="n">modify_report</span><span class="o">]</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Output:</p>
-
-<pre><code>____________________________________________________________
-LENGTH: 10
-                 user     system      total        real
-+=           0.000000   0.000000   0.000000 (  0.004671)
-&lt;&lt;           0.000000   0.000000   0.000000 (  0.000176)
-+= VS &lt;&lt;          NaN        NaN        NaN ( 26.508796)
-____________________________________________________________
-LENGTH: 100
-                 user     system      total        real
-+=           0.020000   0.000000   0.020000 (  0.022995)
-&lt;&lt;           0.000000   0.000000   0.000000 (  0.000226)
-+= VS &lt;&lt;          Inf        NaN        NaN (101.845829)
-____________________________________________________________
-LENGTH: 1000
-                 user     system      total        real
-+=           0.270000   0.120000   0.390000 (  0.390888)
-&lt;&lt;           0.000000   0.000000   0.000000 (  0.001730)
-+= VS &lt;&lt;          Inf        Inf        NaN (225.920077)
-____________________________________________________________
-LENGTH: 10000
-                 user     system      total        real
-+=           3.660000   1.570000   5.230000 (  5.233861)
-&lt;&lt;           0.000000   0.010000   0.010000 (  0.015099)
-+= VS &lt;&lt;          Inf 157.000000        NaN (346.629692)
-____________________________________________________________
-LENGTH: 100000
-                 user     system      total        real
-+=          31.270000  16.990000  48.260000 ( 48.328511)
-&lt;&lt;           0.050000   0.050000   0.100000 (  0.105993)
-+= VS &lt;&lt;   625.400000 339.800000        NaN (455.961373)
-</code></pre>
-
-<h2>Be careful with calculation within iterators</h2>
-
-<p>Assume you need to write a function to convert an array into a hash
-where keys and values are same as elements of the array:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">func</span><span class="p">(</span><span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="o">]</span><span class="p">)</span>  <span class="c1"># =&gt; {1 =&gt; 1, 2 =&gt; 2, 3 =&gt; 3}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The next solution would satisfy the requirements:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And would be extremely slow with big portions of data because it contains
-nested methods (<code>inject</code> and <code>merge</code>), so it&#8217;s <strong> O(n<sup>2</sup>) </strong> algorithm.
-But it&#8217;s obviously that it must be <strong> O(n) </strong>.
-Consider the next:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">[</span><span class="n">e</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span> <span class="n">h</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>In this case we do only one iteration over an array without any hard calculation
-within the iterator.</p>
-
-<p>See the benchmark:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">n_func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">[</span><span class="n">e</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span> <span class="n">h</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">n2_func</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">BASE_SIZE</span> <span class="o">=</span> <span class="mi">10</span>
-</span><span class='line'>
-</span><span class='line'><span class="mi">4</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">factor</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">size</span>   <span class="o">=</span> <span class="no">BASE_SIZE</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">factor</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">params</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="n">.size</span><span class="p">)</span><span class="o">.</span><span class="n">to_a</span>
-</span><span class='line'>  <span class="nb">puts</span> <span class="s2">&quot;_&quot;</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">SIZE: </span><span class="si">#{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span class='line'>  <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;O(n)&quot;</span> <span class="p">)</span> <span class="p">{</span> <span class="n">n_func</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>  <span class="p">}</span>
-</span><span class='line'>    <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;O(n2)&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">n2_func</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Output:</p>
-
-<pre><code>____________________________________________________________
-SIZE: 10
-                user     system      total        real
-O(n)        0.000000   0.000000   0.000000 (  0.000014)
-O(n2)       0.000000   0.000000   0.000000 (  0.000033)
-____________________________________________________________
-SIZE: 100
-                user     system      total        real
-O(n)        0.000000   0.000000   0.000000 (  0.000043)
-O(n2)       0.000000   0.000000   0.000000 (  0.001070)
-____________________________________________________________
-SIZE: 1000
-                user     system      total        real
-O(n)        0.000000   0.000000   0.000000 (  0.000347)
-O(n2)       0.130000   0.000000   0.130000 (  0.127638)
-____________________________________________________________
-SIZE: 10000
-                user     system      total        real
-O(n)        0.020000   0.000000   0.020000 (  0.019067)
-O(n2)      17.850000   0.080000  17.930000 ( 17.983827)
-</code></pre>
-
-<p>It&#8217;s an obvious and trivial example. Just keep in mind to not do
-hard calculation within iterators if it&#8217;s possible.</p>
-
-<h2>Use bang! methods</h2>
-
-<p>In many cases bang methods do the same as there non-bang analogues but without
-duplication an object. The previous example with <code>merge!</code> would be much faster:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">merge!</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge!</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">array</span><span class="o">.</span><span class="n">inject</span><span class="p">({})</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">h</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">e</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000</span>
-</span><span class='line'><span class="n">array</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="n">.N</span><span class="p">)</span><span class="o">.</span><span class="n">to_a</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;merge!&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="n">merge!</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="p">}</span>
-</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;merge&quot;</span><span class="p">)</span>  <span class="p">{</span> <span class="n">merge</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>  <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Output:</p>
-
-<pre><code>                 user     system      total        real
-merge!       0.010000   0.000000   0.010000 (  0.011370)
-merge       17.710000   0.000000  17.710000 ( 17.840856)
-</code></pre>
-
-<h2>Use instance variables</h2>
-
-<p>Accessing instance variable directly is about two times faster than accessing
-them with accessor methods:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Metric</span>
-</span><span class='line'>  <span class="kp">attr_accessor</span> <span class="ss">:var</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-</span><span class='line'>    <span class="vi">@n</span>   <span class="o">=</span> <span class="n">n</span>
-</span><span class='line'>    <span class="vi">@var</span> <span class="o">=</span> <span class="mi">22</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">run</span>
-</span><span class='line'>    <span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;@var&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="vi">@var</span> <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;var&quot;</span> <span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">var</span>  <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;@var =&quot;</span><span class="p">)</span>     <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span><span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="vi">@var</span> <span class="o">=</span> <span class="n">i</span>     <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>      <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;self.var =&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@n</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span><span class="o">|</span><span class="n">i</span><span class="o">|</span> <span class="nb">self</span><span class="o">.</span><span class="n">var</span> <span class="o">=</span> <span class="n">i</span> <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">metric</span> <span class="o">=</span> <span class="no">Metric</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="mi">100_000_000</span><span class="p">)</span>
-</span><span class='line'><span class="n">metric</span><span class="o">.</span><span class="n">run</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Output:</p>
-
-<pre><code>                 user     system      total        real
-@var         6.980000   0.010000   6.990000 (  7.193725)
-var         13.040000   0.000000  13.040000 ( 13.131711)
-@var =       7.960000   0.000000   7.960000 (  8.242603)
-self.var =  14.910000   0.010000  14.920000 ( 15.960125)
-</code></pre>
-
-<h2>Parallel assignment is slower</h2>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">N</span> <span class="o">=</span> <span class="mi">10_000_000</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;parallel&#39;</span><span class="p">)</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;consequentially&#39;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span>
-</span><span class='line'>      <span class="n">a</span> <span class="o">=</span> <span class="mi">10</span>
-</span><span class='line'>      <span class="n">b</span> <span class="o">=</span> <span class="mi">20</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Output:</p>
-
-<pre><code>                      user     system      total        real
-parallel          1.900000   0.000000   1.900000 (  1.928063)
-consequentially   0.880000   0.000000   0.880000 (  0.879675)
-</code></pre>
-
-<h2>Dynamic method defention</h2>
-
-<p>What is the faster way to define method dynamically: <code>class_eval</code> with a code string
-or using <code>define_method</code>? Which way generated methods work faster?</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;benchmark&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">Metric</span>
-</span><span class='line'>  <span class="n">N</span> <span class="o">=</span> <span class="mi">1_000_000</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">class_eval_with_string</span>
-</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
-</span><span class='line'>      <span class="nb">class_eval</span><span class="p">(</span><span class="o">&lt;&lt;-</span><span class="no">eorb</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">,</span> <span class="bp">__LINE__</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-</span><span class='line'><span class="sh">        def smeth_#{i}</span>
-</span><span class='line'><span class="sh">          #{i}</span>
-</span><span class='line'><span class="sh">        end</span>
-</span><span class='line'><span class="no">      eorb</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">with_define_method</span>
-</span><span class='line'>    <span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
-</span><span class='line'>      <span class="n">define_method</span><span class="p">(</span><span class="s2">&quot;dmeth_</span><span class="si">#{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">do</span>
-</span><span class='line'>        <span class="n">i</span>
-</span><span class='line'>      <span class="k">end</span>
-</span><span class='line'>    <span class="k">end</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'><span class="no">Benchmark</span><span class="o">.</span><span class="n">bm</span><span class="p">(</span><span class="mi">22</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
-</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;class_eval with string&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="no">Metric</span><span class="o">.</span><span class="n">class_eval_with_string</span> <span class="p">}</span>
-</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;define_method&quot;</span><span class="p">)</span>          <span class="p">{</span> <span class="no">Metric</span><span class="o">.</span><span class="n">with_define_method</span>     <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">metric</span> <span class="o">=</span> <span class="no">Metric</span><span class="o">.</span><span class="n">new</span>
-</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;string method&quot;</span><span class="p">)</span>  <span class="p">{</span> <span class="no">Metric</span><span class="o">::</span><span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">metric</span><span class="o">.</span><span class="n">smeth_1</span> <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'>  <span class="n">x</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s2">&quot;dynamic method&quot;</span><span class="p">)</span> <span class="p">{</span> <span class="no">Metric</span><span class="o">::</span><span class="n">N</span><span class="o">.</span><span class="n">times</span> <span class="p">{</span> <span class="n">metric</span><span class="o">.</span><span class="n">dmeth_1</span> <span class="p">}</span> <span class="p">}</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Output:</p>
-
-<pre><code>                             user     system      total        real
-class_eval with string 219.840000   0.720000 220.560000 (221.933074)
-define_method           61.280000   0.240000  61.520000 ( 62.070911)
-string method            0.110000   0.000000   0.110000 (  0.111433)
-dynamic method           0.150000   0.000000   0.150000 (  0.156537)
-</code></pre>
-
-<p>So <code>class_eval</code> works slower but it&#8217;s preferred since methods generated with
-<code>class_eval</code> and a string of code work faster.</p>
-
-<h2>Links</h2>
-
-<ul>
-<li><a href="http://www.simonecarletti.com/blog/2010/01/how-slow-are-ruby-exceptions/">How Slow Are Ruby Exceptions</a></li>
-<li><a href="http://www.igvita.com/2008/07/08/6-optimization-tips-for-ruby-mri/">6 Optimization Tips for Ruby MRI</a>
-(NOTE: <code>Symbol#to_proc</code> was ported to Ruby and it&#8217;s not slow anymore)</li>
-<li><a href="http://my.safaribooksonline.com/book/web-development/ruby/9780321540034">&#8220;Writing Efficient Ruby Code&#8221; by Dr. Stefan Kaes</a></li>
-<li><a href="http://programmingzen.com/2007/02/10/top-10-ruby-on-rails-performance-tips/">Top 10 Ruby on Rails performance tips </a></li>
-<li><a href="http://blog.monitis.com/index.php/2012/02/08/20-ruby-performance-tips/">20 Ruby Performance Tips</a></li>
-<li><a href="http://rob-bell.net/2009/06/a-beginners-guide-to-big-o-notation/">A Beginner’s Guide to Big O Notation</a></li>
-</ul>
-
-
-<p>Danke.</p>
 ]]></content>
   </entry>
   

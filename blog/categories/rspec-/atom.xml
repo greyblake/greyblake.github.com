@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rspec, | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/rspec-/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2018-01-15T23:50:19+01:00</updated>
+  <updated>2018-02-18T19:03:19+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -12,6 +12,461 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[How to fix intermittent test failures]]></title>
+    <link href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/"/>
+    <updated>2018-02-19T20:18:00+01:00</updated>
+    <id>http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures</id>
+    <content type="html"><![CDATA[<ul>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Intro</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Order dependent tests</a>
+
+<ul>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#how-to-reproduce-order-dependent-tests">How to reproduce order dependent tests?</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#how-to-fix-order-dependent-tests">How to fix order dependent tests?</a></li>
+</ul>
+</li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#single-intermittent-tests">Single intermittent tests</a>
+
+<ul>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-related-problems">Order related problems</a>
+
+<ul>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#database-selection-without-ordering">Database selection without ordering</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#unstable-sort">Unstable sort</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#iterating-over-hashmap-like-structures">Iterating over HashMap-like structures</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#other-order-related-problems">Other order related problems</a></li>
+</ul>
+</li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#time-and-timezone-related-failures">Time and timezone related failures</a></li>
+</ul>
+</li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#confusion">Conclusion</a></li>
+<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#resources">Resources</a></li>
+</ul>
+
+
+<h2><a name="order-dependent-tests"></a> Intro</h2>
+
+<p>You probably happened to face some nasty tests in your continuous integration,
+that fails from to time and make your build red.
+It slows down the deployment pipeline and could be very annoying.
+Today I would like to dive into the nature of such tests: investigate the origin of problems,
+explain how to reproduce the failures and how to fix them.</p>
+
+<p>In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
+I will cover both in this article.</p>
+
+<h2><a name="order-dependent-tests"></a> Order dependent tests</h2>
+
+<p><strong>An order dependent test is a test that always passes in isolation but fails when it runs with other tests in a particular order</strong>.</p>
+
+<p>Example: let's say we have tests <code>A</code> and <code>B</code>. Test <code>A</code> passes in isolation and passes
+when we run sequence <code>A, B</code>, but permanently fails in sequence <code>B, A</code>.</p>
+
+<p>Usually, it happens when test <code>B</code> does not clean up the environment properly and this in some way affects <code>A</code>.</p>
+
+<h3><a name="how-to-reproduce-order-dependent-tests"></a> How to reproduce order dependent tests?</h3>
+
+<p>Quite often in CI tests run in a random order. For reproduction, it's important to know the exact order.</p>
+
+<p>Let's say you know from your CI logs that in a test sequence <code>A, B, C, D, E, F</code>  test <code>E</code> fails.
+Most likely it fails because one of the preceding tests changes the global environment.</p>
+
+<p>Try to run sequence <code>A, B, C, D, E</code> locally to confirm the hypothesis.
+Make sure that tests run exactly in the specified order. If you're using RSpec you need to
+pass <code>--order defined</code> option.</p>
+
+<pre><code>rspec --order defined ./a_spec.rb ./b_spec.rb ./c_spec.rb ./d_spec.rb ./e_spec.rb
+</code></pre>
+
+<p>Now how do you know which of <code>A</code>, <code>B</code>, <code>C</code>, <code>D</code> makes <code>E</code> break? You need to experiment, running different sequences like
+<code>A, E</code>, <code>B, E</code>, <code>C, E</code>, <code>D, E</code>. If there are a lot of tests it may take long, so I prefer to use binary search.
+Split preceding tests into 2 groups: <code>A, B</code> and <code>C, D</code> and determine which of the following sequences fail:
+<code>A, B, E</code> or <code>C, D, E</code>. Then do the same with the failing group until you get a minimal reproducible example. E.g.</p>
+
+<pre><code>rspec --order defined ./b_spec.rb ./e_spec.rb
+</code></pre>
+
+<!--more-->
+
+
+<h3><a name="how-to-fix-order-dependent-tests"></a> How to fix order dependent tests?</h3>
+
+<p>Now you need to inspect test <code>B</code> to see where exactly it doesn't clean up the environment.
+Quite often it can be one of the following reasons:</p>
+
+<ul>
+<li>The test creates new records in the database without deleting them after.</li>
+<li>The test stubs some object methods (e.g. <code>Time.now</code>) without reverting the change.</li>
+</ul>
+
+
+<p>It often happens with <code>Timecop</code>:
+```ruby
+before { Timecop.freeze(2017, 02, 17) }</p>
+
+<h1>If this is forgotten, the time will be frozen for all the subsequent tests</h1>
+
+<p>after { Timecop.return }
+```</p>
+
+<ul>
+<li>The test creates files in the file system and does not delete them after.</li>
+<li>The test defines some classes that conflict with real classes from the code and it breaks autoloading mechanism in Rails.</li>
+</ul>
+
+
+<p>The latest point may not be easy to understand, so let me illustrate it with an example.
+Let's say we have <code>DummyModule</code> module that we want to test:</p>
+
+<p>```ruby
+module DummyModule
+  def dummy</p>
+
+<pre><code>"dummy"
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>The test may look like the following:</p>
+
+<p>```ruby
+describe DummyModule do
+  class DummyService</p>
+
+<pre><code>include DummyModule
+</code></pre>
+
+<p>  end</p>
+
+<p>  subject(:service) { DummyService.new }</p>
+
+<p>  it "includes dummy method" do</p>
+
+<pre><code>expect(service.dummy).to eq "dummy"
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>So what's wrong with it? It creates a new global constant named <code>DummyService</code>.
+The constant lives even when the test ends. If you define <code>DummyService</code> in multiple tests they overlap
+and may have side effects. Or if you have real <code>DummyService</code> class in you rails app in <code>app/services/dummy_service.rb</code>,
+and you run a test sequence, where <code>dummy_service_spec.rb</code> follows <code>dummy_module_spec.rb</code>, you may get an order
+dependent test.</p>
+
+<p>Since <code>DummyService</code> is already defined in <code>dummy_module_spec.rb</code> rails autoload will never try to load
+<code>app/service/dummy_service.rb</code> file and as result <code>dummy_service_spec.rb</code> will fail, because
+it tests a wrong version of <code>DummyService</code> (defined in <code>dummy_module_spec.rb</code>).</p>
+
+<p>To test such modules you should prefer to use anonymous classes:</p>
+
+<p>```ruby
+describe DummyModule do
+  subject(:service) { dummy_class.new }</p>
+
+<p>  let(:dummy_class) do</p>
+
+<pre><code>Class.new do
+  include DummyModule
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>  it "includes dummy method" do</p>
+
+<pre><code>expect(service.dummy).to eq "dummy"
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Such test does not pollute global environment.</p>
+
+<h2><a name="single-intermittent-tests"></a> Single intermittent tests</h2>
+
+<h3><a name="order-related-problems"></a> Order related problems</h3>
+
+<p>Sometimes programming languages and databases have undefined behavior regarding
+order related operations. We, developers, may make wrong assumptions about it
+and introduce a bug or an intermittent test.
+Fortunately, those issues are often easy to spot and fix.</p>
+
+<h4><a name="database-selection-without-ordering"></a> Database selection without ordering</h4>
+
+<p>Most of the databases do not guarantee an order of returned items unless it's explicitly specified in the request.
+You should always keep this in mind if your test relies on a specific order.</p>
+
+<p>Assume we have an ActiveRecord model <code>User</code> and we want to write a test for
+<code>fetch_all_users</code> function, which returns all existing records from the database.</p>
+
+<p>```ruby
+def fetch_all_users
+  User.all
+end</p>
+
+<p>it "fethes all existing records" do
+  User.create!(name: "Anthony")
+  User.create!(name: "Ahmed")
+  User.create!(name: "Paulo")
+  User.create!(name: "Max")
+  User.create!(name: "Ricardo")</p>
+
+<p>  names = fetch_all_users.map(&amp;:name)
+  expect(names).to eq ["Anthony", "Ahmed", "Paulo", "Max", "Ricardo"]
+end
+```</p>
+
+<p>At first glance, this test may look innocent. And it will probably pass if you try to run it.
+I had to loop the test and run it about 5000 times to reproduce one single failure
+(with PostgreSQL 9.5, and RSpec option <code>use_transactional_fixtures</code> set to <code>false</code>):</p>
+
+<pre><code>1) fethes all existing records
+   Failure/Error: expect(names).to eq ["Anthony", "Ahmed", "Paulo", "Max", "Ricardo"]
+
+     expected: ["Anthony", "Ahmed", "Paulo", "Max", "Ricardo"]
+          got: ["Max", "Ricardo", "Anthony", "Ahmed", "Paulo"]
+</code></pre>
+
+<p>There are two possible solutions to make the test stable.</p>
+
+<p>First one is to modify <code>fetch_all_users</code> to enforce the order of returned items:
+<code>ruby
+def fetch_all_users
+  User.all.order(:id)
+end
+</code></p>
+
+<p>The second one, if you really don't care about the order,
+is to update the test to be order-agnostic.
+With RSpec you can use <a href="http://www.rubydoc.info/gems/rspec-expectations/RSpec/Matchers#contain_exactly-instance_method">contain_exactly</a>
+matcher for that. As the documentation says:</p>
+
+<p><blockquote><p>Passes if actual contains all of the expected regardless of order.</p></blockquote></p>
+
+<p>So the expectation statement becomes:</p>
+
+<p><code>ruby
+  expect(names).to contain_exactly("Anthony", "Ahmed", "Paulo", "Max", "Ricardo")
+</code></p>
+
+<h4><a name="unstable-sort"></a> Unstable sort</h4>
+
+<p>You should learn the difference between stable and unstable sorting algorithms and know which one
+is used by default in your programming language and your database.</p>
+
+<p>Let's take a look at an example with a stable sorting algorithm.
+Here we have 3 people, 2 of them have the same age. We're gonna sort people by age.</p>
+
+<p>```ruby</p>
+
+<h1>Reproduced on MRI 2.4.2 which has a stable sorting algorithm.</h1>
+
+<h1>NOTE: different ruby implementation and versions use different sort algorithms be default.</h1>
+
+<p>class Person
+  attr_reader :name, :age</p>
+
+<p>  def initialize(name, age)</p>
+
+<pre><code>@name = name
+@age = age
+</code></pre>
+
+<p>  end</p>
+
+<p>  def &lt;=> (other)</p>
+
+<pre><code>self.age &lt;=&gt; other.age
+</code></pre>
+
+<p>  end
+end</p>
+
+<p>people_set1 = [
+  Person.new("Bernard", 40),
+  Person.new("Johannes", 30),
+  Person.new("Steffen", 40)
+]</p>
+
+<h1>Bernard precedes Steffen (as in the input data set)</h1>
+
+<p>p people_set1.sort.map(&amp;:name) # => ["Johannes", "Bernard", "Steffen"]</p>
+
+<h1>Now let's swap Bernard and Steffen</h1>
+
+<p>people_set2 = [
+  Person.new("Steffen", 40),
+  Person.new("Johannes", 30),
+  Person.new("Bernard", 40)
+]</p>
+
+<h1>Now Steffen precedes Bernard</h1>
+
+<p>p people_set2.sort.map(&amp;:name) # => ["Johannes", "Steffen", "Bernard"]
+```</p>
+
+<p><strong>Stable sorting algorithms retain the relative order of items with equal keys</strong>.</p>
+
+<p>As you may conclude, unstable sorting algorithms are those, that do not match the
+definition of "stable sorting algorithm".</p>
+
+<p>However, there are 2 possible types of unstable sorting algorithms:</p>
+
+<ul>
+<li>Those that persist the same output for the same given input</li>
+<li>Those that may return different output when the same input is given</li>
+</ul>
+
+
+<p>The second is not desired and must be avoided since it introduces
+a real randomness. An example could be a <a href="https://en.wikipedia.org/wiki/Quicksort">quicksort</a>
+implementation with literally randomly chosen pivot.</p>
+
+<p>Most of the languages have the first type of unstable sort. But it's good to be on the alert.</p>
+
+<p>By the way, if you wonder what kind of sorting algorithm has your Ruby version,
+I recommend you to take a look at this <a href="https://stackoverflow.com/a/44486562/1013173">stackoverflow answer</a>.</p>
+
+<h4><a name="iterating-over-hashmap-like-structures"></a> Iterating over HashMap-like structures</h4>
+
+<p>HashMap-like structures are widely used in many scripting languages: in Ruby it's called "hash", in JavaScript - "object",
+in Python - "dictionary", in PHP - "associated array", etc.</p>
+
+<p>The problem is, some implementations do not guarantee order persistence on iteration over HashMap keys.
+For example it was the case for Ruby before version 1.9, that's why ActiveSupport used to have
+<a href="http://api.rubyonrails.org/v3.2/classes/ActiveSupport/OrderedHash.html">OrderedHash</a>.</p>
+
+<p>In case of JavaScript <a href="http://2ality.com/2015/10/property-traversal-order-es6.html">the traversion order was only defined in ES6</a>.</p>
+
+<p>Here is a little Rust program, that illustrates the issue with an equivalent Ruby code in
+the comments.</p>
+
+<p>```rust
+// Reproduced with rust version 1.22.1
+use std::collections::HashMap;</p>
+
+<p>fn main() {</p>
+
+<pre><code>// hash = { 1 =&gt; 1, 2 =&gt; 4 }
+let mut hash = HashMap::new();
+hash.insert(1, 1);
+hash.insert(2, 4);
+
+// keys = hash.keys
+let keys: Vec&lt;i32&gt; = hash.keys().map(|x| *x).collect();
+
+// expect(keys).to eq [1, 2]
+assert_eq!(keys, vec![1, 2])
+</code></pre>
+
+<p>}</p>
+
+<p>```</p>
+
+<p>If you run this program multiple times, sometimes it may succeed, sometimes it fails:</p>
+
+<pre><code>thread 'main' panicked at 'assertion failed: `(left == right)`
+  left: `[2, 1]`,
+ right: `[1, 2]`', src/main.rs:16:4
+</code></pre>
+
+<p>The solution is the same as for the previous order related problems.
+Either to update the code to sort keys explicitly or to make the test be order agnostic:</p>
+
+<p>```rust
+// keys = hash.keys
+let mut keys: Vec<i32> = hash.keys().map(|x| *x).collect();</p>
+
+<p>// keys.sort!
+keys.sort();</p>
+
+<p>// expect(keys).to eq [1, 2]
+assert_eq!(keys, vec![1, 2])
+```</p>
+
+<h4><a name="other-order-related-problems"></a> Other order related problems</h4>
+
+<p>Everything that has not 100% defined behavior may lead to the similar issues.
+There are few other examples:</p>
+
+<ul>
+<li>Iterating over entries in the file system may vary depending on a file system, operating system, file system drivers, etc.</li>
+<li>If you run concurrent operations they are not guaranteed to finish in the order they start. So you may want to do some kind of sorting to aggregate the final result.</li>
+</ul>
+
+
+<h3><a name="time-and-timezone-related-failures"></a> Time and timezone related failures</h3>
+
+<p>Tests should not depend on current time and date.</p>
+
+<p>It's not obvious, but sometime a test may fail on CI just because it runs in a specific time in a
+specific (different from your local) timezone. E.g. it may fail in time frame from 20:00 to 00:00
+in CI server that runs in Pacific Time Zone, but the failure may not be reproducible in Europe.</p>
+
+<p>If you suspect this, the first step would be to change your local time settings in order to
+reproduce the same time conditions as on the CI server, when the test failed.</p>
+
+<p>After you're able to reproduce the failure locally it must be relatively easy to debug.</p>
+
+<p>Another example of a test that depends on the current time:</p>
+
+<p>```ruby
+def current_year
+  Time.now.year
+end</p>
+
+<p>it "returns current year" do
+  expect(current_year).to eq 2018
+end
+```</p>
+
+<p>Obviously, on the 1st of January 2019 it will start failing.
+For this test you'd need to stub the current time with <a href="https://github.com/travisjeffery/timecop">Timecop</a>:</p>
+
+<p>```ruby
+it "returns current year" do
+  Timecop.freeze(2018, 2, 19) do</p>
+
+<pre><code>expect(current_year).to eq 2018
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<h2><a name="confusion"></a> Conclusion</h2>
+
+<p>We have covered the most common cases where an intermittent test can be
+introduced to a smooth CI process. However, some situations may be tricker and tests may fail
+only when multiple of the covered factors combined together.</p>
+
+<p>Usually, it is better to spot problems on the code review stage,
+at least by now you should know what you should pay attention to.</p>
+
+<p>Also it worth saying, that the article does not cover problems related to concurrency and asynchronous
+communication which are very big topics by themselves.</p>
+
+<p>Thanks for reading please give me feedback.
+What was the toughest intermittent you had to debug? =)</p>
+
+<h2><a name="resources"></a> Resources</h2>
+
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Mozilla/QA/Avoiding_intermittent_oranges">Avoiding intermittent test failures</a></li>
+<li><a href="https://8thlight.com/blog/will-warner/2013/03/26/stable-sorting-in-ruby.html">Stable Sorting in Ruby</a></li>
+<li><a href="https://stackoverflow.com/a/44486562/1013173">Comparison of different ruby implementations for sorting stability</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Тестируем вложенные ActiveRecord-модели с RSpec]]></title>
