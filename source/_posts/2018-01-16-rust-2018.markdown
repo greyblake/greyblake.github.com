@@ -43,7 +43,7 @@ Here is just a short list of things:
 * Community and the way Mozilla organizes the work
 * Performance
 * Language syntax and its expressiveness
-* Ability to write law-level as well as high-level code.
+* Ability to write low-level as well as high-level code.
 * Usage of `!` to indicate a magic behind macros
 
 Every point here deserves its own discussion but in this post, I'd like to focus on the
