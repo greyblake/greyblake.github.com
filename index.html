@@ -9,9 +9,9 @@
   <meta name="author" content="Sergey Potapov">
 
   
-  <meta name="description" content="Intro
-Order dependent tests How to reproduce order dependent tests?
-How to fix order dependent tests? Single intermittent tests Order related &hellip;">
+  <meta name="description" content=". You probably happened to face some nasty tests in your continuous integration,
+that fails from to time and make your build red.
+It slows down the &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -119,8 +119,16 @@ How to fix order dependent tests? Single intermittent tests Order related &helli
   </header>
 
 
-  <div class="entry-content"><ul>
-<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Intro</a></li>
+  <div class="entry-content"><p><img src="/images/how-to-fix-intermittent-test-failures.jpg" alt="Red build in CI? Works on my machine" />.</p>
+
+<p>You probably happened to face some nasty tests in your continuous integration,
+that fails from to time and make your build red.
+It slows down the deployment pipeline and could be very annoying.</p>
+
+<p>In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
+I will cover both in this article.</p>
+
+<ul>
 <li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Order dependent tests</a>
 
 <ul>
@@ -147,17 +155,6 @@ How to fix order dependent tests? Single intermittent tests Order related &helli
 <li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#resources">Resources</a></li>
 </ul>
 
-
-<h2><a name="order-dependent-tests"></a> Intro</h2>
-
-<p>You probably happened to face some nasty tests in your continuous integration,
-that fails from to time and make your build red.
-It slows down the deployment pipeline and could be very annoying.
-Today I would like to dive into the nature of such tests: investigate the origin of problems,
-explain how to reproduce the failures and how to fix them.</p>
-
-<p>In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
-I will cover both in this article.</p>
 
 <h2><a name="order-dependent-tests"></a> Order dependent tests</h2>
 

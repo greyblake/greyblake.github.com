@@ -4,7 +4,7 @@
   <title><![CDATA[Category: rspec, | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/rspec-/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2018-02-18T19:03:19+01:00</updated>
+  <updated>2018-02-18T19:58:41+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -18,8 +18,16 @@
     <link href="http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures/"/>
     <updated>2018-02-19T20:18:00+01:00</updated>
     <id>http://greyblake.com/blog/2018/02/19/how-to-fix-intermittent-test-failures</id>
-    <content type="html"><![CDATA[<ul>
-<li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Intro</a></li>
+    <content type="html"><![CDATA[<p><img src="/images/how-to-fix-intermittent-test-failures.jpg" alt="Red build in CI? Works on my machine" />.</p>
+
+<p>You probably happened to face some nasty tests in your continuous integration,
+that fails from to time and make your build red.
+It slows down the deployment pipeline and could be very annoying.</p>
+
+<p>In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
+I will cover both in this article.</p>
+
+<ul>
 <li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests">Order dependent tests</a>
 
 <ul>
@@ -46,17 +54,6 @@
 <li><a href="/blog/2018/02/19/how-to-fix-intermittent-test-failures/#resources">Resources</a></li>
 </ul>
 
-
-<h2><a name="order-dependent-tests"></a> Intro</h2>
-
-<p>You probably happened to face some nasty tests in your continuous integration,
-that fails from to time and make your build red.
-It slows down the deployment pipeline and could be very annoying.
-Today I would like to dive into the nature of such tests: investigate the origin of problems,
-explain how to reproduce the failures and how to fix them.</p>
-
-<p>In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
-I will cover both in this article.</p>
 
 <h2><a name="order-dependent-tests"></a> Order dependent tests</h2>
 
