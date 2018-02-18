@@ -6,7 +6,15 @@ comments: true
 categories: tests, ci, ruby, rust, rspec, rails
 ---
 
-* [Intro](/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests)
+![Red build in CI? Works on my machine](/images/how-to-fix-intermittent-test-failures.jpg).
+
+You probably happened to face some nasty tests in your continuous integration,
+that fails from to time and make your build red.
+It slows down the deployment pipeline and could be very annoying.
+
+In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
+I will cover both in this article.
+
 * [Order dependent tests](/blog/2018/02/19/how-to-fix-intermittent-test-failures/#order-dependent-tests)
   * [How to reproduce order dependent tests?](/blog/2018/02/19/how-to-fix-intermittent-test-failures/#how-to-reproduce-order-dependent-tests)
   * [How to fix order dependent tests?](/blog/2018/02/19/how-to-fix-intermittent-test-failures/#how-to-fix-order-dependent-tests)
@@ -19,17 +27,6 @@ categories: tests, ci, ruby, rust, rspec, rails
   * [Time and timezone related failures](/blog/2018/02/19/how-to-fix-intermittent-test-failures/#time-and-timezone-related-failures)
 * [Conclusion](/blog/2018/02/19/how-to-fix-intermittent-test-failures/#confusion)
 * [Resources](/blog/2018/02/19/how-to-fix-intermittent-test-failures/#resources)
-
-## <a name="order-dependent-tests"></a> Intro
-
-You probably happened to face some nasty tests in your continuous integration,
-that fails from to time and make your build red.
-It slows down the deployment pipeline and could be very annoying.
-Today I would like to dive into the nature of such tests: investigate the origin of problems,
-explain how to reproduce the failures and how to fix them.
-
-In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
-I will cover both in this article.
 
 ## <a name="order-dependent-tests"></a> Order dependent tests
 
