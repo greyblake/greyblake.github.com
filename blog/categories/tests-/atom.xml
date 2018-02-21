@@ -4,7 +4,7 @@
   <title><![CDATA[Category: tests, | Sergey Potapov]]></title>
   <link href="http://greyblake.com/blog/categories/tests-/atom.xml" rel="self"/>
   <link href="http://greyblake.com/"/>
-  <updated>2018-02-18T19:58:41+01:00</updated>
+  <updated>2018-02-21T08:13:59+01:00</updated>
   <id>http://greyblake.com/</id>
   <author>
     <name><![CDATA[Sergey Potapov]]></name>
@@ -21,7 +21,7 @@
     <content type="html"><![CDATA[<p><img src="/images/how-to-fix-intermittent-test-failures.jpg" alt="Red build in CI? Works on my machine" />.</p>
 
 <p>You probably happened to face some nasty tests in your continuous integration,
-that fails from to time and make your build red.
+that fails from time to time and make your build red.
 It slows down the deployment pipeline and could be very annoying.</p>
 
 <p>In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
@@ -85,6 +85,9 @@ Split preceding tests into 2 groups: <code>A, B</code> and <code>C, D</code> and
 
 <pre><code>rspec --order defined ./b_spec.rb ./e_spec.rb
 </code></pre>
+
+<p>UPDATE: As few of my readers pointed, there is <a href="https://relishapp.com/rspec/rspec-core/docs/command-line/bisect">rspec --bisect</a>
+that does it already automatically. Thanks!</p>
 
 <!--more-->
 
