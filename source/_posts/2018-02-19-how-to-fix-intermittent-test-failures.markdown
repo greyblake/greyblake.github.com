@@ -9,7 +9,7 @@ categories: tests, ci, ruby, rust, rspec, rails
 ![Red build in CI? Works on my machine](/images/how-to-fix-intermittent-test-failures.jpg).
 
 You probably happened to face some nasty tests in your continuous integration,
-that fails from to time and make your build red.
+that fails from time to time and make your build red.
 It slows down the deployment pipeline and could be very annoying.
 
 In my opinion, intermittent tests could be divided into two major groups: order dependent tests and intermittent tests by themselves.
@@ -57,6 +57,9 @@ Split preceding tests into 2 groups: `A, B` and `C, D` and determine which of th
 `A, B, E` or `C, D, E`. Then do the same with the failing group until you get a minimal reproducible example. E.g.
 
     rspec --order defined ./b_spec.rb ./e_spec.rb
+
+UPDATE: As few of my readers pointed, there is [rspec --bisect](https://relishapp.com/rspec/rspec-core/docs/command-line/bisect)
+that does it already automatically. Thanks!
 
 
 <!--more-->
